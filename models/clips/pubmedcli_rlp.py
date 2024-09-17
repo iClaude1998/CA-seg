@@ -1,53 +1,44 @@
 import torch
+import numpy as np
 import torch.nn.functional as F
 
 from torch import nn
 from typing import Optional
-
-from .utils import text_global_pool
 from .auxilary import MultiheadAttention
 
+
 class CustomVisionRLPBlock(nn.Module):
-  
+    
     def __init__(self, block):
         super().__init__()
         for k, v in vars(block).items():
             setattr(self, k, v)
+        
         self.num_heads = self.attn.num_heads
         self.d_model = self.attn.embed_dim
+
         self.attn = MultiheadAttention(self.attn)
-        self.attn_grad = None
-        self.attn_prob = None
-
-    def attention(self, x, attn_mask: Optional[torch.Tensor] = None):
-
-        attn_mask = attn_mask.to(x.dtype) if attn_mask is not None else None
-        return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask, attention_probs_forward_hook=self.set_attn_prob,
-                         attention_probs_backwards_hook=self.set_attn_grad)[0]
     
     def set_attn_grad(self, attn_grad):
         self.attn_grad = attn_grad
       
     def set_attn_prob(self, attn_prob):
       self.attn_prob = attn_prob
-        
-    def forward(self, x, attn_mask: Optional[torch.Tensor] = None):
 
-        x = x + self.ls_1(self.attention(self.ln_1(x), attn_mask=attn_mask))
-        x = x + self.ls_2(self.mlp(self.ln_2(x)))
+    def attention(self, x, attn_mask: Optional[torch.Tensor] = None):
+
+        attn_mask = attn_mask.to(x.dtype) if attn_mask is not None else None
+        return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask, attention_probs_forward_hook=self.set_attn_prob,
+                         attention_probs_backwards_hook=self.set_attn_grad)[0]
+
+    def forward(self, x: torch.Tensor):
+        x = x + self.attention(self.ln_1(x))
+        x = x + self.mlp(self.ln_2(x))
         return x
 
-  
 
 class CustomTransformer(nn.Module):
-    """A customized Transformer to support CAM calculation."""
-
     def __init__(self, transformer):
-        """Initialize the wrapper.
-
-        Args:
-            transformer (nn.Module): the Transformer to be wrapped.
-        """
         super().__init__()
         # for k, v in transformer.named_parameters():
         #   print(k)
@@ -61,11 +52,8 @@ class CustomTransformer(nn.Module):
         self.resblocks = nn.Sequential(*[CustomVisionRLPBlock(block) for block in self.resblocks])
         self.layers = len(self.resblocks)
 
-    def forward(self, x):
-        layers = self.layers  # self.layers - 1
-        for i in range(layers):
-            x = self.resblocks[i](x)
-        return x
+    def forward(self, x: torch.Tensor):
+        return self.resblocks(x)
 
 
 class CustomVisionTransformer(nn.Module):
@@ -85,19 +73,15 @@ class CustomVisionTransformer(nn.Module):
 
     def _patch_embed(self, x):
 
-        x = self.conv1(x)
+        x = self.conv1(x)  # shape = [*, width, grid, grid]
         x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
         return x
 
     def _pos_embed(self, x):
-        # self.pos_embed_new = upsample_position_embedding(
-        #     self.trunk.pos_embed, (h // self.patch_size, w // self.patch_size))
-        class_embedding = self.class_embedding.view(1, 1, -1).expand(x.shape[0], -1, -1)
-        x = torch.cat([class_embedding, x], dim=1)
-        # shape = [*, grid ** 2 + 1, width]
+        x = torch.cat([self.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device), x], dim=1)  # shape = [*, grid ** 2 + 1, width]
         x = x + self.positional_embedding.to(x.dtype)
-        return self.patch_dropout(x)
+        return x
 
     def forward_features(self, x):
         # x = self.trunk.patch_embed(x)
@@ -110,30 +94,21 @@ class CustomVisionTransformer(nn.Module):
         x = x.permute(1, 0, 2)  # NLD -> LND
         return x
     
-    def _global_pool(self, x: torch.Tensor):
-        if self.pool_type == 'avg':
-            pooled, tokens = x[:, 1:].mean(dim=1), x[:, 1:]
-        elif self.pool_type == 'tok':
-            pooled, tokens = x[:, 0], x[:, 1:]
-        else:
-            pooled = tokens = x
-
-        return pooled, tokens
 
     def forward_head(self, x):
-        x = self.ln_post(x)
-        pooled, _ = self._global_pool(x)
+        x = self.ln_post(x[:, 0, :])
         if self.proj is not None:
-            pooled = pooled @ self.proj
-        return pooled
+            x = x @ self.proj
+        return x
 
     def forward(self, x):
         x = self.forward_features(x)
         x = self.forward_head(x)
         return x
-    
 
-class CLIPWrapper(nn.Module):
+
+
+class PUBMEDCLIPWrapper(nn.Module):
     """A wrapper for CLIP to support forward with a list of text inputs."""
 
     def __init__(self, clip_model):
@@ -154,48 +129,45 @@ class CLIPWrapper(nn.Module):
     def dtype(self):
         return self.visual.conv1.weight.dtype
 
-    def encode_image(self, image, normalize=False):
+    def encode_image(self, image):
         # return CLS+patch embeddings and attention scores of all layers
         features = self.visual(image.type(self.dtype))
-        return F.normalize(features, dim=-1) if normalize else features
+        return features
 
-    def encode_text(self, text, normalize=False):
-        cast_dtype = self.transformer.get_cast_dtype()
-        x = self.token_embedding(text).to(cast_dtype)  # [batch_size, n_ctx, d_model]
-        x = x + self.positional_embedding.to(cast_dtype)
+    def encode_text(self, text):
+        x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]
+
+        x = x + self.positional_embedding.type(self.dtype)
         x = x.permute(1, 0, 2)  # NLD -> LND
-        x = self.transformer(x, attn_mask=self.attn_mask)
+        x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
-        x = self.ln_final(x)  # [batch_size, n_ctx, transformer.width]
-        x, _ = text_global_pool(x, text, self.text_pool_type)
-        if self.text_projection is not None:
-            if isinstance(self.text_projection, nn.Linear):
-                x = self.text_projection(x)
-            else:
-                x = x @ self.text_projection
+        x = self.ln_final(x).type(self.dtype)
 
-        return F.normalize(x, dim=-1) if normalize else x
-        
+        # x.shape = [batch_size, n_ctx, transformer.width]
+        # take features from the eot embedding (eot_token is the highest number in each sequence)
+        x = x[torch.arange(x.shape[0]), text.argmax(dim=-1)] @ self.text_projection
 
-    def forward(self, image, text_ids, normalize=False):
-        image_features = self.encode_image(image, normalize)
-        text_features = self.encode_text(text_ids, normalize)
-        if not normalize:
-            image_features = F.normalize(image_features, dim=-1)
-            text_features = F.normalize(text_features, dim=-1)
+        return x
+
+    def forward(self, image, text_ids):
+        image_features = self.encode_image(image)
+        text_features = self.encode_text(text_ids)
+
+        image_features = image_features / image_features.norm(dim=1, keepdim=True)
+        text_features = text_features / text_features.norm(dim=1, keepdim=True)
+            
         logits_per_image = (100.0 * image_features @ text_features.T).softmax(dim=-1)
         logits_per_text = (100.0 * text_features @ image_features.T).softmax(dim=-1)
         return logits_per_image, logits_per_text
     
-
-
-class CLIPLRP:
+    
+    
+    
+class PUBMEDCLIPLRP:
     def __init__(self, clip_model, device):
         self.device = device
         self.clip_model = clip_model.to(device)
         self.clip_model.eval()
-
-
         self.image_attn_blocks = list(dict(self.clip_model.visual.transformer.resblocks.named_children()).values())
     
     def __call__(self, image, text_tokens, start_layer=-1):
@@ -205,7 +177,7 @@ class CLIPLRP:
             text_tokens = [text_tokens]
 
         # forward pass
-        logits_per_image, _ = self.clip_model(image, text_tokens, normalize=True)
+        logits_per_image, _ = self.clip_model(image, text_tokens)
         I = torch.eye(logits_per_image.size(0), requires_grad=True).to(self.device)
         one_hot = torch.sum(I * logits_per_image)
         self.clip_model.zero_grad() 
@@ -231,3 +203,4 @@ class CLIPLRP:
             cam = cam.clamp(min=0).mean(dim=1)
             R = R + torch.bmm(cam, R)
         return R[:, 0, 1:]
+    
