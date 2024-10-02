@@ -38,7 +38,7 @@ class CustomVisionRLPBlock(nn.Module):
 
 
 class CustomTransformer(nn.Module):
-    def __init__(self, transformer):
+    def __init__(self, transformer,out_layers=[2, 5, 8, 11]):
         super().__init__()
         # for k, v in transformer.named_parameters():
         #   print(k)
@@ -51,15 +51,21 @@ class CustomTransformer(nn.Module):
 
         self.resblocks = nn.Sequential(*[CustomVisionRLPBlock(block) for block in self.resblocks])
         self.layers = len(self.resblocks)
+        self.out_layers = out_layers
 
     def forward(self, x: torch.Tensor):
-        return self.resblocks(x)
+        intermediate = []
+        for i in range(self.layers):
+            x = self.resblocks[i](x)
+            if i in self.out_layers:
+                intermediate.append(x)
+        return x, intermediate
 
 
 class CustomVisionTransformer(nn.Module):
     """A customized VisionTransformer to support CAM calculation."""
 
-    def __init__(self, model):
+    def __init__(self, model, output_layers=[2, 5, 8, 11]):
         """Initialize the wrapper.
 
         Args:
@@ -69,7 +75,7 @@ class CustomVisionTransformer(nn.Module):
         for k, v in vars(model).items():
             setattr(self, k, v)
         self.patch_size = self.conv1.weight[0]
-        self.transformer = CustomTransformer(self.transformer)
+        self.transformer = CustomTransformer(self.transformer, output_layers)
 
     def _patch_embed(self, x):
 
@@ -90,9 +96,9 @@ class CustomVisionTransformer(nn.Module):
         # x = self.trunk.patch_drop(x)
         x = self.ln_pre(x)
         x = x.permute(1, 0, 2)  # NLD -> LND
-        x = self.transformer(x)
+        x, intermediate = self.transformer(x)
         x = x.permute(1, 0, 2)  # NLD -> LND
-        return x
+        return x, intermediate
     
 
     def forward_head(self, x):
@@ -102,16 +108,26 @@ class CustomVisionTransformer(nn.Module):
         return x
 
     def forward(self, x):
-        x = self.forward_features(x)
+        x, intermediate = self.forward_features(x)
         x = self.forward_head(x)
-        return x
+        intermediate = self.forward_patch(intermediate)
+        
+        return x, intermediate
 
+    def forward_patch(self, x):
+        x = torch.stack(x, dim=0).permute(2, 0, 1, 3)[..., 1:, :] # [num_layers, B, num_patch, d]
+        x = self.ln_post(x)
+        if self.proj is not None:
+            x = torch.matmul(x, self.proj)
+        return x
+        
+        
 
 
 class PUBMEDCLIPWrapper(nn.Module):
     """A wrapper for CLIP to support forward with a list of text inputs."""
 
-    def __init__(self, clip_model):
+    def __init__(self, clip_model, outlayers=[2, 5, 8, 11]):
         """Initialize the wrapper.
 
         Args:
@@ -122,7 +138,7 @@ class PUBMEDCLIPWrapper(nn.Module):
         for k, v in vars(clip_model).items():
             print(k)
             setattr(self, k, v)
-        self.visual = CustomVisionTransformer(self.visual)
+        self.visual = CustomVisionTransformer(self.visual, outlayers)
         
 
     @property
@@ -131,8 +147,8 @@ class PUBMEDCLIPWrapper(nn.Module):
 
     def encode_image(self, image):
         # return CLS+patch embeddings and attention scores of all layers
-        features = self.visual(image.type(self.dtype))
-        return features
+        features, intermediate = self.visual(image.type(self.dtype))
+        return features, intermediate
 
     def encode_text(self, text):
         x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]
@@ -150,7 +166,7 @@ class PUBMEDCLIPWrapper(nn.Module):
         return x
 
     def forward(self, image, text_ids):
-        image_features = self.encode_image(image)
+        image_features, intermediate = self.encode_image(image)
         text_features = self.encode_text(text_ids)
 
         image_features = image_features / image_features.norm(dim=1, keepdim=True)
@@ -158,7 +174,7 @@ class PUBMEDCLIPWrapper(nn.Module):
             
         logits_per_image = (100.0 * image_features @ text_features.T).softmax(dim=-1)
         logits_per_text = (100.0 * text_features @ image_features.T).softmax(dim=-1)
-        return logits_per_image, logits_per_text
+        return logits_per_image, logits_per_text, intermediate
     
     
     
@@ -177,7 +193,7 @@ class PUBMEDCLIPLRP:
             text_tokens = [text_tokens]
 
         # forward pass
-        logits_per_image, _ = self.clip_model(image, text_tokens)
+        logits_per_image, _, intermediate = self.clip_model(image, text_tokens)
         I = torch.eye(logits_per_image.size(0), requires_grad=True).to(self.device)
         one_hot = torch.sum(I * logits_per_image)
         self.clip_model.zero_grad() 
@@ -202,5 +218,5 @@ class PUBMEDCLIPLRP:
             cam = cam.reshape(batch_size, -1, grad.size(-1), grad.size(-1))
             cam = cam.clamp(min=0).mean(dim=1)
             R = R + torch.bmm(cam, R)
-        return R[:, 0, 1:]
+        return R[:, 0, 1:], intermediate
     
