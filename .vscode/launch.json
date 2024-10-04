@@ -1,3 +1,22 @@
+// // test.py
+
+// {
+//     // Use IntelliSense to learn about possible attributes.
+//     // Hover to view descriptions of existing attributes.
+//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "Python Debugger: Current File",
+//             "type": "debugpy",
+//             "request": "launch",
+//             "program": "${file}",
+//             "console": "integratedTerminal",
+//             "justMyCode": false
+//         }
+//     ]
+// }
+
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -10,7 +29,15 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+            "env": {"CUDA_VISIBLE_DEVICES": "1"},
+            "args": ["--config", "configs/isic_clip.yaml", 
+                     "--exp_name", "debug", 
+                     "--device", "cuda"]
         }
     ]
 }
+
+// parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
+// parser.add_argument('--exp_name', type=str, default='baseline', help='the name of the experiment')
+// parser.add_argument('--device', type=str, default='cuda', help='experiment device')

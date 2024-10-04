@@ -1,2 +1,3 @@
 experiments/
 pretrain_weights/
+wandb/

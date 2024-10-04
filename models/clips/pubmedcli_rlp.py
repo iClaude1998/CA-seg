@@ -184,7 +184,6 @@ class PUBMEDCLIPLRP:
         self.device = device
         self.clip_model = clip_model.to(device)
         self.clip_model.eval()
-        self.image_attn_blocks = list(dict(self.clip_model.visual.transformer.resblocks.named_children()).values())
     
     def __call__(self, image, text_tokens, start_layer=-1):
 

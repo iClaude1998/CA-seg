@@ -8,6 +8,13 @@ def build_dataset(config, preprocessors):
 
 
 def build_isic_dataset(config, preprocessors):
-    return ISIC_seg(preprocessors, config.prompt_type, config.images_dir, config.masks_dir, config.caps_file, config.override_prompt, config.zero_prompt)
+    return ISIC_seg(preprocessors, 
+                    config.prompt_type, 
+                    config.images_dir, 
+                    config.masks_dir, 
+                    config.sdf_dir,
+                    config.caps_file, 
+                    config.override_prompt, 
+                    config.zero_prompt)
     
 

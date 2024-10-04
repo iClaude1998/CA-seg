@@ -32,16 +32,18 @@ if __name__ == '__main__':
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    cliprlp, tokenizer, preprocess = load_clip_and_tokenizer(config.model.clip, device)
+    cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(config.model.clip, device)
     diffusion_model = create_diffusion(config.model.diffusion).to(device)
 
     # unet = UNetModel_v1preview(config.model.unet)
-    val_dataset = build_dataset(config.datasets.val, [preprocess, tokenizer])
+    val_dataset = build_dataset(config.datasets.val, [preprocess, tokenizer, resolution])
     dataloader = DataLoader(val_dataset, batch_size=config.datasets.batch_size, shuffle=False)
     
     for batch in tqdm(dataloader):
         image = batch['pixel_values'].to(device)
         text_ids = batch['input_ids'].to(device)
+        sdf_mask = batch['sdf_map'].to(device)
+        mask = batch['mask'].to(device)
         bz = image.size(0)
         h, w = image.size(-2), image.size(-1)
         timesteps = torch.randint(0, 1000, (bz,)).to(device)

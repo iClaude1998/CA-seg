@@ -176,9 +176,9 @@ class CLIPWrapper(nn.Module):
         cast_dtype = self.transformer.get_cast_dtype()
         x = self.token_embedding(text).to(cast_dtype)  # [batch_size, n_ctx, d_model]
         x = x + self.positional_embedding.to(cast_dtype)
-        x = x.permute(1, 0, 2)  # NLD -> LND
+        # x = x.permute(1, 0, 2)  # NLD -> LND
         x = self.transformer(x, attn_mask=self.attn_mask)
-        x = x.permute(1, 0, 2)  # LND -> NLD
+        # x = x.permute(1, 0, 2)  # LND -> NLD
         x = self.ln_final(x)  # [batch_size, n_ctx, transformer.width]
         x, _ = text_global_pool(x, text, self.text_pool_type)
         if self.text_projection is not None:
@@ -207,9 +207,11 @@ class CLIPLRP:
         self.device = device
         self.clip_model = clip_model.to(device)
         self.clip_model.eval()
+    
+    def to(self, device):
+        self.clip_model = self.clip_model.to(device)
+        self.device = device
 
-
-        self.image_attn_blocks = list(dict(self.clip_model.visual.transformer.resblocks.named_children()).values())
     
     def __call__(self, image, text_tokens, start_layer=-1):
 

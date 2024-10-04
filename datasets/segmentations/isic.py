@@ -2,11 +2,13 @@ import os
 import json
 import torch 
 import random
-
+import numpy as np
 
 from PIL import Image
 from torch.utils.data import Dataset
 from typing import Any, Dict, Optional
+
+from .build_mask_transforms import build_usdf_transforms, build_mask_transforms
 
 
 class ISIC_seg(Dataset):
@@ -37,6 +39,7 @@ class ISIC_seg(Dataset):
         prompt_type: str,
         images_dir: str,
         masks_dir: str,
+        sdf_dir: str,
         caps_file: Optional[str] = None,
         override_prompt: Optional[str] = None,
         zero_prompt: bool = False,
@@ -46,29 +49,31 @@ class ISIC_seg(Dataset):
         self.prompt_type = prompt_type
         self.images_dir = images_dir
         self.masks_dir = masks_dir
+        self.sdf_dir = sdf_dir
 
-        self.preprocess, self.tokenizer = preprocessors
+        self.preprocess, self.tokenizer, image_resolution = preprocessors
 
         self.zero_prompt = zero_prompt
         self.override_prompt = override_prompt
+        self.mask_transforms = build_mask_transforms(image_resolution)
+        self.usdf_transforms = build_usdf_transforms(image_resolution)
 
         with open(caps_file, "r") as fp:
             self.imgs_captions = json.load(fp)
             # random.shuffle(self.imgs_captions)
        
-
     def __len__(self):
         return len(self.imgs_captions)
 
     def __getitem__(self, index) -> Dict[str, Any]:
         cap = self.imgs_captions[index]
         mask_name = cap["mask_name"] 
-        name = os.path.splitext(mask_name)[0]
-
+        name = os.path.splitext(cap['img_name'])[0]
 
         # Ensure the image is read with RGB channels
         image = Image.open(f"{self.images_dir}/{cap['img_name']}").convert("RGB")
         mask = Image.open(f"{self.masks_dir}/{mask_name}")
+        sdf_map = np.load(f"{self.sdf_dir}/{name}.npy")
 
         h, w = mask.height, mask.width
 
@@ -86,12 +91,14 @@ class ISIC_seg(Dataset):
                 prompt = random.choice(prompt)
         
         image = self.preprocess(image)
-        mask = self.preprocess(mask)[:1] # ToTensor Gives 3-channeled mask
+        mask = self.mask_transforms(mask)
+        sdf_map = self.usdf_transforms(sdf_map)
         text_enc = self.tokenizer(prompt)
         
         return_dict = dict(
                         pixel_values=image,
                         mask=mask,
+                        sdf_map=sdf_map,
                         mask_name=cap["mask_name"],
                         height=h,
                         width=w,

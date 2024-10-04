@@ -1,5 +1,6 @@
 import cv2 
 import torch 
+from torch.nn import functional as F
 
 def gt2heatmap(gt):
     if gt.ndim == 3:
@@ -28,8 +29,21 @@ def interpolate_cam(cam, h, w):
         torch.tensor: resized cam
     """
     
-    rcam = torch.nn.functional.interpolate(cam[None, None, ...], [h, w], mode='bilinear')
+    rcam = F.interpolate(cam[None, None, ...], [h, w], mode='bilinear')
     if rcam.max() > 0:
         rcam = (rcam - rcam.min()) / (rcam.max() - rcam.min())
     
     return rcam[0].permute(1, 2, 0)
+
+
+def process_Relevant_score_batch(Rs, size):
+    b, c = Rs.shape[:2]
+    Rs = F.interpolate(Rs, size)
+    mins = torch.min(Rs.view(b, c, -1), dim=-1, keepdim=True)[0]
+    maxs = torch.max(Rs.view(b, c, -1), dim=-1, keepdim=True)[0]
+    mask = (maxs > 0).to(torch.float32)
+    maxs[maxs == 0] = -1
+    Rs = (Rs - mins.unsqueeze(-1)) / (maxs - mins).unsqueeze(-1)
+    return Rs * mask.unsqueeze(-1)
+    
+    
