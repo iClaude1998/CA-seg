@@ -384,54 +384,6 @@ class Reflow_ControlLDM(object):
             self.writer.add_image(f'Ground Truths on iter {step}', gt_grids)
         
         
-        
-        
-    
-    
-    def visualize_backend(self, vts, random_batch):
-        if self.log_method == 'wandb':
-            wandb_heatmaps = []
-            for i in range(vts.size(0)):
-                image = random_batch['pixel_values'][i]
-                sdf_map = random_batch['sdf_map'][i]
-                vt = vts[i]
-                image = to_pil(image.cpu())
-                image = np.array(image)
-                vt = vt.cpu().numpy()
-                sdf_map = sdf_map.cpu().numpy()
-                
-                fig, ax = plt.subplots(1, 2)
-                ax[0].imshow(image)
-                ax[0].imshow(vt[0], cmap='jet', alpha=0.5)
-                ax[0].set_title(f'Image {i} with sdf prediction')
-                ax[1].imshow(image)
-                ax[1].imshow(sdf_map[0], cmap='jet', alpha=0.5)
-                ax[1].set_title(f'image {i} with sdf ground truth')
-                
-                buf = io.BytesIO()
-                plt.savefig(buf, format='png')
-                buf.seek(0)
-                pil_image = Image.open(buf)
-                wandb_heatmap = wandb.Image(pil_image, caption=f'Image {i} with Heatmap Overlay')
-                wandb_heatmaps.append(wandb_heatmap)
-                buf.close()
-                plt.close(fig)
-                # Log the image with heatmap to wandb
-                wandb.log({"heatmaps_batch": wandb_heatmaps})
-        elif self.log_method == 'tensorboard':
-            image = random_batch['pixel_values'].to('cpu')
-            sdf_map = random_batch['sdf_map'].to('cpu')
-            vt = vt.cpu()
-
-            img_grid = torchvision.utils.make_grid(image)
-            sdf_map_grid = torchvision.utils.make_grid(sdf_map)
-            vt_grid = torchvision.utils.make_grid(vt)
-            
-            
-            self.writer.add_image('input_images', img_grid)
-            self.writer.add_image('sdf map grid', sdf_map_grid)
-            self.writer.add_image('vt grid', vt_grid)
-        
 
 
 
