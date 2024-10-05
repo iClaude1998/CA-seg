@@ -71,7 +71,8 @@ if __name__ == '__main__':
                                 cfgs.trainer.num_timesteps,
                                 cfgs.trainer.num_iterations,
                                 cfgs.trainer.save_interval,
-                                cfgs.distribution_training)
+                                cfgs.distribution_training,
+                                cfgs.log_method)
     if cfgs.distribution_training:
         trainer.distribution_train()
     else:

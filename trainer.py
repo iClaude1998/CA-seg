@@ -4,7 +4,9 @@ import torch
 import wandb 
 import random
 import logging
+import matplotlib
 import numpy as np
+import torchvision
 import torch.nn as nn
 
 from PIL import Image
@@ -15,6 +17,7 @@ from matplotlib import pyplot as plt
 from torch.nn import functional as F
 from contextlib import contextmanager
 from torchvision.utils import save_image
+from torch.utils.tensorboard import SummaryWriter
 from accelerate import Accelerator, DistributedDataParallelKwargs
 
 from models.diffusion import LitEma
@@ -40,6 +43,7 @@ class Reflow_ControlLDM(object):
         num_iterations=100000,
         save_interval=100,
         distributed=False,
+        log_method='wandb'
     ):
         # instantiate control module
         self.output_path = output
@@ -68,11 +72,15 @@ class Reflow_ControlLDM(object):
         self.save_interval = save_interval
         if self.distributed:
             self.distribution_init()
+        self.log_method = log_method
+        if self.log_method == "tensorboard":
+            self.writer = SummaryWriter(self.output_path)
         
     
     def train(self):
         
-        wandb.init(project='clipflow2', name=self.exp_name)
+        if self.log_method == 'wandb':
+            wandb.init(project='clipflow2', name=self.exp_name)
         self.diffusion_model.train()
         iter_id = self.start_iteration
         data_iter = iter(self.train_dataloader)
@@ -97,20 +105,35 @@ class Reflow_ControlLDM(object):
             
             if iter_id % self.save_interval == 0:
                 self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss_mse.item():.4f}')
-                wandb.log({'Training Loss': loss_mse.detach().cpu().numpy(), 'iteration': iter_id})
+                # log infos
+                if self.log_method == 'wandb':
+                    wandb.log({'Training Loss': loss_mse.detach().cpu().numpy(), 'iteration': iter_id})
+                elif self.log_method == 'tensorboard':
+                    self.writer.add_scalar('Training Loss', loss_mse.detach().cpu().numpy(), iter_id)
             
             if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
-                self.visualize(vts, random_batch)
+                self.visualize(vts, random_batch, iter_id)
                 self.save_checkpoints(iter_id)
             print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
-        wandb.finish()
+        
+        # let's do the last inference and log
+        self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss_mse.item():.4f}')
+        vts, random_batch = self.random_inference()
+        self.visualize(vts, random_batch, iter_id)
+        self.save_checkpoints(iter_id)
+        
+        if self.log_method == 'wandb':
+            wandb.finish()
+        elif self.log_method == 'tensorboard':
+            self.writer.close()
     
     def distribution_train(self):
         
         if self.accelerator.is_local_main_process:
-            wandb.init(project='clipflow2', name=self.exp_name)
+            if self.log_method == 'wandb':
+                wandb.init(project='clipflow2', name=self.exp_name)
         self.diffusion_model.train()
         iter_id = self.start_iteration
         data_iter = iter(self.train_dataloader)
@@ -130,23 +153,38 @@ class Reflow_ControlLDM(object):
             self.accelerator.backward(loss_mse)
             self.optimizer.step()
             
+            # gather loss from all processes for display
+            gathered_loss = self.accelerator.gather(loss_mse)
+            mean_loss = torch.mean(gathered_loss)
             if self.use_ema:
                 self.model_ema(self.model)
             
             if iter_id % self.save_interval == 0 and self.accelerator.is_local_main_process:
-                self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss_mse.item():.4f}')
-                wandb.log({'Training Loss': loss_mse.detach().cpu().numpy(), 'iteration': iter_id})
+                self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
+                if self.log_method == 'wandb':
+                    wandb.log({'Training Loss': mean_loss.detach().cpu().numpy(), 'iteration': iter_id})
+                elif self.log_method == 'tensorboard':
+                    self.writer.add_scalar('Training Loss', mean_loss.detach().cpu().numpy(), iter_id)
             
             if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
                 if self.accelerator.is_local_main_process:
-                    self.visualize(vts, random_batch)
+                    self.visualize(vts, random_batch, iter_id)
                 self.save_checkpoints(iter_id)
             if self.accelerator.is_local_main_process:
                 print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
+        
+        # perfect ending
+        vts, random_batch = self.random_inference()
+        self.save_checkpoints(iter_id)
         if self.accelerator.is_local_main_process:
-            wandb.finish()    
+            self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
+            self.visualize(vts, random_batch, iter_id)
+            if self.log_method == 'wandb':
+                wandb.finish() 
+            elif self.log_method == 'tensorboard':
+                self.writer.close()   
     
     
     def training_step(self, batch):
@@ -326,41 +364,105 @@ class Reflow_ControlLDM(object):
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
         self.logger.addHandler(console_handler)
+    
+    
+    def visualize(self, vts, random_batch, step):
+        # it is move effectively
+        images = random_batch['pixel_values']
+        usdf_gts = random_batch['sdf_map']
+        # gt -> [B, H, W, C]
+        mixed_img_gts = mix_images_with_sdfs(images, usdf_gts) 
+        mixed_img_predits = mix_images_with_sdfs(images, vts)
+        if self.log_method == "wandb":
+            wandb.log({f"Predictions on iter {step}": [wandb.Image(img, caption=f"predictions {i}") for i, img in enumerate(mixed_img_predits)]})
+            wandb.log({f"GTs on iter {step}": [wandb.Image(img, caption=f"gts {i}") for i, img in enumerate(mixed_img_gts)]})
+        elif self.log_method == "tensorboard":
+            B = mixed_img_gts.shape[0]
+            pred_grids = torchvision.utils.make_grid(torch.from_numpy(mixed_img_predits).permute(0, 3, 1, 2), nrow=B)
+            gt_grids = torchvision.utils.make_grid(torch.from_numpy(mixed_img_gts).permute(0, 3, 1, 2), nrow=B)
+            self.writer.add_image(f'Predictions on iter {step}', pred_grids)
+            self.writer.add_image(f'Ground Truths on iter {step}', gt_grids)
+        
+        
+        
         
     
     
-    def visualize(self, vts, random_batch):
-        
-        wandb_heatmaps = []
-        for i in range(vts.size(0)):
-            image = random_batch['pixel_values'][i]
-            sdf_map = random_batch['sdf_map'][i]
-            vt = vts[i]
-            image = to_pil(image.cpu())
-            image = np.array(image)
-            vt = vt.cpu().numpy()
-            sdf_map = sdf_map.cpu().numpy()
-            
-            fig, ax = plt.subplots(1, 2)
-            ax[0].imshow(image)
-            ax[0].imshow(vt[0], cmap='jet', alpha=0.5)
-            ax[1].imshow(image)
-            ax[1].imshow(sdf_map[0], cmap='jet', alpha=0.5)
-            
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png')
-            buf.seek(0)
-            plt.close(fig)
-            
-            pil_image = Image.open(buf)
-            wandb_heatmap = wandb.Image(pil_image, caption=f'Image {i} with Heatmap Overlay')
-            wandb_heatmaps.append(wandb_heatmap)
+    def visualize_backend(self, vts, random_batch):
+        if self.log_method == 'wandb':
+            wandb_heatmaps = []
+            for i in range(vts.size(0)):
+                image = random_batch['pixel_values'][i]
+                sdf_map = random_batch['sdf_map'][i]
+                vt = vts[i]
+                image = to_pil(image.cpu())
+                image = np.array(image)
+                vt = vt.cpu().numpy()
+                sdf_map = sdf_map.cpu().numpy()
+                
+                fig, ax = plt.subplots(1, 2)
+                ax[0].imshow(image)
+                ax[0].imshow(vt[0], cmap='jet', alpha=0.5)
+                ax[0].set_title(f'Image {i} with sdf prediction')
+                ax[1].imshow(image)
+                ax[1].imshow(sdf_map[0], cmap='jet', alpha=0.5)
+                ax[1].set_title(f'image {i} with sdf ground truth')
+                
+                buf = io.BytesIO()
+                plt.savefig(buf, format='png')
+                buf.seek(0)
+                pil_image = Image.open(buf)
+                wandb_heatmap = wandb.Image(pil_image, caption=f'Image {i} with Heatmap Overlay')
+                wandb_heatmaps.append(wandb_heatmap)
+                buf.close()
+                plt.close(fig)
+                # Log the image with heatmap to wandb
+                wandb.log({"heatmaps_batch": wandb_heatmaps})
+        elif self.log_method == 'tensorboard':
+            image = random_batch['pixel_values'].to('cpu')
+            sdf_map = random_batch['sdf_map'].to('cpu')
+            vt = vt.cpu()
 
-            # Log the image with heatmap to wandb
-        wandb.log({"heatmaps_batch": wandb_heatmaps})
+            img_grid = torchvision.utils.make_grid(image)
+            sdf_map_grid = torchvision.utils.make_grid(sdf_map)
+            vt_grid = torchvision.utils.make_grid(vt)
+            
+            
+            self.writer.add_image('input_images', img_grid)
+            self.writer.add_image('sdf map grid', sdf_map_grid)
+            self.writer.add_image('vt grid', vt_grid)
         
-     
 
+
+
+def mix_images_with_sdfs(images, usdfs, alpha_heatmap=0.5, colormap='jet'):
+    """
+    Mixes images with unsigned distance functions (USDFs) using a specified colormap and alpha blending.
+    Args:
+        images (torch.Tensor): A batch of images with shape (N, C, H, W).
+        usdfs (torch.Tensor): A batch of unsigned SDFs with shape (N, 1, H, W).
+        alpha_heatmap (float, optional): The blending factor for the heatmap overlay. Default is 0.5.
+        colormap (str, optional): The colormap to use for the SDFs. Default is 'jet'.
+    Returns:
+        numpy.ndarray: The resulting images with the SDF heatmap overlay, with shape (N, H, W, C).
+    """
+
+    cmap = matplotlib.colormaps.get_cmap(colormap)
+    images = images.permute(0, 2, 3, 1).cpu().numpy()
+    usdfs = usdfs.squeeze(1).cpu().numpy()
+    
+    # normalize usdfs
+    mim_usdfs = np.min(usdfs, axis=(1, 2), keepdims=True)
+    max_usdfs = np.max(usdfs, axis=(1, 2), keepdims=True)
+    nonzero_max = (max_usdfs > 0).astype('float32')
+    max_usdfs = np.where(max_usdfs > 0, max_usdfs, 1e-6)
+    usdfs = nonzero_max * (usdfs - mim_usdfs) / (max_usdfs - mim_usdfs)
+    
+    rgb_heatmaps_np = cmap(usdfs)[..., :3]
+    overlayed_images = (1 - alpha_heatmap) * images + alpha_heatmap * rgb_heatmaps_np
+    return overlayed_images
+    
+    
 def save_batch(images,imgname_batch, save_path, watch_step=False):
         if watch_step:
             for list_idx, img_list in enumerate(images):
