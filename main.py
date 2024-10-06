@@ -64,7 +64,7 @@ if __name__ == '__main__':
                                 diffusion_model,
                                 dataloader_pakages,
                                 cfgs.trainer.learning_rate,
-                                os.path.join('experiments', cfgs.exp_name, cfgs.trainer.output),
+                                os.path.join('experiments', cfgs.exp_name),
                                 cfgs.device,
                                 cfgs.trainer.use_ema,
                                 cfgs.trainer.checkpoint_path,
