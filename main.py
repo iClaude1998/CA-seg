@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
     parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
+    parser.add_argument('--cache_dir', type=str, default='pretrain_weights', help='cached directory')
     parser.add_argument('--distribution_training', type=bool, default=False, help='whether enable distribution training')
     return parser.parse_args()
 

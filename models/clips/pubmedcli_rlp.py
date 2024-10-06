@@ -136,7 +136,6 @@ class PUBMEDCLIPWrapper(nn.Module):
         super().__init__()
         # copy all attributes from clip_model to self
         for k, v in vars(clip_model).items():
-            print(k)
             setattr(self, k, v)
         self.visual = CustomVisionTransformer(self.visual, outlayers)
         
