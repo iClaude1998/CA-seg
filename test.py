@@ -17,6 +17,10 @@ from models.diffusion import UNetModel_v1preview
 from models.build_models import load_clip_and_tokenizer, create_diffusion
 
 
+# Set the custom cache directory for pretrained models, tokenziers, etc.
+os.environ["TRANSFORMERS_CACHE"] = os.path.join(os.getcwd(), "pretrained", "transformers")
+os.environ["HUGGINGFACE_HUB_CACHE"] = os.path.join(os.getcwd(), "pretrained", "huggingface_hub")
+
 
 
 if __name__ == '__main__':
@@ -54,8 +58,8 @@ if __name__ == '__main__':
         Rs = Rs.view(bz, 1, R_h, R_h)
         Rs = F.interpolate(Rs, (h, w), mode='bilinear', align_corners=False)
         
-        x = torch.cat([image, Rs], dim=1)
-        out = diffusion_model(x, timesteps, y=None)
+        # x = torch.cat([image, Rs], dim=1)
+        # out = diffusion_model(x, timesteps, y=None)
         
         break
 

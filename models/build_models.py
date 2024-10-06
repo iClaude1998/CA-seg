@@ -1,9 +1,13 @@
+import os
 import clip 
 import torch
 import open_clip
 
+from transformers import PreTrainedTokenizerFast
+
 from .diffusion import UNetModel_v1preview
 from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper
+
 
 
 def load_clip_and_tokenizer(cfgs, device):
@@ -18,13 +22,14 @@ def load_clip_and_tokenizer(cfgs, device):
         tokenizer = open_clip.get_tokenizer('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
         model = CLIPLRP(CLIPWrapper(model, cfgs.outlayers), device)
     elif cfgs.pretrain == "Pubmedclip":
-        clip_model = torch.load("pretrain_weights/PubMedCLIP_ViT32.pth")
-        model, preprocess = clip.load("ViT-B/32", jit=False)
+        clip_model = torch.load("pretrained/PubMedCLIP_ViT32.pth")
+        model, preprocess = clip.load("ViT-B/32", jit=False, download_root="pretrained/clips")
         model.load_state_dict(clip_model['state_dict'])
         resolution = model.visual.input_resolution
         tokenizer = clip.tokenize
         model = PUBMEDCLIPLRP(PUBMEDCLIPWrapper(model, cfgs.outlayers), device)
     return model, tokenizer, preprocess, resolution
+
 
 
 def create_diffusion(cfgs):
