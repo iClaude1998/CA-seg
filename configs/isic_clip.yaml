@@ -1,5 +1,5 @@
 datasets:
-  batch_size: 2
+  batch_size: 4
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -39,7 +39,7 @@ datasets:
 
 model:
   clip:
-    pretrain: "MedICaT" # Pubmedclip, MedICaT, ViT-B-32
+    pretrain: "ViT-B-32" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       # - 2
       # - 5
