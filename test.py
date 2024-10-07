@@ -17,10 +17,6 @@ from models.diffusion import UNetModel_v1preview
 from models.build_models import load_clip_and_tokenizer, create_diffusion
 
 
-# Set the custom cache directory for pretrained models, tokenziers, etc.
-os.environ["TRANSFORMERS_CACHE"] = os.path.join(os.getcwd(), "pretrained", "transformers")
-os.environ["HUGGINGFACE_HUB_CACHE"] = os.path.join(os.getcwd(), "pretrained", "huggingface_hub")
-
 
 
 if __name__ == '__main__':
