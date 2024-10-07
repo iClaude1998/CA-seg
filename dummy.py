@@ -1,19 +1,15 @@
 import os
 import yaml
 import torch 
-import clip 
-import open_clip 
 
 from tqdm import tqdm 
 from datasets import build_dataset
 from torch.nn import functional as F
 from easydict import EasyDict as edict
 from torch.utils.data import DataLoader
-from transformers import CLIPProcessor, CLIPModel
+
 
 from utils.vis import vis_batch
-from utils.img_process import interpolate_cam
-from models.diffusion import UNetModel_v1preview
 from models.build_models import load_clip_and_tokenizer, create_diffusion
 
 
@@ -22,7 +18,7 @@ from models.build_models import load_clip_and_tokenizer, create_diffusion
 if __name__ == '__main__':
     
     config_file = "configs/isic_clip.yaml"
-    save_dir = "experiments"
+    save_dir = "experiments/cam_test/visualizations"
     with open(config_file, 'r', encoding='utf-8') as f:
         config_dict = yaml.safe_load(f)
     
@@ -46,20 +42,17 @@ if __name__ == '__main__':
         mask = batch['mask'].to(device)
         bz = image.size(0)
         h, w = image.size(-2), image.size(-1)
-        timesteps = torch.randint(0, 1000, (bz,)).to(device)
-        
+
         Rs, intermediate = cliprlp(image, text_ids)
         bz = Rs.size(0)
         R_h = int(Rs[0].numel() ** 0.5)
         Rs = Rs.view(bz, 1, R_h, R_h)
         Rs = F.interpolate(Rs, (h, w), mode='bilinear', align_corners=False)
+        vis_batch(batch, save_dir, Rs)
         
         # x = torch.cat([image, Rs], dim=1)
         # out = diffusion_model(x, timesteps, y=None)
         
-        break
-
-
         # vis_batch(batch, save_dir, Rs)
     
     

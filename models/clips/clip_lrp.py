@@ -83,7 +83,7 @@ class CustomVisionTransformer(nn.Module):
         super().__init__()
         for k, v in vars(model).items():
             setattr(self, k, v)
-        self.patch_size = self.conv1.weight[0]
+        self.patch_size = self.conv1.weight.shape[0]
         self.outlayers = outlayers
         self.transformer = CustomTransformer(self.transformer, outlayers)
 
@@ -159,6 +159,7 @@ class CLIPWrapper(nn.Module):
         for k, v in vars(clip_model).items():
             setattr(self, k, v)
         self.visual = CustomVisionTransformer(self.visual, outlayers)
+        self.transformer.batch_first = True
         
 
     @property
@@ -176,9 +177,9 @@ class CLIPWrapper(nn.Module):
         cast_dtype = self.transformer.get_cast_dtype()
         x = self.token_embedding(text).to(cast_dtype)  # [batch_size, n_ctx, d_model]
         x = x + self.positional_embedding.to(cast_dtype)
-        x = x.permute(1, 0, 2)  # NLD -> LND
+        # x = x.permute(1, 0, 2)  # NLD -> LND
         x = self.transformer(x, attn_mask=self.attn_mask)
-        x = x.permute(1, 0, 2)  # LND -> NLD
+        # x = x.permute(1, 0, 2)  # LND -> NLD
         x = self.ln_final(x)  # [batch_size, n_ctx, transformer.width]
         x, _ = text_global_pool(x, text, self.text_pool_type)
         if self.text_projection is not None:

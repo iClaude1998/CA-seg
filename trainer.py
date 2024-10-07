@@ -9,19 +9,18 @@ import numpy as np
 import torchvision
 import torch.nn as nn
 
-from PIL import Image
+from tqdm import tqdm
 from torch.optim import AdamW
 from torch.backends import cudnn
 from torchvision import transforms
-from matplotlib import pyplot as plt
 from torch.nn import functional as F
+from matplotlib import pyplot as plt
 from contextlib import contextmanager
-from torchvision.utils import save_image
 from torch.utils.tensorboard import SummaryWriter
 from accelerate import Accelerator, DistributedDataParallelKwargs
 
 from models.diffusion import LitEma
-from utils import process_Relevant_score_batch
+from utils import process_Relevant_score_batch, process_checkpoints
 
 
 to_pil = transforms.ToPILImage()
@@ -30,15 +29,15 @@ class Reflow_ControlLDM(object):
     
     def __init__(
         self,
+        task,
         exp_name,
         clip_model,
         diffusion_model,
         dataloaders,
         learning_rate,
-        output='./',
         device='cuda',
         use_ema=False,
-        checkpoint_path=None,
+        checkpoint_name=None,
         num_timesteps=1000,
         num_iterations=100000,
         save_interval=100,
@@ -46,11 +45,10 @@ class Reflow_ControlLDM(object):
         log_method='wandb'
     ):
         # instantiate control module
-        self.output_path = output
-        os.makedirs(self.output_path, exist_ok=True)
+        self.exp_name = exp_name
+        self.create_output_dirs()
         self.init_loggers()
         self.num_timesteps = num_timesteps
-        self.exp_name = exp_name
         self.clip_model = clip_model
         self.diffusion_model = diffusion_model
         self.learning_rate = learning_rate
@@ -61,8 +59,10 @@ class Reflow_ControlLDM(object):
         self.start_iteration = 0
         if use_ema:
             self.model_ema = LitEma(self.diffusion_model)
-        if checkpoint_path is not None:
-            self.load_checkpoint(checkpoint_path)
+        if checkpoint_name is not None:
+            self.load_succeed = self.load_checkpoint(checkpoint_name)
+        else:
+            self.load_succeed = False
         self.unzip_dataloaders(dataloaders)
         self.distributed = distributed
         
@@ -73,9 +73,21 @@ class Reflow_ControlLDM(object):
         if self.distributed:
             self.distribution_init()
         self.log_method = log_method
-        if self.log_method == "tensorboard":
-            self.writer = SummaryWriter(self.output_path)
-        
+        if task == 'train':
+            if self.log_method == "tensorboard":
+                self.writer = SummaryWriter(self.log_path)
+    
+    
+    
+    def create_output_dirs(self):
+        self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
+        os.makedirs(self.log_path, exist_ok=True)  
+        self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
+        os.makedirs(self.checkpoint_path, exist_ok=True)
+        self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations')  
+        os.makedirs(self.vis_path, exist_ok=True)
+    
+    
     
     def train(self):
         
@@ -128,6 +140,8 @@ class Reflow_ControlLDM(object):
             wandb.finish()
         elif self.log_method == 'tensorboard':
             self.writer.close()
+    
+    
     
     def distribution_train(self):
         
@@ -214,27 +228,46 @@ class Reflow_ControlLDM(object):
         return loss_mse   #+loss_perc
 
 
+    def inference(self):
+        if not self.load_succeed:
+            raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
+        self.diffusion_model.eval()
+        for batch in tqdm(self.test_dataloader):
+            vts, Rs = self.test_step(batch)
+            images = batch['pixel_values']
+            usdf_gts = batch['sdf_map']
+            mask_names = batch['mask_name']
+            # gt -> [B, H, W, C]
+            with torch.no_grad():
+                mixed_img_predits_I = mix_images_with_sdfs(images, Rs)
+                mixed_img_predits_II = mix_images_with_sdfs(images, vts)
+                mixed_img_gts = mix_images_with_sdfs(images, usdf_gts) 
+                
+                save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
+
+    
+    
     def test_step(self, batch):
 
         images, text_ids, sdf_map = self.get_input(batch)
         B = sdf_map.shape[0]
         Rs, intermediate = self.clip_model(images, text_ids)
-        R_h = int(Rs[0].numel() ** 0.5)
-        Rs = Rs.view(B, 1, R_h, R_h)
-        Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-        zt = Rs
-        
-        # normalize Rs
-        Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-        eular_steps = [999, 749, 499, 249]
-      
-        #eular_steps = [999,899,799,699,599,499,399,299,199,99]
-        for i, step in enumerate(eular_steps):
-            ts = torch.ones(B,device=self.device) * step
-            x = torch.cat([images, zt], dim=1)
-            v = self.diffusion_model(x, ts, y=None)
-            zt = zt + v / len(eular_steps)
-        return zt   
+        with torch.no_grad():
+            R_h = int(Rs[0].numel() ** 0.5)
+            Rs = Rs.view(B, 1, R_h, R_h)
+            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+            
+            # normalize Rs
+            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+            zt = Rs
+            eular_steps = [999, 749, 499, 249]
+            #eular_steps = [999,899,799,699,599,499,399,299,199,99]
+            for i, step in enumerate(eular_steps):
+                ts = torch.ones(B, device=self.device) * step
+                x = torch.cat([images, zt], dim=1)
+                v = self.diffusion_model(x, ts, y=None)
+                zt = zt + v / len(eular_steps)
+        return zt, Rs   
     
     
     def distribution_init(self):
@@ -269,11 +302,11 @@ class Reflow_ControlLDM(object):
             'optimizer': self.optimizer.state_dict()
         }
         if self.distributed:
-            self.accelerator.save(checkpoint, os.path.join(self.output_path, f'checkpoint_iter{iteration}.pth'))
+            self.accelerator.save(checkpoint, os.path.join(self.checkpoint_path, f'checkpoint_iter{iteration}.pth'))
             if self.accelerator.is_local_main_process:
                 self.logger.info(f"Saved checkpoint at iteration {iteration}")
         else:
-            torch.save(checkpoint, os.path.join(self.output_path, f'checkpoint_iter{iteration}.pth'))
+            torch.save(checkpoint, os.path.join(self.checkpoint_path, f'checkpoint_iter{iteration}.pth'))
             self.logger.info(f"Saved checkpoint at iteration {iteration}")
     
     
@@ -305,13 +338,23 @@ class Reflow_ControlLDM(object):
         
             
     def load_checkpoint(self, checkpoint_path):
+        # check whether the path exist, if not, find the ckpt according to the exp_name
+        if os.path.exists(checkpoint_path):
+            checkpoint_path = checkpoint_path
+        elif os.path.exists(os.path.join(self.checkpoint_path, checkpoint_path)):
+            checkpoint_path = os.path.join(self.checkpoint_path, checkpoint_path)
+        else:
+            self.logger.info(f"fail loading checkpoint from {checkpoint_path}, please check it, and try again")
+            return False
         checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        checkpoint = process_checkpoints(checkpoint)
         self.diffusion_model.load_state_dict(checkpoint['model'])
-        if self.use_ema:
+        if self.use_ema and checkpoint['model_ema'] is not None:
             self.model_ema.load_state_dict(checkpoint['model_ema'])
         self.learning_rate = checkpoint['learning_rate']
         self.start_iteration = checkpoint['iteration']
         self.logger.info(f"Loaded checkpoint from {checkpoint_path}")
+        return True
         
     
     
@@ -346,13 +389,13 @@ class Reflow_ControlLDM(object):
         self.diffusion_model.eval()
         loader_list = list(self.val_dataloader)
         random_batch = random.choice(loader_list)
-        vts = self.test_step(random_batch)
+        vts, _ = self.test_step(random_batch)
         self.diffusion_model.train()
         return vts.detach().cpu(), random_batch
     
     
     def init_loggers(self):
-        log_file_path = os.path.join(self.output_path, "training.log")
+        log_file_path = os.path.join(self.log_path, "training.log")
         logging.basicConfig(
                 filename=log_file_path, 
                 filemode='a',
@@ -412,24 +455,24 @@ def mix_images_with_sdfs(images, usdfs, alpha_heatmap=0.5, colormap='jet'):
     
     rgb_heatmaps_np = cmap(usdfs)[..., :3]
     overlayed_images = (1 - alpha_heatmap) * images + alpha_heatmap * rgb_heatmaps_np
-    return overlayed_images
+    return np.clip(overlayed_images, a_min=0., a_max=1.)
     
     
-def save_batch(images,imgname_batch, save_path, watch_step=False):
-        if watch_step:
-            for list_idx, img_list in enumerate(images):
-                for img_idx, img in enumerate(img_list):
-                    imgname = str(list_idx)+"_"+imgname_batch[img_idx]
-                
-                    save_img = os.path.join(save_path,imgname)
-                    save_image(img,save_img)
-        else:   
-            for img_idx, img in enumerate(images):
-                imgname = imgname_batch[img_idx]
-                if imgname[-3:] == 'jpg':
-                    imgname = imgname[:-3] + 'png'
-                save_img = os.path.join(save_path,imgname)
-                save_image(img,save_img)
+def save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, vis_path):
+    num_examples = mixed_img_predits_I.shape[0]
+    for i in range(num_examples):
+        fig, ax = plt.subplots(1, 3, figsize=(10, 5))
+        ax[0].imshow(mixed_img_predits_I[i])
+        ax[0].axis('off')
+        ax[0].set_title('Predictions I')   
+        ax[1].imshow(mixed_img_predits_II[i])
+        ax[1].axis('off')
+        ax[1].set_title('Predictions II')   
+        ax[2].imshow(mixed_img_gts[i])
+        ax[2].axis('off')
+        ax[2].set_title('Ground truths')   
+        plt.savefig(os.path.join(vis_path, mask_names[i]))
+        plt.close(fig)
 
             
             
