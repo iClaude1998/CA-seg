@@ -83,7 +83,7 @@ class CustomVisionTransformer(nn.Module):
         super().__init__()
         for k, v in vars(model).items():
             setattr(self, k, v)
-        self.patch_size = self.conv1.weight[0]
+        self.patch_size = self.conv1.weight.shape[0]
         self.outlayers = outlayers
         self.transformer = CustomTransformer(self.transformer, outlayers)
 
