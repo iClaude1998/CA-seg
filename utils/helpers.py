@@ -296,5 +296,27 @@ class MixedPrecisionTrainer:
 
 
 
+def process_checkpoints(checkpoint):
+    """convert the checkpoint from parallel to single gpu:
+
+    Args:
+        checkpoint (_type_): _description_
+    """
+    new_state_dict_model = {}
+    for key in checkpoint['model'].keys():
+        new_key = key.replace("module.", "")  # Remove 'module.' prefix
+        new_state_dict_model[new_key] = checkpoint['model'][key]
+    checkpoint['model'] = new_state_dict_model
+    
+    new_state_dict_model = {}
+    if checkpoint['model_ema'] is not None:
+        for key in checkpoint['model_ema'].keys():
+            new_key = key.replace("module.", "")  # Remove 'module.' prefix
+            new_state_dict_model[new_key] = checkpoint['model_ema'][key]
+        checkpoint['model_ema'] = new_state_dict_model
+    
+    return checkpoint
+    
+    
 
 

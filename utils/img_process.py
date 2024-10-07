@@ -21,7 +21,7 @@ def interpolate_cam(cam, h, w):
     """interpolate cam
 
     Args:
-        cam (torch.tensor): [c, h, w]
+        cam (torch.tensor): [h, w]
         h (int): target height
         w (int): target width
 
@@ -29,6 +29,7 @@ def interpolate_cam(cam, h, w):
         torch.tensor: resized cam
     """
     
+    # [1, 1, h, w]
     rcam = F.interpolate(cam[None, None, ...], [h, w], mode='bilinear')
     if rcam.max() > 0:
         rcam = (rcam - rcam.min()) / (rcam.max() - rcam.min())

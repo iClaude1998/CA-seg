@@ -22,10 +22,10 @@ torch.manual_seed(SEED)
 
 def parse_args():
     parser = ArgumentParser(description='Reflow')
+    parser.add_argument('--task', type=str, default='train', help='the task to performs', choices=['train', 'inf', 'test'])
     parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
     parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
-    parser.add_argument('--cache_dir', type=str, default='pretrain_weights', help='cached directory')
     parser.add_argument('--distribution_training', type=bool, default=False, help='whether enable distribution training')
     return parser.parse_args()
 
@@ -60,25 +60,34 @@ if __name__ == '__main__':
     
     dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}
     
-    trainer = Reflow_ControlLDM(cfgs.exp_name, 
+    distribution_training = cfgs.distribution_training and cfgs.task == 'train'
+    trainer = Reflow_ControlLDM(cfgs.task,
+                                cfgs.exp_name, 
                                 cliprlp, 
                                 diffusion_model,
                                 dataloader_pakages,
                                 cfgs.trainer.learning_rate,
-                                os.path.join('experiments', cfgs.exp_name, cfgs.trainer.output),
                                 cfgs.device,
                                 cfgs.trainer.use_ema,
-                                cfgs.trainer.checkpoint_path,
+                                cfgs.trainer.checkpoint_name,
                                 cfgs.trainer.num_timesteps,
                                 cfgs.trainer.num_iterations,
                                 cfgs.trainer.save_interval,
-                                cfgs.distribution_training,
+                                distribution_training,
                                 cfgs.log_method)
-    if cfgs.distribution_training:
-        trainer.distribution_train()
-    else:
-        trainer.train()
     
+    if cfgs.task == 'train':
+        if cfgs.distribution_training:
+            trainer.distribution_train()
+        else:
+            trainer.train()
+    elif cfgs.task == 'inf':
+        trainer.inference() # inference the results for visualization
+    elif cfgs.task == 'test':
+        pass #TODO: implement test for quantitive evaluation 
+    else:
+        raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
+        
     
     
     
