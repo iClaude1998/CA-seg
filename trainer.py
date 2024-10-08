@@ -81,11 +81,14 @@ class Reflow_ControlLDM(object):
     
     def create_output_dirs(self):
         self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
-        os.makedirs(self.log_path, exist_ok=True)  
+        if not os.path.exists(self.log_path):
+            os.makedirs(self.log_path, exist_ok=True)  
         self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
-        os.makedirs(self.checkpoint_path, exist_ok=True)
+        if not os.path.exists(self.checkpoint_path):
+            os.makedirs(self.checkpoint_path, exist_ok=True)
         self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations')  
-        os.makedirs(self.vis_path, exist_ok=True)
+        if not os.path.exists(self.vis_path):
+            os.makedirs(self.vis_path, exist_ok=True)
     
     
     

@@ -1,0 +1,64 @@
+# conda environments:
+#
+base                     /home/a1233646/miniconda3
+MA_detection             /hpcfs/users/a1233646/myconda/envs/MA_detection
+clipflow              *  /hpcfs/users/a1233646/myconda/envs/clipflow
+
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2022 NVIDIA Corporation
+Built on Wed_Sep_21_10:33:58_PDT_2022
+Cuda compilation tools, release 11.8, V11.8.89
+Build cuda_11.8.r11.8/compiler.31833905_0
+NODELIST=p2-gpu-12
+MASTER_ADDR=p2-gpu-12-ib
+usage: main.py [-h] [--task {train,inf,test}] [--config CONFIG]
+               [--exp_name EXP_NAME] [--device DEVICE]
+               [--distribution_training DISTRIBUTION_TRAINING]
+usage: main.py [-h] [--task {train,inf,test}] [--config CONFIG]
+               [--exp_name EXP_NAME] [--device DEVICE]
+               [--distribution_training DISTRIBUTION_TRAINING]
+usage: main.py [-h] [--task {train,inf,test}] [--config CONFIG]
+               [--exp_name EXP_NAME] [--device DEVICE]
+               [--distribution_training DISTRIBUTION_TRAINING]
+main.py: error: argument --distribution_training: expected one argument
+main.py: error: argument --distribution_training: expected one argument
+main.py: error: argument --distribution_training: expected one argument
+usage: main.py [-h] [--task {train,inf,test}] [--config CONFIG]
+               [--exp_name EXP_NAME] [--device DEVICE]
+               [--distribution_training DISTRIBUTION_TRAINING]
+main.py: error: argument --distribution_training: expected one argument
+[2024-10-09 09:51:17,794] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 3857442 closing signal SIGTERM
+[2024-10-09 09:51:17,794] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 3857443 closing signal SIGTERM
+[2024-10-09 09:51:17,795] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 3857444 closing signal SIGTERM
+[2024-10-09 09:51:18,872] torch.distributed.elastic.multiprocessing.api: [ERROR] failed (exitcode: 2) local_rank: 0 (pid: 3857441) of binary: /hpcfs/users/a1233646/myconda/envs/clipflow/bin/python
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/bin/accelerate", line 8, in <module>
+    sys.exit(main())
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/accelerate_cli.py", line 48, in main
+    args.func(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/launch.py", line 1165, in launch_command
+    multi_gpu_launcher(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/launch.py", line 799, in multi_gpu_launcher
+    distrib_run.run(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/run.py", line 797, in run
+    elastic_launch(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 134, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 264, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+main.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2024-10-09_09:51:17
+  host      : p2-gpu-12.hpc.adelaide.edu.au
+  rank      : 0 (local_rank: 0)
+  exitcode  : 2 (pid: 3857441)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

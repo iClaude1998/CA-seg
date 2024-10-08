@@ -15,6 +15,8 @@ module load CUDA/11.8.0
 module load cuDNN/8.6.0.163-CUDA-11.8.0
 
 conda info --envs
+nvcc -V
+
 export MASTER_PORT=12340
 echo "NODELIST="${SLURM_NODELIST}
 master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
@@ -30,4 +32,4 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-accelerate launch --multi-gpu --num_processes=4 --num_machines=1 --mixed-precision=no --dynamo_backend=no main.py --exp_name imageflow16 --config configs/isic_clip.yaml --distribution_training True
+accelerate launch --multi-gpu --num_processes=4 --num_machines=1 --mixed-precision=no --dynamo_backend=no main.py --task train --exp_name imageflow16 --config configs/isic_clip.yaml --distribution_training

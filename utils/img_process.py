@@ -30,7 +30,7 @@ def interpolate_cam(cam, h, w):
     """
     
     # [1, 1, h, w]
-    rcam = F.interpolate(cam[None, None, ...], [h, w], mode='bilinear')
+    rcam = F.interpolate(cam[None, ...], [h, w], mode='bilinear')
     if rcam.max() > 0:
         rcam = (rcam - rcam.min()) / (rcam.max() - rcam.min())
     

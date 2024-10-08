@@ -39,7 +39,7 @@ datasets:
 
 model:
   clip:
-    pretrain: "ViT-B-32" # Pubmedclip, MedICaT, ViT-B-32
+    pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       # - 2
       # - 5
@@ -74,4 +74,4 @@ trainer:
   num_iterations: 100000
   save_interval: 100
 
-log_method: "wandb" # wandb, tensorboard
+log_method: "tensorboard" # wandb, tensorboard

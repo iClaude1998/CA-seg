@@ -14,9 +14,9 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {// "CUDA_VISIBLE_DEVICES": "1",
-                    // "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-                    // "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-                    // "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",
+                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
+                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
+                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",
                     }
         }
     ]

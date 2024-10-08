@@ -45,7 +45,8 @@ if __name__ == '__main__':
         if value is not None:  # Update only if argument is provided
             cfgs[key] = value
     
-    os.makedirs(os.path.join('experiments', cfgs.exp_name), exist_ok=True)
+    if not os.path.exists(os.path.join('experiments', cfgs.exp_name)):
+        os.makedirs(os.path.join('experiments', cfgs.exp_name), exist_ok=True)
     
     cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(cfgs.model.clip, 'cpu')
     diffusion_model = create_diffusion(cfgs.model.diffusion)
