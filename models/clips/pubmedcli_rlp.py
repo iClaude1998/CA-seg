@@ -190,6 +190,11 @@ class PUBMEDCLIPLRP:
         self.device = device
         
     
+    
+    def to(self, device):
+        self.clip_model = self.clip_model.to(device)
+        self.device = device
+    
     def __call__(self, image, text_tokens, start_layer=-1):
 
         batch_size = image.size(0)
