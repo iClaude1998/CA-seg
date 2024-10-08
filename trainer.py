@@ -41,17 +41,17 @@ class Reflow_ControlLDM(object):
         num_timesteps=1000,
         num_iterations=100000,
         save_interval=100,
-        distributed=False,
+        accelerator=False,
         log_method='wandb'
     ):
         # instantiate control module
         self.exp_name = exp_name
-        self.create_output_dirs()
-        self.init_loggers()
+        self.task = task
         self.num_timesteps = num_timesteps
         self.clip_model = clip_model
         self.diffusion_model = diffusion_model
         self.learning_rate = learning_rate
+        self.log_method = log_method
         self.criterion = nn.MSELoss(reduction='mean')
         
         self.device = device
@@ -64,27 +64,32 @@ class Reflow_ControlLDM(object):
         else:
             self.load_succeed = False
         self.unzip_dataloaders(dataloaders)
-        self.distributed = distributed
+        
+        self.accelerator = accelerator
         
         self.models_to_device()
         self.optimizer = self.configure_optimizers()
         self.num_iterations = num_iterations
         self.save_interval = save_interval
-        if self.distributed:
+        if self.accelerator is not None:
             self.distribution_init()
-        self.log_method = log_method
-        if task == 'train':
-            if self.log_method == "tensorboard":
-                self.writer = SummaryWriter(self.log_path)
+            self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
+            self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
+            self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations') 
+            if self.accelerator.is_local_main_process:
+                self.create_output_dirs()
+                self.init_loggers()
+        else:
+            self.create_output_dirs()
+            self.init_loggers()
+            
     
     
     
     def create_output_dirs(self):
-        self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
+
         os.makedirs(self.log_path, exist_ok=True)  
-        self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
         os.makedirs(self.checkpoint_path, exist_ok=True)
-        self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations')  
         os.makedirs(self.vis_path, exist_ok=True)
     
     
@@ -272,14 +277,9 @@ class Reflow_ControlLDM(object):
     
     def distribution_init(self):
         
-        # accelerate training (maybe???)
-        cudnn.benchmark = True
-        ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=False)
-        self.accelerator = Accelerator(kwargs_handlers=[ddp_kwargs])
-        self.device = self.accelerator.device
-        
-        if self.accelerator.is_local_main_process:
-            self.logger.info(f"Total CUDA devices: {torch.cuda.device_count()}")
+        # if self.accelerator.is_local_main_process:
+        #     self.logger.info(f"Total CUDA devices: {torch.cuda.device_count()}")
+        self.accelerator.print(f"Total CUDA devices: {torch.cuda.device_count()}")
         
         # init model, optimizers, and dataloaders
         if self.train_dataloader is not None:
@@ -301,7 +301,7 @@ class Reflow_ControlLDM(object):
             'iteration': iteration,
             'optimizer': self.optimizer.state_dict()
         }
-        if self.distributed:
+        if self.accelerator is not None:
             self.accelerator.save(checkpoint, os.path.join(self.checkpoint_path, f'checkpoint_iter{iteration}.pth'))
             if self.accelerator.is_local_main_process:
                 self.logger.info(f"Saved checkpoint at iteration {iteration}")
@@ -366,7 +366,7 @@ class Reflow_ControlLDM(object):
      
     @torch.no_grad()
     def get_input(self, batch):
-        if self.distributed:
+        if self.accelerator is not None:
             image = batch['pixel_values']
             text_ids = batch['input_ids']
             sdf_map = batch['sdf_map']
@@ -407,6 +407,9 @@ class Reflow_ControlLDM(object):
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
         self.logger.addHandler(console_handler)
+        if self.task == 'train':
+            if self.log_method == "tensorboard":
+                self.writer = SummaryWriter(self.log_path)
     
     
     def visualize(self, vts, random_batch, step):
