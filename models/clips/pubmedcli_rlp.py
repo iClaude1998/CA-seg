@@ -58,7 +58,7 @@ class CustomTransformer(nn.Module):
         for i in range(self.layers):
             x = self.resblocks[i](x)
             if i in self.out_layers:
-                intermediate.append(x)
+                intermediate.append(x[None, ...])
         return x, intermediate
 
 
@@ -115,7 +115,7 @@ class CustomVisionTransformer(nn.Module):
         return x, intermediate
 
     def forward_patch(self, x):
-        x = torch.stack(x, dim=0).permute(2, 0, 1, 3)[..., 1:, :] # [num_layers, B, num_patch, d]
+        x = torch.cat(x, dim=0).permute(2, 0, 1, 3)[..., 1:, :] # [num_layers, B, num_patch, d]
         x = self.ln_post(x)
         if self.proj is not None:
             x = torch.matmul(x, self.proj)
