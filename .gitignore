@@ -1,3 +1,7 @@
 experiments/
 pretrained/
 wandb/
+__pycache__/
+.vscode/
+models/__pycache__/
+utils/__pycache__/
