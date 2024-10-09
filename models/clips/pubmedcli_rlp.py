@@ -115,7 +115,7 @@ class CustomVisionTransformer(nn.Module):
         return x, intermediate
 
     def forward_patch(self, x):
-        x = torch.cat(x, dim=0).permute(2, 0, 1, 3)[..., 1:, :] # [num_layers, B, num_patch, d]
+        x = torch.cat(x, dim=0).permute(0, 2, 1, 3)[..., 1:, :] # [num_layers, B, num_patch, d]
         x = self.ln_post(x)
         if self.proj is not None:
             x = torch.matmul(x, self.proj)
@@ -168,12 +168,27 @@ class PUBMEDCLIPWrapper(nn.Module):
         image_features, intermediate = self.encode_image(image)
         text_features = self.encode_text(text_ids)
 
-        image_features = image_features / image_features.norm(dim=1, keepdim=True)
-        text_features = text_features / text_features.norm(dim=1, keepdim=True)
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        intermediate = intermediate / intermediate.norm(dim=-1, keepdim=True)
             
         logits_per_image = (100.0 * image_features @ text_features.T).softmax(dim=-1)
         logits_per_text = (100.0 * text_features @ image_features.T).softmax(dim=-1)
         return logits_per_image, logits_per_text, intermediate
+    
+
+    def produce_cam(self, image, text_ids, vis_layer=-1):
+
+        image_features, intermediate = self.encode_image(image)
+        text_features = self.encode_text(text_ids)
+
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        intermediate = intermediate / intermediate.norm(dim=-1, keepdim=True)
+        text_features = text_features[None, :, :, None] # [1, B, D, 1]
+        score = torch.matmul(intermediate, text_features).squeeze(-1) # [L, B, N]
+        
+        return F.softmax(100.0 * score, dim=-1)[vis_layer]
     
     
     

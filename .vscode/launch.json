@@ -1,4 +1,4 @@
-// test.py
+// dummy.py
 
 {
     // Use IntelliSense to learn about possible attributes.
@@ -17,12 +17,18 @@
                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",
-                    }
+                    },
+            "args": ["--task", "cam",
+                     "--vis_layer", "8",
+                     "--config", "configs/isic_clip_attention.yaml", 
+                     "--exp_name", "cam_test_8", 
+                     "--device", "cuda"]
         }
     ]
 }
 
 
+// train
 
 // {
 //     // Use IntelliSense to learn about possible attributes.

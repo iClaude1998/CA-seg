@@ -67,7 +67,7 @@ class CustomTransformer(nn.Module):
         for i in range(self.layers):
             x = self.resblocks[i](x)
             if i in self.outlayers:
-                intermediates.append(x)
+                intermediates.append(x[None, ...])
         return x, intermediates
 
 
@@ -138,7 +138,7 @@ class CustomVisionTransformer(nn.Module):
         return x, intermediates
     
     def forward_patch(self, x):
-        x = torch.stack(x, dim=0).permute(2, 0, 1, 3)[..., 1:, :] # [num_layers, B, num_patch, d]
+        x = torch.cat(x, dim=0).permute(2, 0, 1, 3)[..., 1:, :] # [num_layers, B, num_patch, d]
         x = self.ln_post(x)
         if self.proj is not None:
             x = torch.matmul(x, self.proj)
@@ -171,6 +171,7 @@ class CLIPWrapper(nn.Module):
         features, intermediates = self.visual(image.type(self.dtype))
         if normalize:
             features = F.normalize(features, dim=-1)
+            intermediates = F.normalize(intermediates, dim=-1)
         return features, intermediates
 
     def encode_text(self, text, normalize=False):
@@ -197,9 +198,24 @@ class CLIPWrapper(nn.Module):
         if not normalize:
             image_features = F.normalize(image_features, dim=-1)
             text_features = F.normalize(text_features, dim=-1)
+            intermediates = F.normalize(intermediates, dim=-1)
         logits_per_image = (100.0 * image_features @ text_features.T).softmax(dim=-1)
         logits_per_text = (100.0 * text_features @ image_features.T).softmax(dim=-1)
         return logits_per_image, logits_per_text, intermediates
+    
+
+    def produce_cam(self, image, text_ids, normalize, vis_layer=-1):
+
+        image_features, intermediates = self.encode_image(image, normalize)
+        text_features = self.encode_text(text_ids, normalize)
+        if not normalize:
+            image_features = F.normalize(image_features, dim=-1)
+            text_features = F.normalize(text_features, dim=-1) # [B, D]
+            intermediates = F.normalize(intermediates, dim=-1) # [L, B, N, D]
+        text_features = text_features[None, :, :, None] # [1, B, D, 1]
+        score = torch.matmul(intermediates, text_features).squeeze(-1) # [L, B, N]
+        
+        return F.softmax(100.0 * score, dim=-1)[vis_layer]
     
 
 
