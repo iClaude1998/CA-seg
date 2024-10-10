@@ -46,14 +46,15 @@ def create_diffusion(cfgs):
         channel_mult = tuple(int(ch_mult) for ch_mult in cfgs.channel_mult.split(","))
 
     attention_ds = []
+
     for res in cfgs.attention_resolutions.split(","):
-        attention_ds.append(cfgs.image_size // int(res))
+        attention_ds.append(int(res))
 
     return  UNetModel_v1preview(
                 image_size=cfgs.image_size,
                 in_channels=cfgs.in_channels,
                 model_channels=cfgs.num_channels,
-                out_channels=1,#(3 if not learn_sigma else 6),
+                out_channels=cfgs.out_channels,#(3 if not learn_sigma else 6),
                 num_res_blocks=cfgs.num_res_blocks,
                 attention_resolutions=tuple(attention_ds),
                 dropout=cfgs.dropout,

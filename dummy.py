@@ -10,15 +10,28 @@ from torch.utils.data import DataLoader
 
 
 from utils.vis import vis_batch
+from argparse import ArgumentParser
 from models.build_models import load_clip_and_tokenizer, create_diffusion
 
 
 
+def parse_args():
+    parser = ArgumentParser(description='Reflow')
+    parser.add_argument('--task', type=str, default='rlp', help='the task to performs', choices=['rlp', 'cam'])
+    parser.add_argument('--vis_layer', type=int, default=-1, help='visualization layer')
+    parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
+    parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
+    parser.add_argument('--device', type=str, default='cuda', help='experiment device')
+    parser.add_argument('--run_diffusion', action="store_true", help='whether run diffusion')
+    return parser.parse_args()
+
 
 if __name__ == '__main__':
     
-    config_file = "configs/isic_clip.yaml"
-    save_dir = "experiments/cam_test/visualizations"
+    args = parse_args()
+    
+    config_file = args.config
+    save_dir = os.path.join("experiments", args.exp_name, "visualizations") # "experiments/cam_test/visualizations"
     with open(config_file, 'r', encoding='utf-8') as f:
         config_dict = yaml.safe_load(f)
     
@@ -26,7 +39,7 @@ if __name__ == '__main__':
     
     config = edict(config_dict)
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     
     cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(config.model.clip, device)
     diffusion_model = create_diffusion(config.model.diffusion).to(device)
@@ -43,17 +56,23 @@ if __name__ == '__main__':
         bz = image.size(0)
         h, w = image.size(-2), image.size(-1)
 
-        Rs, intermediate = cliprlp(image, text_ids)
-        bz = Rs.size(0)
+        if args.task == 'rlp':
+            Rs, intermediate = cliprlp(image, text_ids)
+            bz = Rs.size(0)    
+        elif args.task == 'cam':
+            Rs = cliprlp.clip_model.produce_cam(image, text_ids, vis_layer=args.vis_layer)
+        
         R_h = int(Rs[0].numel() ** 0.5)
         Rs = Rs.view(bz, 1, R_h, R_h)
         Rs = F.interpolate(Rs, (h, w), mode='bilinear', align_corners=False)
-        vis_batch(batch, save_dir, Rs)
+        vis_batch(batch, save_dir, Rs)   
         
-        # x = torch.cat([image, Rs], dim=1)
-        # out = diffusion_model(x, timesteps, y=None)
+        if args.run_diffusion:
+            ts = torch.randint(1, 1000, (bz,), device=device).long()
+            x = torch.cat([image, Rs], dim=1)
+            out = diffusion_model(x, ts, y=None)
         
-        # vis_batch(batch, save_dir, Rs)
+
     
     
     

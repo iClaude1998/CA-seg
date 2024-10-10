@@ -57,6 +57,16 @@ class Reflow_ControlLDM(object):
         self.device = device
         self.use_ema = use_ema
         self.start_iteration = 0
+        
+        self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
+        self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
+        self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations') 
+        
+        # I have to seperate the branches
+        if accelerator is None:
+            self.create_output_dirs()
+            self.init_loggers()
+            
         if use_ema:
             self.model_ema = LitEma(self.diffusion_model)
         if checkpoint_name is not None:
@@ -71,17 +81,14 @@ class Reflow_ControlLDM(object):
         self.optimizer = self.configure_optimizers()
         self.num_iterations = num_iterations
         self.save_interval = save_interval
+        
+        # I have to seperate the branches
         if self.accelerator is not None:
             self.distribution_init()
-            self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
-            self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
-            self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations') 
             if self.accelerator.is_local_main_process:
                 self.create_output_dirs()
                 self.init_loggers()
-        else:
-            self.create_output_dirs()
-            self.init_loggers()
+            
             
     
     
