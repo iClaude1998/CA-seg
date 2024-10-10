@@ -12,9 +12,6 @@ from torch.utils.data import DataLoader
 
 
 
-
-
-
 if __name__ == "__main__":
     config_file = "configs/isic_clip.yaml"
     save_dir = "experiments"

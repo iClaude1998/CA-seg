@@ -41,7 +41,7 @@ class Reflow_ControlLDM(object):
         num_timesteps=1000,
         num_iterations=100000,
         save_interval=100,
-        accelerator=False,
+        accelerator=None,
         log_method='wandb'
     ):
         # instantiate control module

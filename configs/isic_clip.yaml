@@ -1,5 +1,5 @@
 datasets:
-  batch_size: 2
+  batch_size: 4
   train:
     name: "isic_seg"
     prompt_type: "p6"
