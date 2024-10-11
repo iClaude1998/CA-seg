@@ -75,7 +75,6 @@ class UNetModel_v1preview(nn.Module):
         use_scale_shift_norm=False,
         resblock_updown=False,
         use_new_attention_order=False,
-        condition="high_way",
     ):
         super().__init__()
 
@@ -255,15 +254,9 @@ class UNetModel_v1preview(nn.Module):
             nn.SiLU(),
             zero_module(conv_nd(dims, model_channels , out_channels, 3, padding=1)),
         )
-        self.condition = condition
-        if self.condition == 'high_way':
-            features = 32
-            self.hwm = Generic_UNet_v1(self.in_channels - 1, features, 1, 5, image_size=self.image_size)
-        elif self.condition == 'clip':
-            #TODO: Implement clip condition
-            raise NotImplementedError
-        else:
-            raise ValueError(f"Unsupported condition: {self.condition}")
+
+        features = 32
+        self.hwm = Generic_UNet_v1(self.in_channels - 1, features, 1, 5, image_size=self.image_size)
 
     def convert_to_fp16(self):
         """
@@ -325,11 +318,9 @@ class UNetModel_v1preview(nn.Module):
         # hs[12] -> out of 4th resblock 2
         # hs[15] -> out of 5th resblock 4
         # hs[18] -> out of 6th resblock 4
-        if self.condition == 'high_way':
-            uemb = self.highway_forward(c, [hs[3],hs[6],hs[9],hs[12]])
-        elif self.condition == 'clip':
-            #TODO: Implement clip condition
-            raise NotImplementedError
+
+        uemb = self.highway_forward(c, [hs[3],hs[6],hs[9],hs[12]])
+
         h = h + uemb
         h = self.middle_block(h, emb)
         for module in self.output_blocks:

@@ -24,12 +24,13 @@ def vis_batch(batch, save_dir, scores):
         vis_gt = raw_img * 0.6 + heatmap * 0.4
         vis_gt = cv2.cvtColor(vis_gt.astype('uint8'), cv2.COLOR_BGR2RGB)
         
-        fig, axs = plt.subplots(1, 2)
+        fig, axs = plt.subplots(1, 2, figsize=(6, 4))
+        plt.subplots_adjust(wspace=0.1, hspace=0.1)
         axs[0].imshow(vis_pred)
         axs[0].axis('off')
         axs[1].imshow(vis_gt)
         axs[1].axis('off')
-        fig.suptitle(batch['sentence'][bid], fontsize=8)
+        fig.suptitle(batch['sentence'][bid], fontsize=8, y=0.83)
         save_name = os.path.join(save_dir, f"{batch['mask_name'][bid]}")
         plt.savefig(save_name)
         plt.close()
