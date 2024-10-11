@@ -67,6 +67,5 @@ def create_diffusion(cfgs):
                 num_heads_upsample=cfgs.num_heads_upsample,
                 use_scale_shift_norm=cfgs.use_scale_shift_norm,
                 resblock_updown=cfgs.resblock_updown,
-                use_new_attention_order=cfgs.use_new_attention_order,
-                condition=cfgs.condition
+                use_new_attention_order=cfgs.use_new_attention_order
     )
