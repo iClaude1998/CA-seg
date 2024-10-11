@@ -256,7 +256,7 @@ class UNetModel_v1preview(nn.Module):
         )
 
         features = 32
-        self.hwm = Generic_UNet_v1(self.in_channels - 1, features, 1, 5, image_size=self.image_size)
+        self.hwm = Generic_UNet_v1(3, features, 1, 5, image_size=self.image_size)
 
     def convert_to_fp16(self):
         """
@@ -305,20 +305,14 @@ class UNetModel_v1preview(nn.Module):
 
         h = x.type(self.dtype)
         c = h[:,:-1,...]
+        if self.in_channels == 1:
+            h = h[:, :1, ...]
         hlist= []
         for ind, module in enumerate(self.input_blocks):
             if len(emb.size()) > 2:
                 emb = emb.squeeze()
             h = module(h, emb)
             hs.append(h)
-        # hs[0] -> out of input layer
-        # hs[3] -> out of 1st resblock 1
-        # hs[6] -> out of 2nd resblock 1
-        # hs[9] -> out of 3rd resblock 2
-        # hs[12] -> out of 4th resblock 2
-        # hs[15] -> out of 5th resblock 4
-        # hs[18] -> out of 6th resblock 4
-
         uemb = self.highway_forward(c, [hs[3],hs[6],hs[9],hs[12]])
 
         h = h + uemb
