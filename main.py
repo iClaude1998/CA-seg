@@ -75,7 +75,8 @@ if __name__ == '__main__':
     dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}
     
     distribution_training = cfgs.distribution_training and cfgs.task == 'train'
-    trainer = Reflow_ControlLDM(cfgs.task,
+    trainer = Reflow_ControlLDM(cfgs.model.diffusion.version,
+                                cfgs.task,
                                 cfgs.exp_name, 
                                 cliprlp, 
                                 diffusion_model,

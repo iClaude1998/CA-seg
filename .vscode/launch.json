@@ -18,11 +18,12 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",
                     },
-            "args": ["--task", "cam",
-                     "--vis_layer", "7",
-                     "--config", "configs/isic_clip_attention.yaml", 
-                     "--exp_name", "cam_test_7", 
-                     "--device", "cuda"]
+            "args": ["--task", "rlp",
+                     "--vis_layer", "11",
+                     "--config", "configs/isic_clipcam_flow.yaml", 
+                     "--exp_name", "debug", 
+                     "--device", "cuda",
+                     "--run_diffusion"]
         }
     ]
 }
@@ -48,8 +49,7 @@
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
 //             "args": ["--task", "train",
-//                      "--distribution_training", "False",
-//                      "--config", "configs/isic_clip.yaml", 
+//                      "--config", "configs/isic_clipcam_flow.yaml", 
 //                      "--exp_name", "debug", 
 //                      "--device", "cuda"]
 //         }
