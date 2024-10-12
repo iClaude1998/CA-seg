@@ -345,10 +345,13 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
     support it as an extra input.
     """
 
-    def forward(self, x, emb):
+    def forward(self, x, emb, clip_emb=None):
         for layer in self:
             if isinstance(layer, TimestepBlock):
                 x = layer(x, emb)
+            elif isinstance(layer, CLIPAttentionBlock):
+                assert clip_emb is not None, "clip_emb must be provided"
+                x = layer(x, clip_emb)
             else:
                 x = layer(x)
         return x
@@ -579,6 +582,87 @@ class AttentionBlock(nn.Module):
         h = self.attention(qkv)
         h = self.proj_out(h)
         return (x + h).reshape(b, c, *spatial)
+    
+class CLIPAttentionBlock(nn.Module):
+    """
+    An attention block that allows spatial positions to attend to each other.
+
+    Originally ported from here, but adapted to the N-d case.
+    https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/models/unet.py#L66.
+    """
+
+    def __init__(
+        self,
+        channels,
+        channels_clip,
+        spatial_size,
+        num_heads=1,
+        num_head_channels=-1,
+        linear_allignment=None,
+        use_checkpoint=False,
+    ):
+        super().__init__()
+        self.channels_clip = channels_clip
+        self.channels = channels
+        if num_head_channels == -1:
+            self.num_heads = num_heads
+        else:
+            assert (
+                channels % num_head_channels == 0
+            ), f"q,k,v channels {channels} is not divisible by num_head_channels {num_head_channels}"
+            self.num_heads = channels // num_head_channels
+        self.linear_allignment = linear_allignment
+        if channels_clip != channels:
+            assert linear_allignment is not None, "channels_clip != channels, linear_allignment must be specified"
+        
+        self.use_checkpoint = use_checkpoint
+        self.norm_q = normalization(channels)
+        self.norm_kv = normalization(channels)
+        self.linear_q = conv_nd(1, channels, channels, 1)
+        self.linear_kv = conv_nd(1, channels, 2*channels, 1)
+        
+        # preprocess the label embeddings for kv branch
+        self.conv_trans_block_a = conv_nd(2, channels, channels, 1)
+        self.conv_trans_block_b = conv_nd(2, channels, 1, 1)
+        self.ffparser = FFParser(channels, spatial_size, spatial_size//2+1)
+        
+        if self.linear_allignment == 'linear':
+            # a simpler projection layer, maybe we try more complex one later 
+            self.clip_projector = conv_nd(1, channels_clip, channels, 1)
+        elif self.linear_allignment == 'linear_gelu':
+            
+            self.clip_projector = nn.Sequential(*[conv_nd(1, channels_clip, channels, 1),
+                                                  nn.GELU(),
+                                                  conv_nd(1, channels, channels, 1)])
+        self.attention = CrossAttentionBlock(self.num_heads)
+        self.proj_out = zero_module(conv_nd(1, channels, channels, 1))
+
+    def forward(self, x, emb):
+        return checkpoint(self._forward, (x, emb), self.parameters(), True)
+
+    def _forward(self, x, emb):
+        # x: [B, C, H, W]
+        # emb: [B, C, dim]
+        b, c, *spatial = x.shape
+        xa = self.conv_trans_block_a(x)
+        xa = self.ffparser(xa)
+        xb = self.conv_trans_block_b(xa)
+        x_mean = torch.mean(xa, dim=(2, 3), keepdim=True)
+        x_k = x_mean * xb
+        
+        x = x.reshape(b, c, -1)
+        q = self.linear_q(self.norm_q(x))
+        
+        emb = emb.permute(0, 2, 1)
+        if self.linear_allignment:
+            emb = self.clip_projector(emb)
+        # cat them together
+        hkv = torch.cat([x_k.reshape(b, c, -1), emb], dim=2)
+        hidden_kv = self.linear_kv(self.norm_kv(hkv))
+        out = self.attention(q, hidden_kv)
+        out = self.proj_out(out)
+        
+        return (x + out).reshape(b, c, *spatial)   
 
 
 
@@ -648,6 +732,26 @@ class QKVAttention(nn.Module):
     @staticmethod
     def count_flops(model, _x, y):
         return count_flops_attn(model, _x, y)
+
+
+class CrossAttentionBlock(nn.Module):
+    
+    def __init__(self, n_heads):
+        super().__init__()
+        self.n_heads = n_heads
+    
+    def forward(self, q, kv):
+        bs, width, length_q = q.shape
+        k, v = kv.chunk(2, dim=1) # [B, C, L]
+        length_k = k.size(2)
+        ch = width // self.n_heads
+        scale = 1 / math.sqrt(math.sqrt(ch))
+        weight = torch.einsum(
+            "bct,bcs->bts",
+            (q * scale).view(bs * self.n_heads, ch, length_q),
+            (k * scale).view(bs * self.n_heads, ch, length_k),)
+        a = torch.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length_k))
+        return a.reshape(bs, -1, length_q)
 
         
 
