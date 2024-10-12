@@ -29,6 +29,7 @@ class Reflow_ControlLDM(object):
     
     def __init__(
         self,
+        diffusion_version,
         task,
         exp_name,
         clip_model,
@@ -45,6 +46,7 @@ class Reflow_ControlLDM(object):
         log_method='wandb'
     ):
         # instantiate control module
+        self.diffusion_version = diffusion_version
         self.exp_name = exp_name
         self.task = task
         self.num_timesteps = num_timesteps
@@ -89,16 +91,12 @@ class Reflow_ControlLDM(object):
                 self.create_output_dirs()
                 self.init_loggers()
             
-            
-    
-    
     
     def create_output_dirs(self):
 
         os.makedirs(self.log_path, exist_ok=True)  
         os.makedirs(self.checkpoint_path, exist_ok=True)
         os.makedirs(self.vis_path, exist_ok=True)
-    
     
     
     def train(self):
@@ -152,7 +150,6 @@ class Reflow_ControlLDM(object):
             wandb.finish()
         elif self.log_method == 'tensorboard':
             self.writer.close()
-    
     
     
     def distribution_train(self):
@@ -232,9 +229,12 @@ class Reflow_ControlLDM(object):
 
         # TODO: add noise maybe, (hope not)
         zt = t_norm * Rs + (1 - t_norm) * sdf_map
-        x = torch.cat([images, zt], dim=1)
         
-        v = self.diffusion_model(x, t, y=None)
+        if self.diffusion_version == 'v1':
+            x = torch.cat([images, zt], dim=1)
+            v = self.diffusion_model(x, t, y=None)
+        elif self.diffusion_version == 'v2':
+            v = self.diffusion_model(zt, t, intermediate.detach())
         loss_mse = self.criterion(sdf_map - Rs, v)
       
         return loss_mse   #+loss_perc
@@ -276,8 +276,11 @@ class Reflow_ControlLDM(object):
             #eular_steps = [999,899,799,699,599,499,399,299,199,99]
             for i, step in enumerate(eular_steps):
                 ts = torch.ones(B, device=self.device) * step
-                x = torch.cat([images, zt], dim=1)
-                v = self.diffusion_model(x, ts, y=None)
+                if self.diffusion_version == 'v1':
+                    x = torch.cat([images, zt], dim=1)
+                    v = self.diffusion_model(x, ts, y=None)
+                elif self.diffusion_version == 'v2':
+                    v = self.diffusion_model(zt, ts, intermediate.detach())
                 zt = zt + v / len(eular_steps)
         return zt, Rs   
     

@@ -54,6 +54,7 @@ model:
       - 10
       - 11
   diffusion:
+    version: "v1"
     image_size: 224
     in_channels: 1 # 4 for ISIC
     num_channels: 128

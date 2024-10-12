@@ -5,7 +5,7 @@ import open_clip
 
 from transformers import PreTrainedTokenizerFast
 
-from .diffusion import UNetModel_v1preview
+from .diffusion import UNetModel_v1preview, UNetModel_v2preview
 from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper
 
 
@@ -49,23 +49,43 @@ def create_diffusion(cfgs):
 
     for res in cfgs.attention_resolutions.split(","):
         attention_ds.append(int(res))
+    
+    if cfgs.version == 'v1':
 
-    return  UNetModel_v1preview(
-                image_size=cfgs.image_size,
-                in_channels=cfgs.in_channels,
-                model_channels=cfgs.num_channels,
-                out_channels=cfgs.out_channels,#(3 if not learn_sigma else 6),
-                num_res_blocks=cfgs.num_res_blocks,
-                attention_resolutions=tuple(attention_ds),
-                dropout=cfgs.dropout,
-                channel_mult=channel_mult,
-                num_classes=cfgs.num_classes,
-                use_checkpoint=cfgs.use_checkpoint,
-                use_fp16=cfgs.use_fp16,
-                num_heads=cfgs.num_heads,
-                num_head_channels=cfgs.num_head_channels,
-                num_heads_upsample=cfgs.num_heads_upsample,
-                use_scale_shift_norm=cfgs.use_scale_shift_norm,
-                resblock_updown=cfgs.resblock_updown,
-                use_new_attention_order=cfgs.use_new_attention_order
-    )
+        return  UNetModel_v1preview(
+                    image_size=cfgs.image_size,
+                    in_channels=cfgs.in_channels,
+                    model_channels=cfgs.num_channels,
+                    out_channels=cfgs.out_channels,#(3 if not learn_sigma else 6),
+                    num_res_blocks=cfgs.num_res_blocks,
+                    attention_resolutions=tuple(attention_ds),
+                    dropout=cfgs.dropout,
+                    channel_mult=channel_mult,
+                    num_classes=cfgs.num_classes,
+                    use_checkpoint=cfgs.use_checkpoint,
+                    use_fp16=cfgs.use_fp16,
+                    num_heads=cfgs.num_heads,
+                    num_head_channels=cfgs.num_head_channels,
+                    num_heads_upsample=cfgs.num_heads_upsample,
+                    use_scale_shift_norm=cfgs.use_scale_shift_norm,
+                    resblock_updown=cfgs.resblock_updown,
+                    use_new_attention_order=cfgs.use_new_attention_order
+        )
+    elif cfgs.version == 'v2':
+        return UNetModel_v2preview(
+                        image_size=cfgs.image_size,
+                        in_channels=cfgs.in_channels,
+                        model_channels=cfgs.num_channels,
+                        out_channels=cfgs.out_channels,
+                        channels_clip=cfgs.channels_clip,
+                        num_res_blocks=cfgs.num_res_blocks,
+                        attention_resolutions=tuple(attention_ds),
+                        dropout=cfgs.dropout,
+                        channel_mult=channel_mult,
+                        use_checkpoint=cfgs.use_checkpoint,
+                        use_fp16=cfgs.use_fp16,
+                        num_heads=cfgs.num_heads,
+                        num_head_channels=cfgs.num_head_channels,
+                        num_heads_upsample=cfgs.num_heads_upsample,
+                        use_scale_shift_norm=cfgs.use_scale_shift_norm,
+        )

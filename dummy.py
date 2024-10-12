@@ -67,10 +67,14 @@ if __name__ == '__main__':
         Rs = F.interpolate(Rs, (h, w), mode='bilinear', align_corners=False)
         vis_batch(batch, save_dir, Rs)   
         
+        # layer 3 7 11
         if args.run_diffusion:
             ts = torch.randint(1, 1000, (bz,), device=device).long()
-            x = torch.cat([image, Rs], dim=1)
-            out = diffusion_model(x, ts, y=None)
+            if config.model.diffusion.version == 'v1':
+                x = torch.cat([image, Rs], dim=1)
+                out = diffusion_model(x, ts, y=None)
+            elif config.model.diffusion.version == 'v2':
+                out = diffusion_model(Rs, ts, intermediate.detach())
         
 
     
