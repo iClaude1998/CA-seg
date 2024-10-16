@@ -4,6 +4,6 @@ from .img_process import process_Relevant_score_batch
 from .helpers import (MixedPrecisionTrainer, get_blob_logdir, 
                       find_resume_checkpoint, update_ema, 
                       log_loss_dict, parse_resume_step_from_filename, 
-                      find_ema_checkpoint, process_checkpoints)
+                      find_ema_checkpoint, process_checkpoints, mix_images_with_sdfs, save_batch, compute_metrics)
 
 

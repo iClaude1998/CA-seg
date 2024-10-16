@@ -1,8 +1,11 @@
+import os 
 import torch 
+import matplotlib
 import numpy as np
 import blobfile as bf
 
 from torch import nn
+from matplotlib import pyplot as plt
 from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors
 from . import logger
 
@@ -316,6 +319,108 @@ def process_checkpoints(checkpoint):
         checkpoint['model_ema'] = new_state_dict_model
     
     return checkpoint
+
+
+def mix_images_with_sdfs(images, usdfs, alpha_heatmap=0.5, colormap='jet'):
+    """
+    Mixes images with unsigned distance functions (USDFs) using a specified colormap and alpha blending.
+    Args:
+        images (torch.Tensor): A batch of images with shape (N, C, H, W).
+        usdfs (torch.Tensor): A batch of unsigned SDFs with shape (N, 1, H, W).
+        alpha_heatmap (float, optional): The blending factor for the heatmap overlay. Default is 0.5.
+        colormap (str, optional): The colormap to use for the SDFs. Default is 'jet'.
+    Returns:
+        numpy.ndarray: The resulting images with the SDF heatmap overlay, with shape (N, H, W, C).
+    """
+
+    cmap = matplotlib.colormaps.get_cmap(colormap)
+    images = images.permute(0, 2, 3, 1).cpu().numpy()
+    usdfs = usdfs.squeeze(1).cpu().numpy()
+    
+    # normalize usdfs
+    usdfs = min_max_normalize(usdfs)
+    
+    rgb_heatmaps_np = cmap(usdfs)[..., :3]
+    overlayed_images = (1 - alpha_heatmap) * images + alpha_heatmap * rgb_heatmaps_np
+    return np.clip(overlayed_images, a_min=0., a_max=1.)
+
+
+def compute_metrics(preds, gts, mask_name, metric, thresh=126):
+    preds = preds.squeeze(1).cpu().numpy()
+    gts = gts.squeeze(1).cpu().numpy()
+    preds = min_max_normalize(preds)
+    gts = min_max_normalize(gts)
+    
+    preds = (255 * preds >= thresh)
+    gts = (255 * gts >= 1)
+    # visualization_for_debug(preds, gts, mask_name)
+    if metric == 'iou':
+        intersection = np.logical_and(preds, gts)
+        union = np.logical_or(preds, gts)
+        intersection_batch = np.sum(intersection.astype('float32'), axis=(1, 2))
+        union_batch = np.sum(union.astype('float32'), axis=(1, 2))
+        
+        mask = np.where(union_batch > 0, 1., 0.)
+        union_batch = np.where(union_batch > 0, union_batch, 1e-3)
+        outcome = intersection_batch * mask / union_batch
+    elif metric == 'dice':
+        intersection = np.logical_and(preds, gts)
+        intersection_batch = np.sum(intersection.astype('float32'), axis=(1, 2))
+        pred_batch = np.sum(preds.astype('float32'), axis=(1, 2))
+        gt_batch = np.sum(gts.astype('float32'), axis=(1, 2))
+        denorminztor = pred_batch + gt_batch
+        
+        mask = np.where(denorminztor > 0., 1., 0.)
+        denorminztor = np.where(denorminztor > 0., denorminztor, 1e-3)
+        outcome = (2 * intersection_batch * mask) / denorminztor
+        
+    return outcome
+    
+    
+    
+def save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, vis_path):
+    num_examples = mixed_img_predits_I.shape[0]
+    for i in range(num_examples):
+        fig, ax = plt.subplots(1, 3, figsize=(10, 5))
+        ax[0].imshow(mixed_img_predits_I[i])
+        ax[0].axis('off')
+        ax[0].set_title('Predictions I')   
+        ax[1].imshow(mixed_img_predits_II[i])
+        ax[1].axis('off')
+        ax[1].set_title('Predictions II')   
+        ax[2].imshow(mixed_img_gts[i])
+        ax[2].axis('off')
+        ax[2].set_title('Ground truths')   
+        plt.savefig(os.path.join(vis_path, mask_names[i]))
+        plt.close(fig)
+        
+        
+        
+
+def min_max_normalize(usdfs):
+    
+    mim_usdfs = np.min(usdfs, axis=(1, 2), keepdims=True)
+    max_usdfs = np.max(usdfs, axis=(1, 2), keepdims=True)
+    nonzero_max = (max_usdfs > 0).astype('float32')
+    max_usdfs = np.where(max_usdfs > 0, max_usdfs, 1e-6)
+    return nonzero_max * (usdfs - mim_usdfs) / (max_usdfs - mim_usdfs)
+
+
+def visualization_for_debug(preds, gts, mask_name, save_dir='experiments/check_res'):
+    
+    B = preds.shape[0]
+    for i in range(B):
+        pred = 255 * preds[i].astype('float32')
+        gt = gts[i].astype('float32')
+        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        ax[0].imshow(pred)
+        ax[0].axis('off')
+        ax[0].set_title('Predictions')  
+        ax[1].imshow(gt)
+        ax[1].axis('off')
+        ax[1].set_title('GroundTruth')  
+        plt.savefig(os.path.join(save_dir, mask_name[i]))
+        plt.close(fig)
     
     
 

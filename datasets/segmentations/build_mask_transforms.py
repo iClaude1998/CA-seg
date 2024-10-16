@@ -21,5 +21,7 @@ def build_mask_transforms(image_resolution):
 
 def normalization_usdf(usdf):
     # normalize all to be in [0, 1] for guidance image
+    if usdf.max() == 0:
+        return torch.zeros_like(usdf)
     usdf = (usdf - usdf.min()) / (usdf.max() - usdf.min())
     return usdf
