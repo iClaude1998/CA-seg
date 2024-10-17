@@ -7,6 +7,8 @@ import logging
 import matplotlib
 import numpy as np
 import torchvision
+import pandas as pd
+
 import torch.nn as nn
 
 from tqdm import tqdm
@@ -16,11 +18,13 @@ from torchvision import transforms
 from torch.nn import functional as F
 from matplotlib import pyplot as plt
 from contextlib import contextmanager
+from collections import defaultdict as dedict
 from torch.utils.tensorboard import SummaryWriter
+
 from accelerate import Accelerator, DistributedDataParallelKwargs
 
 from models.diffusion import LitEma
-from utils import process_Relevant_score_batch, process_checkpoints
+from utils import process_Relevant_score_batch, process_checkpoints, mix_images_with_sdfs, save_batch, compute_metrics
 
 
 to_pil = transforms.ToPILImage()
@@ -38,6 +42,7 @@ class Reflow_ControlLDM(object):
         learning_rate,
         device='cuda',
         use_ema=False,
+        load_checkpoint=False,
         checkpoint_name=None,
         num_timesteps=1000,
         num_iterations=100000,
@@ -71,8 +76,10 @@ class Reflow_ControlLDM(object):
             
         if use_ema:
             self.model_ema = LitEma(self.diffusion_model)
-        if checkpoint_name is not None:
+            
+        if checkpoint_name is not None and load_checkpoint:
             self.load_succeed = self.load_checkpoint(checkpoint_name)
+            self.checkpoint_name = os.path.splitext(checkpoint_name)[0]
         else:
             self.load_succeed = False
         self.unzip_dataloaders(dataloaders)
@@ -256,7 +263,37 @@ class Reflow_ControlLDM(object):
                 mixed_img_gts = mix_images_with_sdfs(images, usdf_gts) 
                 
                 save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
-
+    
+    
+    def test(self, testset='test'):
+        if not self.load_succeed:
+            raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
+        self.diffusion_model.eval()
+        outcomes = dedict(list)
+        if testset == 'test':
+            dl = self.test_dataloader
+        elif testset == 'val':
+            dl = self.val_dataloader
+        else:
+            raise ValueError(f"Unsupported testset: {testset}")
+        for batch in tqdm(dl):
+            vts, Rs = self.test_step(batch)
+            mask_name = batch['mask_name']
+            usdf_gts = batch['sdf_map']
+            with torch.no_grad():
+                iou_batch_I = compute_metrics(Rs, usdf_gts, mask_name, metric='iou', thresh=66) # stage I
+                iou_batch_II = compute_metrics(vts, usdf_gts, mask_name, metric='iou', thresh=33) # stage II
+                
+                dice_batch_I = compute_metrics(Rs, usdf_gts, mask_name, metric='dice', thresh=66) # stage I
+                dice_batch_II = compute_metrics(vts, usdf_gts, mask_name, metric='dice', thresh=33) # stage II
+                outcomes['mask_name'].extend(mask_name)
+                outcomes['iou_I'].extend(iou_batch_I)
+                outcomes['iou_II'].extend(iou_batch_II)
+                outcomes['dice_I'].extend(dice_batch_I)
+                outcomes['dice_II'].extend(dice_batch_II)
+        outcomes = pd.DataFrame(outcomes)
+        outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_{self.checkpoint_name}.csv'), index=False)
+        return outcomes
     
     
     def test_step(self, batch):
@@ -272,8 +309,8 @@ class Reflow_ControlLDM(object):
             # normalize Rs
             Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
             zt = Rs
-            eular_steps = [999, 749, 499, 249]
-            #eular_steps = [999,899,799,699,599,499,399,299,199,99]
+            # eular_steps = [999, 749, 499, 249]
+            eular_steps = [999,899,799,699,599,499,399,299,199,99]
             for i, step in enumerate(eular_steps):
                 ts = torch.ones(B, device=self.device) * step
                 if self.diffusion_version == 'v1':
@@ -443,49 +480,13 @@ class Reflow_ControlLDM(object):
 
 
 
-def mix_images_with_sdfs(images, usdfs, alpha_heatmap=0.5, colormap='jet'):
-    """
-    Mixes images with unsigned distance functions (USDFs) using a specified colormap and alpha blending.
-    Args:
-        images (torch.Tensor): A batch of images with shape (N, C, H, W).
-        usdfs (torch.Tensor): A batch of unsigned SDFs with shape (N, 1, H, W).
-        alpha_heatmap (float, optional): The blending factor for the heatmap overlay. Default is 0.5.
-        colormap (str, optional): The colormap to use for the SDFs. Default is 'jet'.
-    Returns:
-        numpy.ndarray: The resulting images with the SDF heatmap overlay, with shape (N, H, W, C).
-    """
 
-    cmap = matplotlib.colormaps.get_cmap(colormap)
-    images = images.permute(0, 2, 3, 1).cpu().numpy()
-    usdfs = usdfs.squeeze(1).cpu().numpy()
-    
-    # normalize usdfs
-    mim_usdfs = np.min(usdfs, axis=(1, 2), keepdims=True)
-    max_usdfs = np.max(usdfs, axis=(1, 2), keepdims=True)
-    nonzero_max = (max_usdfs > 0).astype('float32')
-    max_usdfs = np.where(max_usdfs > 0, max_usdfs, 1e-6)
-    usdfs = nonzero_max * (usdfs - mim_usdfs) / (max_usdfs - mim_usdfs)
-    
-    rgb_heatmaps_np = cmap(usdfs)[..., :3]
-    overlayed_images = (1 - alpha_heatmap) * images + alpha_heatmap * rgb_heatmaps_np
-    return np.clip(overlayed_images, a_min=0., a_max=1.)
+        
+
+
     
     
-def save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, vis_path):
-    num_examples = mixed_img_predits_I.shape[0]
-    for i in range(num_examples):
-        fig, ax = plt.subplots(1, 3, figsize=(10, 5))
-        ax[0].imshow(mixed_img_predits_I[i])
-        ax[0].axis('off')
-        ax[0].set_title('Predictions I')   
-        ax[1].imshow(mixed_img_predits_II[i])
-        ax[1].axis('off')
-        ax[1].set_title('Predictions II')   
-        ax[2].imshow(mixed_img_gts[i])
-        ax[2].axis('off')
-        ax[2].set_title('Ground truths')   
-        plt.savefig(os.path.join(vis_path, mask_names[i]))
-        plt.close(fig)
+    
 
             
             

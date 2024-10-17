@@ -29,6 +29,8 @@ def parse_args():
     parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     parser.add_argument('--distribution_training', action="store_true", help='whether enable distribution training')
+    parser.add_argument('--load_checkpoint', action="store_true", help='whether to load checkpoint')
+    parser.add_argument('--test_type', type=str, default='test', help='whether to load checkpoint')
     return parser.parse_args()
 
 
@@ -84,6 +86,7 @@ if __name__ == '__main__':
                                 cfgs.trainer.learning_rate,
                                 device,
                                 cfgs.trainer.use_ema,
+                                cfgs.load_checkpoint,
                                 cfgs.trainer.checkpoint_name,
                                 cfgs.trainer.num_timesteps,
                                 cfgs.trainer.num_iterations,
@@ -99,7 +102,10 @@ if __name__ == '__main__':
     elif cfgs.task == 'inf':
         trainer.inference() # inference the results for visualization
     elif cfgs.task == 'test':
-        pass #TODO: implement test for quantitive evaluation 
+        outcomes = trainer.test(cfgs.test_type) # test the model on the test set /validation set
+        numeric_outcomes = outcomes.select_dtypes(include='number')
+        columns_means = numeric_outcomes.mean()
+        print(columns_means)
     else:
         raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
         
