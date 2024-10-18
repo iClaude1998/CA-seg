@@ -15,19 +15,22 @@ def load_clip_and_tokenizer(cfgs, device):
         model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
         resolution = model.visual.preprocess_cfg['size']
         tokenizer = open_clip.get_tokenizer('ViT-B-32')
-        model = CLIPLRP(CLIPWrapper(model, cfgs.outlayers), device)
+        default_imgsize = 224
+        model = CLIPLRP(CLIPWrapper(model, default_imgsize, cfgs.outlayers), device)
     elif cfgs.pretrain == "MedICaT":
         model, _ , preprocess = open_clip.create_model_and_transforms('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
         resolution = model.visual.preprocess_cfg['size']
         tokenizer = open_clip.get_tokenizer('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
-        model = CLIPLRP(CLIPWrapper(model, cfgs.outlayers), device)
+        default_imgsize = 448
+        model = CLIPLRP(CLIPWrapper(model, default_imgsize, cfgs.outlayers), device)
     elif cfgs.pretrain == "Pubmedclip":
         clip_model = torch.load("pretrained/PubMedCLIP_ViT32.pth")
         model, preprocess = clip.load("ViT-B/32", jit=False, download_root="pretrained/clips")
         model.load_state_dict(clip_model['state_dict'])
         resolution = model.visual.input_resolution
         tokenizer = clip.tokenize
-        model = PUBMEDCLIPLRP(PUBMEDCLIPWrapper(model, cfgs.outlayers), device)
+        default_imgsize = 224
+        model = PUBMEDCLIPLRP(PUBMEDCLIPWrapper(model, default_imgsize, cfgs.outlayers), device)
     return model, tokenizer, preprocess, resolution
 
 
