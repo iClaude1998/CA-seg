@@ -8,7 +8,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from typing import Any, Dict, Optional
 
-from .build_mask_transforms import build_usdf_transforms, build_mask_transforms
+from .build_mask_transforms import build_usdf_transforms, build_mask_transforms, refine_image_transforms
 
 
 class ISIC_seg(Dataset):
@@ -43,6 +43,7 @@ class ISIC_seg(Dataset):
         caps_file: Optional[str] = None,
         override_prompt: Optional[str] = None,
         zero_prompt: bool = False,
+        image_size=None
     ) -> None:
         super().__init__()
 
@@ -55,6 +56,9 @@ class ISIC_seg(Dataset):
 
         self.zero_prompt = zero_prompt
         self.override_prompt = override_prompt
+        if image_size is not None and image_size != image_resolution:
+            image_resolution = image_size
+            self.preprocess = refine_image_transforms(self.preprocess, image_resolution)
         self.mask_transforms = build_mask_transforms(image_resolution)
         self.usdf_transforms = build_usdf_transforms(image_resolution)
 

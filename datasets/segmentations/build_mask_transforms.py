@@ -4,6 +4,19 @@ import torchvision.transforms as T
 from torchvision.transforms import InterpolationMode
 
 
+def refine_image_transforms(preprocess, image_resolution):
+    
+    new_preprocess = []
+    for transfrom in preprocess.transforms:
+        if isinstance(transfrom, T.Resize):
+            new_preprocess.append(T.Resize(image_resolution, interpolation=InterpolationMode.BICUBIC, antialias=True))
+        elif isinstance(transfrom, T.CenterCrop):
+            new_preprocess.append(T.CenterCrop(image_resolution))
+        else:
+            new_preprocess.append(transfrom)
+
+    return T.Compose(new_preprocess)
+
 
 def build_usdf_transforms(image_resolution):
     return T.Compose([

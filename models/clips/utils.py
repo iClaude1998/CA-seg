@@ -6,6 +6,7 @@ import cv2
 import torch
 import numpy as np
 
+from torch import nn
 from enum import Enum
 from PIL import Image
 from typing import Union
@@ -285,3 +286,37 @@ def text_global_pool(x, text: Optional[torch.Tensor] = None, pool_type: str = 'a
         pooled = tokens = x
 
     return pooled, tokens
+
+
+def interpolate_position_embeddings(position_embedding, new_size):
+    """
+    Interpolates the position embeddings to a new size. which is used to adapt various image sizes.
+    HINT: for ViT-B/16 performance decreases for images larger than 350 pixels
+    Args:
+        position_embedding (torch.Tensor): The original position embeddings of shape (num_tokens, hidden_size).
+        new_size (tuple of int): The new size to interpolate the position embeddings to. Should consist of 2 values.
+    Returns:
+        torch.Tensor: The interpolated position embeddings of shape (new_num_tokens, hidden_size).
+    Raises:
+        ValueError: If `new_size` does not consist of 2 values.
+    """
+    
+    #for ViT-B/16 performance only decreases for images larger than 350 pixels
+    num_tokens, hidden_size = position_embedding.shape
+    num_patches = num_tokens - 1
+    if len(new_size) != 2:
+        raise ValueError("new_size should consist of 2 values")
+
+    num_patches_one_direction = int(num_patches**0.5)
+    # we interpolate the position embeddings in 2D
+    a = position_embedding[1:].T.view(1, hidden_size, num_patches_one_direction, num_patches_one_direction)
+    b = (
+        nn.functional.interpolate(a, new_size, mode="bicubic", align_corners=False)
+        .squeeze(0)
+        .view(hidden_size, new_size[0] * new_size[1])
+        .T
+    )
+    # cat [CLS_pos, other_pos]
+    result = torch.cat([position_embedding[:1], b])
+
+    return result

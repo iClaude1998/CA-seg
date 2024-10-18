@@ -1,3 +1,4 @@
+import math 
 import torch
 import numpy as np
 import torch.nn.functional as F
@@ -5,6 +6,7 @@ import torch.nn.functional as F
 from torch import nn
 from typing import Optional
 from .auxilary import MultiheadAttention
+from .utils import interpolate_position_embeddings
 
 
 class CustomVisionRLPBlock(nn.Module):
@@ -65,7 +67,7 @@ class CustomTransformer(nn.Module):
 class CustomVisionTransformer(nn.Module):
     """A customized VisionTransformer to support CAM calculation."""
 
-    def __init__(self, model, output_layers=[2, 5, 8, 11]):
+    def __init__(self, model, default_imgsize, output_layers=[2, 5, 8, 11]):
         """Initialize the wrapper.
 
         Args:
@@ -74,8 +76,9 @@ class CustomVisionTransformer(nn.Module):
         super().__init__()
         for k, v in vars(model).items():
             setattr(self, k, v)
-        self.patch_size = self.conv1.weight[0]
+        patch_size = self.conv1.weight.shape[-1]
         self.transformer = CustomTransformer(self.transformer, output_layers)
+        self.default_num_patches = (default_imgsize // patch_size) ** 2
 
     def _patch_embed(self, x):
 
@@ -85,8 +88,14 @@ class CustomVisionTransformer(nn.Module):
         return x
 
     def _pos_embed(self, x):
-        x = torch.cat([self.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device), x], dim=1)  # shape = [*, grid ** 2 + 1, width]
-        x = x + self.positional_embedding.to(x.dtype)
+        num_patches = x.shape[1]
+        x = torch.cat([self.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device), x], dim=1) 
+        if self.default_num_patches != num_patches:
+            new_size = int(math.sqrt(num_patches))
+            positional_embedding = interpolate_position_embeddings(self.positional_embedding, 2*(new_size,)).to(x.dtype)
+        else:
+            positional_embedding = self.positional_embedding.to(x.dtype)# shape = [*, grid ** 2 + 1, width]
+        x = x + positional_embedding
         return x
 
     def forward_features(self, x):
@@ -127,7 +136,7 @@ class CustomVisionTransformer(nn.Module):
 class PUBMEDCLIPWrapper(nn.Module):
     """A wrapper for CLIP to support forward with a list of text inputs."""
 
-    def __init__(self, clip_model, outlayers=[2, 5, 8, 11]):
+    def __init__(self, clip_model, default_imgsize, outlayers=[2, 5, 8, 11]):
         """Initialize the wrapper.
 
         Args:
@@ -137,7 +146,7 @@ class PUBMEDCLIPWrapper(nn.Module):
         # copy all attributes from clip_model to self
         for k, v in vars(clip_model).items():
             setattr(self, k, v)
-        self.visual = CustomVisionTransformer(self.visual, outlayers)
+        self.visual = CustomVisionTransformer(self.visual, default_imgsize, outlayers)
         
 
     @property
