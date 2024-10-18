@@ -15,6 +15,7 @@ def build_isic_dataset(config, preprocessors):
                     config.sdf_dir,
                     config.caps_file, 
                     config.override_prompt, 
-                    config.zero_prompt)
+                    config.zero_prompt,
+                    image_size=tuple(config.image_size))
     
 

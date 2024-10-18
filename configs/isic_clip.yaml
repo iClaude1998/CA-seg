@@ -10,6 +10,9 @@ datasets:
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/train.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/train.json"
+    image_size: &size
+      - 224
+      - 224
     override_prompt:
     zero_prompt: False
   val:
@@ -22,6 +25,7 @@ datasets:
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/val.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/val.json"
+    image_size: *size
     override_prompt:
     zero_prompt: False
   test:
@@ -34,6 +38,7 @@ datasets:
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/test.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/test.json"
+    image_size: *size
     override_prompt:
     zero_prompt: False
 
