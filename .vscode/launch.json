@@ -1,6 +1,5 @@
 // dummy.py
 
-<<<<<<< HEAD
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -28,35 +27,6 @@
         }
     ]
 }
-=======
-// {
-//     // Use IntelliSense to learn about possible attributes.
-//     // Hover to view descriptions of existing attributes.
-//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-//     "version": "0.2.0",
-//     "configurations": [
-//         {
-//             "name": "Python Debugger: Current File",
-//             "type": "debugpy",
-//             "request": "launch",
-//             "program": "${file}",
-//             "console": "integratedTerminal",
-//             "justMyCode": false,
-//             "env": {"CUDA_VISIBLE_DEVICES": "1",
-//                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-//                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",
-//                     },
-//             "args": ["--task", "rlp",
-//                      "--vis_layer", "11",
-//                      "--config", "configs/isic_clipcam_flow.yaml", 
-//                      "--exp_name", "debug", 
-//                      "--device", "cuda",
-//                      "--run_diffusion"]
-//         }
-//     ]
-// }
->>>>>>> b2c4bc8d2cd815790904fb175fac8c01c8396cfc
 
 
 // train
@@ -116,29 +86,29 @@
 
 
 // inference
-{
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "env": {"CUDA_VISIBLE_DEVICES": "1",
-                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-            "args": ["--task", "test",
-                     "--config", "configs/isic_clip_attention.yaml", 
-                     "--exp_name", "imageattndiffPub", 
-                     "--device", "cuda",
-                     "--test_type", "test",
-                     "--load_checkpoint"]
-        }
-    ]
-}
+// {
+//     // Use IntelliSense to learn about possible attributes.
+//     // Hover to view descriptions of existing attributes.
+//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "Python Debugger: Current File",
+//             "type": "debugpy",
+//             "request": "launch",
+//             "program": "${file}",
+//             "console": "integratedTerminal",
+//             "justMyCode": false,
+//             "env": {"CUDA_VISIBLE_DEVICES": "1",
+//                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
+//                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
+//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
+//             "args": ["--task", "test",
+//                      "--config", "configs/isic_clip_attention.yaml", 
+//                      "--exp_name", "imageattndiffPub", 
+//                      "--device", "cuda",
+//                      "--test_type", "test",
+//                      "--load_checkpoint"]
+//         }
+//     ]
+// }
