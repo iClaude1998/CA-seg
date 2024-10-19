@@ -71,6 +71,7 @@ model:
     use_new_attention_order: False
 
 trainer:
+  gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False

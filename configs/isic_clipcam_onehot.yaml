@@ -10,6 +10,9 @@ datasets:
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/train.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/train.json"
+    image_size: &size
+      - 224
+      - 224
     override_prompt:
     zero_prompt: False
   val:
@@ -22,6 +25,7 @@ datasets:
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/val.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/val.json"
+    image_size: *size
     override_prompt:
     zero_prompt: False
   test:
@@ -34,6 +38,7 @@ datasets:
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/test.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/test.json"
+    image_size: *size
     override_prompt:
     zero_prompt: False
 
@@ -45,27 +50,26 @@ model:
       - 7
       - 11
   diffusion:
-    version: "v1"
+    version: "v2"
     image_size: 224
     in_channels: 1    # 1 for CAM input only and image input only as condition
     num_channels: 128
     out_channels: 1
+    channels_clip: 512
     num_res_blocks: 2
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
-    num_classes: # set None for avoid label embeddings (why we have it, strange ???)
     use_checkpoint: False
     use_fp16: False
     num_heads: 1
     num_head_channels: -1
     num_heads_upsample: -1
     use_scale_shift_norm: -1
-    resblock_updown: False
-    use_new_attention_order: False
+    clip_allignment: # set to None, linear or linear_gelu 
 
 trainer:
-  gt_type: "sdf_map" # sdf_map, mask
+  gt_type: "mask" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False

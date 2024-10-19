@@ -84,6 +84,7 @@ if __name__ == '__main__':
                                 diffusion_model,
                                 dataloader_pakages,
                                 cfgs.trainer.learning_rate,
+                                cfgs.trainer.gt_type,
                                 device,
                                 cfgs.trainer.use_ema,
                                 cfgs.load_checkpoint,
