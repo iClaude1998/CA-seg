@@ -321,12 +321,12 @@ def process_checkpoints(checkpoint):
     return checkpoint
 
 
-def mix_images_with_sdfs(images, usdfs, alpha_heatmap=0.5, colormap='jet'):
+def mix_images_with_masks(images, masks, alpha_heatmap=0.5, colormap='jet'):
     """
     Mixes images with unsigned distance functions (USDFs) using a specified colormap and alpha blending.
     Args:
         images (torch.Tensor): A batch of images with shape (N, C, H, W).
-        usdfs (torch.Tensor): A batch of unsigned SDFs with shape (N, 1, H, W).
+        masks (torch.Tensor): A batch of masks with shape (N, 1, H, W).
         alpha_heatmap (float, optional): The blending factor for the heatmap overlay. Default is 0.5.
         colormap (str, optional): The colormap to use for the SDFs. Default is 'jet'.
     Returns:
@@ -335,21 +335,23 @@ def mix_images_with_sdfs(images, usdfs, alpha_heatmap=0.5, colormap='jet'):
 
     cmap = matplotlib.colormaps.get_cmap(colormap)
     images = images.permute(0, 2, 3, 1).cpu().numpy()
-    usdfs = usdfs.squeeze(1).cpu().numpy()
+    masks = masks.squeeze(1).cpu().numpy()
     
-    # normalize usdfs
-    usdfs = min_max_normalize(usdfs)
+    # normalize masks
+    masks = min_max_normalize(masks)
     
-    rgb_heatmaps_np = cmap(usdfs)[..., :3]
+    rgb_heatmaps_np = cmap(masks)[..., :3]
     overlayed_images = (1 - alpha_heatmap) * images + alpha_heatmap * rgb_heatmaps_np
     return np.clip(overlayed_images, a_min=0., a_max=1.)
 
 
-def compute_metrics(preds, gts, mask_name, metric, thresh=126):
+def compute_metrics(preds, gts, mask_name, metric, thresh=126, gt_type='sdf_map'):
     preds = preds.squeeze(1).cpu().numpy()
     gts = gts.squeeze(1).cpu().numpy()
     preds = min_max_normalize(preds)
     gts = min_max_normalize(gts)
+    if gt_type == 'mask':
+        thresh = 127
     
     preds = (255 * preds >= thresh)
     gts = (255 * gts >= 1)
