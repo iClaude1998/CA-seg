@@ -9,14 +9,10 @@ datasets:
     masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
     sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/train.json"
-<<<<<<< HEAD
-    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/train.json"
-=======
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/train.json"
     image_size: &size
       - 224
       - 224
->>>>>>> 2d743107e60cf69d2da551123c72a519f44c60ad
     override_prompt:
     zero_prompt: False
   val:
@@ -28,12 +24,8 @@ datasets:
     masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
     sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/val.json"
-<<<<<<< HEAD
-    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/val.json"
-=======
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/val.json"
     image_size: *size
->>>>>>> 2d743107e60cf69d2da551123c72a519f44c60ad
     override_prompt:
     zero_prompt: False
   test:
@@ -45,12 +37,8 @@ datasets:
     masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
     sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/test.json"
-<<<<<<< HEAD
-    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/test.json"
-=======
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/test.json"
     image_size: *size
->>>>>>> 2d743107e60cf69d2da551123c72a519f44c60ad
     override_prompt:
     zero_prompt: False
 
