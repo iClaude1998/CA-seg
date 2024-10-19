@@ -1,11 +1,8 @@
 import os
-import io
 import torch
 import wandb 
 import random
 import logging
-import matplotlib
-import numpy as np
 import torchvision
 import pandas as pd
 
@@ -13,18 +10,15 @@ import torch.nn as nn
 
 from tqdm import tqdm
 from torch.optim import AdamW
-from torch.backends import cudnn
 from torchvision import transforms
 from torch.nn import functional as F
-from matplotlib import pyplot as plt
 from contextlib import contextmanager
 from collections import defaultdict as dedict
 from torch.utils.tensorboard import SummaryWriter
 
-from accelerate import Accelerator, DistributedDataParallelKwargs
 
 from models.diffusion import LitEma
-from utils import process_Relevant_score_batch, process_checkpoints, mix_images_with_sdfs, save_batch, compute_metrics
+from utils import process_Relevant_score_batch, process_checkpoints, mix_images_with_masks, save_batch, compute_metrics
 
 
 to_pil = transforms.ToPILImage()
@@ -40,6 +34,7 @@ class Reflow_ControlLDM(object):
         diffusion_model,
         dataloaders,
         learning_rate,
+        gt_type='sdf_map',
         device='cuda',
         use_ema=False,
         load_checkpoint=False,
@@ -58,9 +53,9 @@ class Reflow_ControlLDM(object):
         self.clip_model = clip_model
         self.diffusion_model = diffusion_model
         self.learning_rate = learning_rate
+        self.gt_type = gt_type
         self.log_method = log_method
         self.criterion = nn.MSELoss(reduction='mean')
-        
         self.device = device
         self.use_ema = use_ema
         self.start_iteration = 0
@@ -219,8 +214,8 @@ class Reflow_ControlLDM(object):
     
     def training_step(self, batch):
        
-        images, text_ids, sdf_map = self.get_input(batch)
-        B = sdf_map.shape[0]
+        images, text_ids, gt = self.get_input(batch)
+        B = gt.shape[0]
         # zT = torch.randn_like(sdf_map, device=self.device)
         Rs, intermediate = self.clip_model(images, text_ids)
         R_h = int(Rs[0].numel() ** 0.5)
@@ -235,14 +230,14 @@ class Reflow_ControlLDM(object):
         t_norm = t_norm.view(B ,1, 1, 1)
 
         # TODO: add noise maybe, (hope not)
-        zt = t_norm * Rs + (1 - t_norm) * sdf_map
+        zt = t_norm * Rs + (1 - t_norm) * gt
         
         if self.diffusion_version == 'v1':
             x = torch.cat([images, zt], dim=1)
             v = self.diffusion_model(x, t, y=None)
         elif self.diffusion_version == 'v2':
             v = self.diffusion_model(zt, t, intermediate.detach())
-        loss_mse = self.criterion(sdf_map - Rs, v)
+        loss_mse = self.criterion(gt - Rs, v)
       
         return loss_mse   #+loss_perc
 
@@ -254,13 +249,13 @@ class Reflow_ControlLDM(object):
         for batch in tqdm(self.test_dataloader):
             vts, Rs = self.test_step(batch)
             images = batch['pixel_values']
-            usdf_gts = batch['sdf_map']
+            gts = batch[self.gt_type]
             mask_names = batch['mask_name']
             # gt -> [B, H, W, C]
             with torch.no_grad():
-                mixed_img_predits_I = mix_images_with_sdfs(images, Rs)
-                mixed_img_predits_II = mix_images_with_sdfs(images, vts)
-                mixed_img_gts = mix_images_with_sdfs(images, usdf_gts) 
+                mixed_img_predits_I = mix_images_with_masks(images, Rs)
+                mixed_img_predits_II = mix_images_with_masks(images, vts)
+                mixed_img_gts = mix_images_with_masks(images, gts) 
                 
                 save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
     
@@ -279,13 +274,13 @@ class Reflow_ControlLDM(object):
         for batch in tqdm(dl):
             vts, Rs = self.test_step(batch)
             mask_name = batch['mask_name']
-            usdf_gts = batch['sdf_map']
+            gts = batch[self.gt_type]
             with torch.no_grad():
-                iou_batch_I = compute_metrics(Rs, usdf_gts, mask_name, metric='iou', thresh=66) # stage I
-                iou_batch_II = compute_metrics(vts, usdf_gts, mask_name, metric='iou', thresh=33) # stage II
+                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=66, gt_type=self.gt_type) # stage I
+                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
                 
-                dice_batch_I = compute_metrics(Rs, usdf_gts, mask_name, metric='dice', thresh=66) # stage I
-                dice_batch_II = compute_metrics(vts, usdf_gts, mask_name, metric='dice', thresh=33) # stage II
+                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=66, gt_type=self.gt_type) # stage I
+                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
                 outcomes['mask_name'].extend(mask_name)
                 outcomes['iou_I'].extend(iou_batch_I)
                 outcomes['iou_II'].extend(iou_batch_II)
@@ -298,8 +293,8 @@ class Reflow_ControlLDM(object):
     
     def test_step(self, batch):
 
-        images, text_ids, sdf_map = self.get_input(batch)
-        B = sdf_map.shape[0]
+        images, text_ids, gt = self.get_input(batch)
+        B = gt.shape[0]
         Rs, intermediate = self.clip_model(images, text_ids)
         with torch.no_grad():
             R_h = int(Rs[0].numel() ** 0.5)
@@ -416,12 +411,12 @@ class Reflow_ControlLDM(object):
         if self.accelerator is not None:
             image = batch['pixel_values']
             text_ids = batch['input_ids']
-            sdf_map = batch['sdf_map']
+            gt = batch[self.gt_type]
         else:
             image = batch['pixel_values'].to(self.device)
             text_ids = batch['input_ids'].to(self.device)
-            sdf_map = batch['sdf_map'].to(self.device)
-        return image, text_ids, sdf_map
+            gt = batch[self.gt_type].to(self.device)
+        return image, text_ids, gt
 
 
     def configure_optimizers(self):
@@ -462,10 +457,10 @@ class Reflow_ControlLDM(object):
     def visualize(self, vts, random_batch, step):
         # it is move effectively
         images = random_batch['pixel_values']
-        usdf_gts = random_batch['sdf_map']
+        gts = random_batch[self.gt_type]
         # gt -> [B, H, W, C]
-        mixed_img_gts = mix_images_with_sdfs(images, usdf_gts) 
-        mixed_img_predits = mix_images_with_sdfs(images, vts)
+        mixed_img_gts = mix_images_with_masks(images, gts) 
+        mixed_img_predits = mix_images_with_masks(images, vts)
         if self.log_method == "wandb":
             wandb.log({f"Predictions on iter {step}": [wandb.Image(img, caption=f"predictions {i}") for i, img in enumerate(mixed_img_predits)]})
             wandb.log({f"GTs on iter {step}": [wandb.Image(img, caption=f"gts {i}") for i, img in enumerate(mixed_img_gts)]})
