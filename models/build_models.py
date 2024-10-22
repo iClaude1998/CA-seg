@@ -37,7 +37,7 @@ def load_clip_and_tokenizer(cfgs, device):
 
 def create_diffusion(cfgs):
     if cfgs.channel_mult == "":
-        if cfgs.image_size == 512 or cfgs.image_size == 256 or cfgs.image_size == 224:
+        if cfgs.image_size >= 224:
             channel_mult = (1, 1, 2, 2, 4, 4)
         elif cfgs.image_size == 128:
             channel_mult = (1, 1, 2, 3, 4)
