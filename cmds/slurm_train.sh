@@ -1,9 +1,12 @@
 #!/bin/bash
 # Configure the resources required
+#SBATCH --job-name=dadofsyy # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
-#SBATCH -c 32                # number of cores (sequential job calls a multi-thread program that uses 8 cores)
-#SBATCH --time=2-00:00:00         # time allocation, which has the format (D-HH:MM), here set to 1 hour
+#SBATCH --ntasks=4          # number of tasks (multi-thread job starts 4 tasks)
+#SBATCH --mem=24G              # memory required by the job (if above 64G, use --mem=128G)
+#SBATCH -c 8                # number of cores (sequential job calls a multi-thread program that uses 8 cores)
+#SBATCH --time=1-00:00:00         # time allocation, which has the format (D-HH:MM), here set to 1 hour
 #SBATCH --gres=gpu:4            # generic resource required (here requires 4 GPUs)
 
 # Configure notifications
@@ -11,6 +14,7 @@
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=yunxiang.liu@adelaide.edu.au
 
+module load NCCL/2.12.12-GCCcore-11.2.0-CUDA-11.6.2
 module load CUDA/11.8.0
 module load cuDNN/8.6.0.163-CUDA-11.8.0
 
@@ -32,4 +36,15 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-accelerate launch --multi-gpu --num_processes=4 --num_machines=1 --mixed-precision=no --dynamo_backend=no main.py --task train --exp_name imageflow16 --config configs/isic_clip.yaml --distribution_training
+accelerate launch --multi-gpu \
+                  --main_process_ip=$MASTER_ADDR \
+                  --main_process_port=$MASTER_PORT \
+                  --num_processes=4 \
+                  --num_machines=1 \
+                  --mixed-precision=no \
+                  --dynamo_backend=no \
+                   main.py --task train \
+                   --exp_name flow_with_clip \
+                   --config configs/isic_clipcam_flow.yaml \
+                   --num_workers 4 \
+                   --distribution_training
