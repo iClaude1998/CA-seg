@@ -203,10 +203,16 @@ class PUBMEDCLIPWrapper(nn.Module):
     
     
 class PUBMEDCLIPLRP:
+    
     def __init__(self, clip_model, device):
         self.device = device
         self.clip_model = clip_model.to(device)
         self.clip_model.eval()
+        
+    def to(self, device):
+        self.clip_model = self.clip_model.to(device)
+        self.device = device
+        
     
     
     def to(self, device):

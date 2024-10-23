@@ -26,6 +26,7 @@ def parse_args():
     parser = ArgumentParser(description='Reflow')
     parser.add_argument('--task', type=str, default='train', help='the task to performs', choices=['train', 'inf', 'test'])
     parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
+    parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
     parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     parser.add_argument('--distribution_training', action="store_true", help='whether enable distribution training')
@@ -70,7 +71,7 @@ if __name__ == '__main__':
     val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution])
     test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution])
     
-    train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, shuffle=True)
+    train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
     val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
     test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
     

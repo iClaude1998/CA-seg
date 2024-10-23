@@ -1,0 +1,128 @@
+
+The following have been reloaded with a version change:
+  1) CUDA/11.6.2 => CUDA/11.8.0
+
+# conda environments:
+#
+base                     /home/a1233646/miniconda3
+MA_detection             /hpcfs/users/a1233646/myconda/envs/MA_detection
+clipflow              *  /hpcfs/users/a1233646/myconda/envs/clipflow
+
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2022 NVIDIA Corporation
+Built on Wed_Sep_21_10:33:58_PDT_2022
+Cuda compilation tools, release 11.8, V11.8.89
+Build cuda_11.8.r11.8/compiler.31833905_0
+NODELIST=p2-gpu-13
+MASTER_ADDR=p2-gpu-13-ib
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myprojects/clipflow2/main.py", line 13, in <module>
+  File "/hpcfs/users/a1233646/myprojects/clipflow2/main.py", line 13, in <module>
+  File "/hpcfs/users/a1233646/myprojects/clipflow2/trainer.py", line 3, in <module>
+  File "/hpcfs/users/a1233646/myprojects/clipflow2/trainer.py", line 3, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myprojects/clipflow2/main.py", line 13, in <module>
+  File "<frozen importlib._bootstrap_external>", line 1016, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1016, in get_code
+  File "/hpcfs/users/a1233646/myprojects/clipflow2/main.py", line 13, in <module>
+  File "<frozen importlib._bootstrap_external>", line 1073, in get_data
+  File "<frozen importlib._bootstrap_external>", line 1073, in get_data
+  File "/hpcfs/users/a1233646/myprojects/clipflow2/trainer.py", line 3, in <module>
+  File "/hpcfs/users/a1233646/myprojects/clipflow2/trainer.py", line 3, in <module>
+BrokenPipeErrorBrokenPipeError: : [Errno 108] Cannot send after transport endpoint shutdown: '/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/wandb/__init__.py'[Errno 108] Cannot send after transport endpoint shutdown: '/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/wandb/__init__.py'ModuleNotFoundError
+
+: ModuleNotFoundErrorNo module named 'wandb': 
+No module named 'wandb'
+Exception ignored in atexit callbackException ignored in atexit callback: Exception ignored in atexit callback: Exception ignored in atexit callback<function dump_compile_times at 0x7f680c8dae60>: <function dump_compile_times at 0x7f9747a1ae60>: 
+<function dump_compile_times at 0x7faf616fee60>
+<function dump_compile_times at 0x7f29cf3f2e60>Traceback (most recent call last):
+
+Traceback (most recent call last):
+
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 247, in dump_compile_times
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 247, in dump_compile_times
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 247, in dump_compile_times
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 247, in dump_compile_times
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 234, in compile_times
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 234, in compile_times
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 234, in compile_times
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 234, in compile_times
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 86, in tabulate
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 86, in tabulate
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 86, in tabulate
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/_dynamo/utils.py", line 86, in tabulate
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1016, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1016, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1016, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1016, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1073, in get_data
+  File "<frozen importlib._bootstrap_external>", line 1073, in get_data
+  File "<frozen importlib._bootstrap_external>", line 1073, in get_data
+  File "<frozen importlib._bootstrap_external>", line 1073, in get_data
+BrokenPipeError: [Errno 108] Cannot send after transport endpoint shutdown: '/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/tabulate/__init__.py'
+BrokenPipeErrorBrokenPipeError: : BrokenPipeError[Errno 108] Cannot send after transport endpoint shutdown: '/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/tabulate/__init__.py'[Errno 108] Cannot send after transport endpoint shutdown: '/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/tabulate/__init__.py': 
+
+[Errno 108] Cannot send after transport endpoint shutdown: '/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/tabulate/__init__.py'
+[2024-10-23 11:44:25,777] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 4062501 closing signal SIGTERM
+[2024-10-23 11:44:25,778] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 4062502 closing signal SIGTERM
+[2024-10-23 11:44:25,778] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 4062503 closing signal SIGTERM
+[2024-10-23 11:44:25,793] torch.distributed.elastic.multiprocessing.api: [ERROR] failed (exitcode: -7) local_rank: 0 (pid: 4062500) of binary: /hpcfs/users/a1233646/myconda/envs/clipflow/bin/python
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/bin/accelerate", line 8, in <module>
+    sys.exit(main())
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/accelerate_cli.py", line 48, in main
+    args.func(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/launch.py", line 1165, in launch_command
+    multi_gpu_launcher(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/launch.py", line 799, in multi_gpu_launcher
+    distrib_run.run(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/run.py", line 797, in run
+    elastic_launch(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 134, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 264, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+=======================================================
+main.py FAILED
+-------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+-------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2024-10-23_11:44:25
+  host      : p2-gpu-13.hpc.adelaide.edu.au
+  rank      : 0 (local_rank: 0)
+  exitcode  : -7 (pid: 4062500)
+  error_file: <N/A>
+  traceback : Signal 7 (SIGBUS) received by PID 4062500
+=======================================================

@@ -229,6 +229,7 @@ class CLIPWrapper(nn.Module):
 
 
 class CLIPLRP:
+    
     def __init__(self, clip_model, device):
         self.device = device
         self.clip_model = clip_model.to(device)
