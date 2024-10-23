@@ -50,7 +50,7 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/isic_clipcam_highres.yaml", 
+                     "--config", "configs/flow_noise.yaml", 
                      "--exp_name", "debug", 
                      "--device", "cuda"]
         }

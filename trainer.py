@@ -43,8 +43,11 @@ class Reflow_ControlLDM(object):
         num_iterations=100000,
         save_interval=100,
         accelerator=None,
-        log_method='wandb'
+        log_method='wandb',
+        start_point="LRP"
     ):
+        if start_point == 'guassian':
+            assert diffusion_version == 'v1', "Only support v1 version when start_point is guassian"
         # instantiate control module
         self.diffusion_version = diffusion_version
         self.exp_name = exp_name
@@ -59,6 +62,7 @@ class Reflow_ControlLDM(object):
         self.device = device
         self.use_ema = use_ema
         self.start_iteration = 0
+        self.start_point = start_point
         
         self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
         self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
@@ -217,13 +221,18 @@ class Reflow_ControlLDM(object):
         images, text_ids, gt = self.get_input(batch)
         B = gt.shape[0]
         # zT = torch.randn_like(sdf_map, device=self.device)
-        Rs, intermediate = self.clip_model(images, text_ids)
-        R_h = int(Rs[0].numel() ** 0.5)
-        Rs = Rs.view(B, 1, R_h, R_h)
-        Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-        
-        # normalize Rs
-        Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+        if self.start_point == "LRP":
+            Rs, intermediate = self.clip_model(images, text_ids)
+            R_h = int(Rs[0].numel() ** 0.5)
+            Rs = Rs.view(B, 1, R_h, R_h)
+            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+            
+            # normalize Rs
+            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+        elif self.start_point == "guassian":
+            Rs = torch.randn_like(images[:, 0:1], device=self.device)
+        else:
+            raise ValueError(f"Unsupported start_point: {self.start_point}")
         
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
         t_norm = t.float() / (self.num_timesteps - 1)
@@ -295,17 +304,24 @@ class Reflow_ControlLDM(object):
 
         images, text_ids, gt = self.get_input(batch)
         B = gt.shape[0]
-        Rs, intermediate = self.clip_model(images, text_ids)
+        if self.start_point == "LRP":
+            Rs, intermediate = self.clip_model(images, text_ids)
+        elif self.start_point == "guassian":
+            Rs = torch.randn_like(images[:, 0:1], device=self.device)
+        else:
+            raise ValueError(f"Unsupported start_point: {self.start_point}")
         with torch.no_grad():
-            R_h = int(Rs[0].numel() ** 0.5)
-            Rs = Rs.view(B, 1, R_h, R_h)
-            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-            
-            # normalize Rs
-            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+            if self.start_point == "LRP":
+                R_h = int(Rs[0].numel() ** 0.5)
+                Rs = Rs.view(B, 1, R_h, R_h)
+                Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+                
+                # normalize Rs
+                Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
             zt = Rs
-            # eular_steps = [999, 749, 499, 249]
-            eular_steps = [999,899,799,699,599,499,399,299,199,99]
+            eular_steps = [999, 749, 499, 249]
+            # eular_steps = [999,899,799,699,599,499,399,299,199,99]
+            # eular_steps = list(range(1000))[::-1]
             for i, step in enumerate(eular_steps):
                 ts = torch.ones(B, device=self.device) * step
                 if self.diffusion_version == 'v1':

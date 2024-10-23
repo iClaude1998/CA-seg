@@ -93,7 +93,8 @@ if __name__ == '__main__':
                                 cfgs.trainer.num_iterations,
                                 cfgs.trainer.save_interval,
                                 accelerator,
-                                cfgs.log_method)
+                                cfgs.log_method,
+                                cfgs.trainer.start_point)
     
     if cfgs.task == 'train':
         if cfgs.distribution_training:

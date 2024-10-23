@@ -14,4 +14,9 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 # done
 
 vis_layer=11
-python dummy.py --task cam --vis_layer ${vis_layer} --config configs/vis_cam.yaml --exp_name cam_test_${vis_layer} --device cuda --run_diffusion
+python dummy.py --task rlp \
+                --vis_layer ${vis_layer} \
+                --config configs/isic_clipcam_highres.yaml \
+                --exp_name cam_test_${vis_layer} \
+                --device cuda \
+                # --run_diffusion
