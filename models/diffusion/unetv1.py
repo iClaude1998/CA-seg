@@ -303,10 +303,11 @@ class UNetModel_v1preview(nn.Module):
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
 
+        # x = cat[images, zt]
         h = x.type(self.dtype)
         c = h[:,:-1,...]
         if self.in_channels == 1:
-            h = h[:, :1, ...]
+            h = h[:, -1:, ...]
         hlist= []
         for ind, module in enumerate(self.input_blocks):
             if len(emb.size()) > 2:

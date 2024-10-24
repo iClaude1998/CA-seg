@@ -1,8 +1,5 @@
 experiments/
 pretrained/
 wandb/
-__pycache__/
 .vscode/
-models/__pycache__/
-utils/__pycache__/
-models/diffusion/__pycache__/
+**/__pycache__/
