@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append('..')
 import torch
 import wandb 
 import random
@@ -11,6 +13,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from torch.optim import AdamW
 from torchvision import transforms
+from diffusers import DDPMScheduler
 from torch.nn import functional as F
 from contextlib import contextmanager
 from collections import defaultdict as dedict
@@ -23,7 +26,7 @@ from utils import process_Relevant_score_batch, process_checkpoints, mix_images_
 
 to_pil = transforms.ToPILImage()
 
-class Reflow_ControlLDM(object):
+class DDPM_Trainer(object):
     
     def __init__(
         self,
@@ -58,11 +61,12 @@ class Reflow_ControlLDM(object):
         self.learning_rate = learning_rate
         self.gt_type = gt_type
         self.log_method = log_method
-        self.criterion = nn.MSELoss(reduction='mean')
         self.device = device
         self.use_ema = use_ema
         self.start_iteration = 0
         self.start_point = start_point
+        self.criterion = nn.MSELoss(reduction='mean')
+        self.noise_schedule = DDPMScheduler(num_train_timesteps=num_timesteps)
         
         self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
         self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')

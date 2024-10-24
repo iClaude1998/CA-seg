@@ -12,6 +12,7 @@ datasets:
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/train.json"
     override_prompt:
     zero_prompt: False
+    image_size:
   val:
     name: "isic_seg"
     prompt_type: "p6"
@@ -24,6 +25,7 @@ datasets:
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/val.json"
     override_prompt:
     zero_prompt: False
+    image_size:
   test:
     name: "isic_seg"
     prompt_type: "p6"
@@ -36,6 +38,7 @@ datasets:
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/test.json"
     override_prompt:
     zero_prompt: False
+    image_size:
 
 model:
   clip:
