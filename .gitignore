@@ -3,3 +3,5 @@ pretrained/
 wandb/
 .vscode/
 **/__pycache__/
+pod_cmds/
+pheonix_cmds/
