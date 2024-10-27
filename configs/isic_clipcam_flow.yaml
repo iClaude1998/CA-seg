@@ -68,6 +68,7 @@ model:
     use_scale_shift_norm: -1
     clip_allignment: # set to None, linear or linear_gelu 
 
+
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
@@ -78,5 +79,7 @@ trainer:
   num_iterations: 100000
   save_interval: 100
   start_point: "LRP"
+  gradient_accumulation_steps: 1
+  clip_grads:
 
 log_method: "tensorboard" # wandb, tensorboard

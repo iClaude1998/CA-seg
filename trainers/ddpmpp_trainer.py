@@ -8,24 +8,25 @@ import logging
 import torchvision
 import pandas as pd
 
-import torch.nn as nn
-
 from tqdm import tqdm
 from torch.optim import AdamW
 from torchvision import transforms
 from torch.nn import functional as F
 from contextlib import contextmanager
+from torch.nn.utils import clip_grad_norm_
 from collections import defaultdict as dedict
 from torch.utils.tensorboard import SummaryWriter
 
-
 from models.diffusion import LitEma
+from custom_schedulers import create_ddpmpp_scheduler
 from utils import process_Relevant_score_batch, process_checkpoints, mix_images_with_masks, save_batch, compute_metrics
+
+SEED = 0
 
 
 to_pil = transforms.ToPILImage()
 
-class Reflow_Trainer(object):
+class DDPMPP_Trainer(object):
     
     def __init__(
         self,
@@ -46,10 +47,11 @@ class Reflow_Trainer(object):
         save_interval=100,
         accelerator=None,
         log_method='wandb',
-        start_point="LRP"
+        start_point="LRP",
+        clip_grads=None,
+        infer_algo='ddpm', # ddpm or ddim
+        
     ):
-        if start_point == 'guassian':
-            assert diffusion_version == 'v1', "Only support v1 version when start_point is guassian"
         # instantiate control module
         self.diffusion_version = diffusion_version
         self.exp_name = exp_name
@@ -60,16 +62,19 @@ class Reflow_Trainer(object):
         self.learning_rate = learning_rate
         self.gt_type = gt_type
         self.log_method = log_method
-        self.criterion = nn.MSELoss(reduction='mean')
         self.device = device
         self.use_ema = use_ema
         self.start_iteration = 0
         self.start_point = start_point
+        self.noise_scheduler = create_ddpmpp_scheduler(steps=num_timesteps, noise_scheduler='cosine', rescale_loss=True, )
+        self.clip_grads = clip_grads
         
         self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
         self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
         self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations') 
-        
+        self.generator = torch.Generator(device=self.device).manual_seed(SEED)
+        self.infer_algo = infer_algo
+
         # I have to seperate the branches
         if accelerator is None:
             self.create_output_dirs()
@@ -107,7 +112,7 @@ class Reflow_Trainer(object):
         os.makedirs(self.vis_path, exist_ok=True)
     
     
-    def train(self):
+    def train(self, gradient_accumulation_steps=1):
         
         if self.log_method == 'wandb':
             wandb.init(project='clipflow2', name=self.exp_name)
@@ -116,7 +121,6 @@ class Reflow_Trainer(object):
         data_iter = iter(self.train_dataloader)
         
         while (iter_id < self.num_iterations):
-
             try:
                 batch = next(data_iter)
             except StopIteration:
@@ -124,22 +128,31 @@ class Reflow_Trainer(object):
                 # reinitialize data loader
                 data_iter = iter(self.train_dataloader)
                 batch = next(data_iter)
-            loss_mse = self.training_step(batch)
+            loss_dict = self.training_step(batch)
+            loss = loss_dict["loss"].mean() / gradient_accumulation_steps
+            loss.backward()
             
-            self.optimizer.zero_grad()
-            loss_mse.backward()
-            self.optimizer.step()
+            if iter_id % gradient_accumulation_steps == 0:
+                if self.clip_grads is not None:
+                    clip_grad_norm_(self.diffusion_model.parameters(), self.clip_grads)
+                self.optimizer.step()
+                self.optimizer.zero_grad()
             
             if self.use_ema:
                 self.model_ema(self.model)
             
             if iter_id % self.save_interval == 0:
-                self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss_mse.item():.4f}')
+                mse, vb = loss_dict["mse"].mean().item(), loss_dict["vb"].mean().item()
+                self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss.item():.4f}, Loss MSE: {mse:.4f}, Loss vb: {vb:.4f}')
                 # log infos
                 if self.log_method == 'wandb':
-                    wandb.log({'Training Loss': loss_mse.detach().cpu().numpy(), 'iteration': iter_id})
+                    wandb.log({'Training Loss': loss.detach().cpu().numpy(), 'iteration': iter_id})
+                    wandb.log({'Loss MSE': mse, 'iteration': iter_id})
+                    wandb.log({'Loss vb': vb, 'iteration': iter_id})
                 elif self.log_method == 'tensorboard':
-                    self.writer.add_scalar('Training Loss', loss_mse.detach().cpu().numpy(), iter_id)
+                    self.writer.add_scalar('Training Loss', loss.detach().cpu().numpy(), iter_id)
+                    self.writer.add_scalar('Loss MSE', mse, iter_id)
+                    self.writer.add_scalar('Loss vb', vb, iter_id)
             
             if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
@@ -149,7 +162,7 @@ class Reflow_Trainer(object):
             iter_id += 1
         
         # let's do the last inference and log
-        self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss_mse.item():.4f}')
+        self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss.item():.4f}, Loss MSE: {loss_dict["mse"].item():.4f}, Loss vb: {loss_dict["vb"].item():.4f}')
         vts, random_batch = self.random_inference()
         self.visualize(vts, random_batch, iter_id)
         self.save_checkpoints(iter_id)
@@ -178,24 +191,31 @@ class Reflow_Trainer(object):
                 # reinitialize data loader
                 data_iter = iter(self.train_dataloader)
                 batch = next(data_iter)
-            loss_mse = self.training_step(batch)
-            
-            self.optimizer.zero_grad()
-            self.accelerator.backward(loss_mse)
-            self.optimizer.step()
+            with self.accelerator.accumulate(self.diffusion_model):
+                loss_dict = self.training_step(batch)
+                loss = loss_dict["loss"].mean()
+                self.accelerator.backward(loss)
+                if self.clip_grads is not None:
+                    self.accelerator.clip_grad_norm_(self.diffusion_model.parameters(), self.clip_grads)
+                self.optimizer.step()
+                self.optimizer.zero_grad()
             
             # gather loss from all processes for display
-            gathered_loss = self.accelerator.gather(loss_mse)
-            mean_loss = torch.mean(gathered_loss)
+            gathered_loss_dict = self.accelerator.gather(loss_dict)
+            mean_loss_dict =  {k: torch.mean(v).item() for k, v in gathered_loss_dict.items()}
             if self.use_ema:
                 self.model_ema(self.model)
             
             if iter_id % self.save_interval == 0 and self.accelerator.is_local_main_process:
-                self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
+                self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss_dict["loss"]:.4f}, Loss MSE: {mean_loss_dict["mse"]:.4f}, Loss vb: {mean_loss_dict["vb"]:.4f}')
                 if self.log_method == 'wandb':
-                    wandb.log({'Training Loss': mean_loss.detach().cpu().numpy(), 'iteration': iter_id})
+                    wandb.log({'Training Loss': mean_loss_dict['loss'], 'iteration': iter_id})
+                    wandb.log({'MSE': mean_loss_dict['mse'], 'iteration': iter_id})
+                    wandb.log({'VB': mean_loss_dict["vb"], 'iteration': iter_id})
                 elif self.log_method == 'tensorboard':
-                    self.writer.add_scalar('Training Loss', mean_loss.detach().cpu().numpy(), iter_id)
+                    self.writer.add_scalar('Training Loss', mean_loss_dict['loss'], iter_id)
+                    self.writer.add_scalar('MSE', mean_loss_dict['mse'], iter_id)
+                    self.writer.add_scalar('Training Loss', mean_loss_dict["vb"], iter_id)
             
             if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
@@ -222,34 +242,30 @@ class Reflow_Trainer(object):
        
         images, text_ids, gt = self.get_input(batch)
         B = gt.shape[0]
-        # zT = torch.randn_like(sdf_map, device=self.device)
+        Rs, intermediate = self.clip_model(images, text_ids)
         if self.start_point == "LRP":
-            Rs, intermediate = self.clip_model(images, text_ids)
             R_h = int(Rs[0].numel() ** 0.5)
             Rs = Rs.view(B, 1, R_h, R_h)
             Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
             
             # normalize Rs
             Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-        elif self.start_point == "guassian":
-            Rs = torch.randn_like(images[:, 0:1], device=self.device)
+            conditions = torch.cat([images, Rs], dim=1)
+        elif self.start_point == "image":
+            conditions = images
         else:
             raise ValueError(f"Unsupported start_point: {self.start_point}")
         
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
-        t_norm = t.float() / (self.num_timesteps - 1)
-        t_norm = t_norm.view(B ,1, 1, 1)
-
-        # TODO: add noise maybe, (hope not)
-        zt = t_norm * Rs + (1 - t_norm) * gt
-        x = torch.cat([images, zt], dim=1)
-        if self.diffusion_version == 'v1':
-            v = self.diffusion_model(x, t, y=None)
-        elif self.diffusion_version == 'v2':
-            v = self.diffusion_model(x, t, intermediate.detach())
-        loss_mse = self.criterion(gt - Rs, v)
-      
-        return loss_mse   #+loss_perc
+        losses = self.noise_scheduler.training_losses(self.diffusion_model, # model
+                                                      gt, # input + condition
+                                                      t, # timesteps
+                                                      conditions,
+                                                      intermediate, # intermediate layers
+                                                      self.diffusion_version, # version
+                                                      )
+        
+        return losses   #+loss_perc
 
 
     def inference(self):
@@ -257,14 +273,15 @@ class Reflow_Trainer(object):
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
         self.diffusion_model.eval()
         for batch in tqdm(self.test_dataloader):
-            vts, Rs = self.test_step(batch)
+            preds, Rs = self.test_step(batch)
             images = batch['pixel_values']
             gts = batch[self.gt_type]
             mask_names = batch['mask_name']
+            
             # gt -> [B, H, W, C]
             with torch.no_grad():
                 mixed_img_predits_I = mix_images_with_masks(images, Rs)
-                mixed_img_predits_II = mix_images_with_masks(images, vts)
+                mixed_img_predits_II = mix_images_with_masks(images, preds)
                 mixed_img_gts = mix_images_with_masks(images, gts) 
                 
                 save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
@@ -282,15 +299,15 @@ class Reflow_Trainer(object):
         else:
             raise ValueError(f"Unsupported testset: {testset}")
         for batch in tqdm(dl):
-            vts, Rs = self.test_step(batch)
+            pred, Rs = self.test_step(batch)
             mask_name = batch['mask_name']
             gts = batch[self.gt_type]
             with torch.no_grad():
                 iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=66, gt_type=self.gt_type) # stage I
-                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
+                iou_batch_II = compute_metrics(pred, gts, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
                 
                 dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=66, gt_type=self.gt_type) # stage I
-                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
+                dice_batch_II = compute_metrics(pred, gts, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
                 outcomes['mask_name'].extend(mask_name)
                 outcomes['iou_I'].extend(iou_batch_I)
                 outcomes['iou_II'].extend(iou_batch_II)
@@ -298,6 +315,7 @@ class Reflow_Trainer(object):
                 outcomes['dice_II'].extend(dice_batch_II)
         outcomes = pd.DataFrame(outcomes)
         outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_{self.checkpoint_name}.csv'), index=False)
+        
         return outcomes
     
     
@@ -305,33 +323,34 @@ class Reflow_Trainer(object):
 
         images, text_ids, gt = self.get_input(batch)
         B = gt.shape[0]
+        
+        zt = torch.randn(images[:, 0:1].shape, device=self.device, generator=self.generator)
+        Ro, intermediate = self.clip_model(images, text_ids)
         if self.start_point == "LRP":
-            Rs, intermediate = self.clip_model(images, text_ids)
-        elif self.start_point == "guassian":
-            Rs = torch.randn_like(images[:, 0:1], device=self.device)
+            R_h = int(Ro[0].numel() ** 0.5)
+            Rs = Ro.view(B, 1, R_h, R_h)
+            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+            
+            # normalize Rs
+            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+            Rs = torch.cat([images, Rs], dim=1)
+        elif self.start_point == "image":
+            Rs = images
         else:
             raise ValueError(f"Unsupported start_point: {self.start_point}")
+        
+        sample_fn = (self.noise_scheduler.p_sample_loop if not self.infer_algo == 'ddim' else self.noise_scheduler.p_sample_loop_ddim)
         with torch.no_grad():
-            if self.start_point == "LRP":
-                R_h = int(Rs[0].numel() ** 0.5)
-                Rs = Rs.view(B, 1, R_h, R_h)
-                Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-                
-                # normalize Rs
-                Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-            zt = Rs
-            eular_steps = [999, 749, 499, 249]
-            # eular_steps = [999,899,799,699,599,499,399,299,199,99]
-            # eular_steps = list(range(1000))[::-1]
-            for i, step in enumerate(eular_steps):
-                ts = torch.ones(B, device=self.device) * step
-                x = torch.cat([images, zt], dim=1)
-                if self.diffusion_version == 'v1':
-                    v = self.diffusion_model(x, ts, y=None)
-                elif self.diffusion_version == 'v2':
-                    v = self.diffusion_model(x, ts, intermediate.detach())
-                zt = zt + v / len(eular_steps)
-        return zt, Rs   
+            # the sampling happens insde the fn
+            shape = tuple([B, 1, images.shape[-2], images.shape[-1]])
+            sample = sample_fn(self.diffusion_model, Rs, intermediate, 
+                               self.diffusion_version, shape, noise=zt, 
+                               clip_denoised=True)
+              
+        # inverse normalize zt from [-1, 1] to [0, 1]
+        sample = (sample / 2 + 0.5).clamp(0, 1)
+        
+        return sample, Ro   
     
     
     def distribution_init(self):
