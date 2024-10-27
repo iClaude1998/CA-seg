@@ -50,9 +50,10 @@
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
 //             "args": ["--task", "train",
-//                      "--config", "configs/isic_clipcam_flow.yaml", 
+//                      "--config", "configs/ddpmpp_image_mask.yaml", 
 //                      "--exp_name", "debug", 
-//                      "--device", "cuda"]
+//                      "--device", "cuda",
+//                      "--learn_obj", "ddpmpp"]
 //         }
 //     ]
 // }
@@ -85,9 +86,10 @@
                      "--dynamo_backend", "no",
                      "main.py",
                      "--task", "train",
-                     "--config", "configs/isic_clipcam_flow.yaml", 
+                     "--config", "configs/ddpmpp_image_mask.yaml", 
                      "--exp_name", "debug", 
                      "--device", "cuda",
+                     "--learn_obj", "ddpmpp",
                      "--distribution_training"
                     ]
         }

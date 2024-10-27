@@ -17,19 +17,17 @@ from torch.nn import functional as F
 from contextlib import contextmanager
 from torch.nn.utils import clip_grad_norm_
 from collections import defaultdict as dedict
+
 from torch.utils.tensorboard import SummaryWriter
-from diffusers import DDPMScheduler
 
 
 from models.diffusion import LitEma
 from utils import process_Relevant_score_batch, process_checkpoints, mix_images_with_masks, save_batch, compute_metrics
 
-SEED = 0
-
 
 to_pil = transforms.ToPILImage()
 
-class DDPM_Trainer(object):
+class Reflow_Trainer(object):
     
     def __init__(
         self,
@@ -63,18 +61,16 @@ class DDPM_Trainer(object):
         self.learning_rate = learning_rate
         self.gt_type = gt_type
         self.log_method = log_method
+        self.criterion = nn.MSELoss(reduction='mean')
         self.device = device
         self.use_ema = use_ema
         self.start_iteration = 0
         self.start_point = start_point
-        self.criterion = nn.MSELoss(reduction='mean')
-        self.noise_scheduler = DDPMScheduler(num_train_timesteps=num_timesteps)
         self.clip_grads = clip_grads
         
         self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
         self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
         self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations') 
-        self.generator = torch.Generator(device=self.device).manual_seed(SEED)
         
         # I have to seperate the branches
         if accelerator is None:
@@ -234,30 +230,33 @@ class DDPM_Trainer(object):
        
         images, text_ids, gt = self.get_input(batch)
         B = gt.shape[0]
-        epis = torch.randn_like(images[:, 0:1], device=self.device)
+        # zT = torch.randn_like(sdf_map, device=self.device)
+        
+        Rs, intermediate = self.clip_model(images, text_ids)
         if self.start_point == "LRP":
-            Rs, intermediate = self.clip_model(images, text_ids)
             R_h = int(Rs[0].numel() ** 0.5)
             Rs = Rs.view(B, 1, R_h, R_h)
             Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
             
             # normalize Rs
             Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-            Rs = torch.cat([images, Rs], dim=1)
-        elif self.start_point == "image":
-            Rs = images
+        elif self.start_point == "guassian":
+            Rs = torch.randn_like(images[:, 0:1], device=self.device)
         else:
             raise ValueError(f"Unsupported start_point: {self.start_point}")
         
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
-        # add noise to gt as input
-        noisy_gts = self.noise_scheduler.add_noise(gt, epis, t)
-        x = torch.cat([Rs, noisy_gts], dim=1)
+        t_norm = t.float() / (self.num_timesteps - 1)
+        t_norm = t_norm.view(B ,1, 1, 1)
+
+        # TODO: add noise maybe, (hope not)
+        zt = t_norm * Rs + (1 - t_norm) * gt
+        x = torch.cat([images, zt], dim=1)
         if self.diffusion_version == 'v1':
-            epis_pred = self.diffusion_model(x, t, y=None)
+            v = self.diffusion_model(x, t, y=None)
         elif self.diffusion_version == 'v2':
-            epis_pred = self.diffusion_model(x, t, intermediate.detach())
-        loss_mse = self.criterion(epis, epis_pred)
+            v = self.diffusion_model(x, t, intermediate.detach())
+        loss_mse = self.criterion(gt - Rs, v)
       
         return loss_mse   #+loss_perc
 
@@ -267,14 +266,14 @@ class DDPM_Trainer(object):
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
         self.diffusion_model.eval()
         for batch in tqdm(self.test_dataloader):
-            preds, Rs = self.test_step(batch)
+            vts, Rs = self.test_step(batch)
             images = batch['pixel_values']
             gts = batch[self.gt_type]
             mask_names = batch['mask_name']
             # gt -> [B, H, W, C]
             with torch.no_grad():
                 mixed_img_predits_I = mix_images_with_masks(images, Rs)
-                mixed_img_predits_II = mix_images_with_masks(images, preds)
+                mixed_img_predits_II = mix_images_with_masks(images, vts)
                 mixed_img_gts = mix_images_with_masks(images, gts) 
                 
                 save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
@@ -292,15 +291,15 @@ class DDPM_Trainer(object):
         else:
             raise ValueError(f"Unsupported testset: {testset}")
         for batch in tqdm(dl):
-            pred, Rs = self.test_step(batch)
+            vts, Rs = self.test_step(batch)
             mask_name = batch['mask_name']
             gts = batch[self.gt_type]
             with torch.no_grad():
                 iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=66, gt_type=self.gt_type) # stage I
-                iou_batch_II = compute_metrics(pred, gts, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
+                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
                 
                 dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=66, gt_type=self.gt_type) # stage I
-                dice_batch_II = compute_metrics(pred, gts, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
+                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
                 outcomes['mask_name'].extend(mask_name)
                 outcomes['iou_I'].extend(iou_batch_I)
                 outcomes['iou_II'].extend(iou_batch_II)
@@ -315,36 +314,32 @@ class DDPM_Trainer(object):
 
         images, text_ids, gt = self.get_input(batch)
         B = gt.shape[0]
-        
-        zt = torch.randn(images[:, 0:1].shape, device=self.device, generator=self.generator)
-        Ro, intermediate = self.clip_model(images, text_ids)
-        if self.start_point == "LRP":
-            R_h = int(Ro[0].numel() ** 0.5)
-            Rs = Ro.view(B, 1, R_h, R_h)
-            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-            
-            # normalize Rs
-            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-            Rs = torch.cat([images, Rs], dim=1)
-        elif self.start_point == "image":
-            Rs = images
-        else:
-            raise ValueError(f"Unsupported start_point: {self.start_point}")
-        
-        self.noise_scheduler.set_timesteps(self.num_timesteps)
-        
+
+        Rs, intermediate = self.clip_model(images, text_ids)
+        if self.start_point == "guassian":
+            Rs = torch.randn_like(images[:, 0:1], device=self.device)
+
         with torch.no_grad():
-            for i, step in enumerate(self.noise_scheduler.timesteps):
+            if self.start_point == "LRP":
+                R_h = int(Rs[0].numel() ** 0.5)
+                Rs = Rs.view(B, 1, R_h, R_h)
+                Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+                
+                # normalize Rs
+                Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+            zt = Rs
+            eular_steps = [999, 749, 499, 249]
+            # eular_steps = [999,899,799,699,599,499,399,299,199,99]
+            # eular_steps = list(range(1000))[::-1]
+            for i, step in enumerate(eular_steps):
                 ts = torch.ones(B, device=self.device) * step
-                x = torch.cat([Rs, zt], dim=1)
+                x = torch.cat([images, zt], dim=1)
                 if self.diffusion_version == 'v1':
-                    pred_noise = self.diffusion_model(x, ts, y=None)
+                    v = self.diffusion_model(x, ts, y=None)
                 elif self.diffusion_version == 'v2':
-                    pred_noise = self.diffusion_model(x, ts, intermediate.detach())
-                zt = self.noise_scheduler.step(pred_noise, step, zt, generator=self.generator).prev_sample
-        # inverse normalize zt from [-1, 1] to [0, 1]
-        zt = (zt / 2 + 0.5).clamp(0, 1)
-        return zt, Ro   
+                    v = self.diffusion_model(x, ts, intermediate.detach())
+                zt = zt + v / len(eular_steps)
+        return zt, Rs   
     
     
     def distribution_init(self):
