@@ -32,7 +32,7 @@ class DDPMPP_Trainer(object):
         self,
         diffusion_version,
         task,
-        exp_name,
+        output_dir,
         clip_model,
         diffusion_model,
         dataloaders,
@@ -54,7 +54,7 @@ class DDPMPP_Trainer(object):
     ):
         # instantiate control module
         self.diffusion_version = diffusion_version
-        self.exp_name = exp_name
+        self.output_dir = output_dir
         self.task = task
         self.num_timesteps = num_timesteps
         self.clip_model = clip_model
@@ -69,9 +69,10 @@ class DDPMPP_Trainer(object):
         self.noise_scheduler = create_ddpmpp_scheduler(steps=num_timesteps, noise_scheduler='cosine', rescale_loss=True, )
         self.clip_grads = clip_grads
         
-        self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
-        self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
-        self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations') 
+        self.create_exp_name()
+        self.log_path = os.path.join('experiments', self.output_dir, 'output_logs')
+        self.checkpoint_path = os.path.join('experiments', self.output_dir, 'checkpoints')
+        self.vis_path = os.path.join('experiments', self.output_dir, 'visualizations') 
         self.generator = torch.Generator(device=self.device).manual_seed(SEED)
         self.infer_algo = infer_algo
 
@@ -110,6 +111,11 @@ class DDPMPP_Trainer(object):
         os.makedirs(self.log_path, exist_ok=True)  
         os.makedirs(self.checkpoint_path, exist_ok=True)
         os.makedirs(self.vis_path, exist_ok=True)
+    
+    
+    def create_exp_name(self):
+        learn_obj, dataset_name, exp_name = self.output_dir.split('/')
+        self.exp_name = f"{learn_obj}-{dataset_name}-{exp_name}"
     
     
     def train(self, gradient_accumulation_steps=1):

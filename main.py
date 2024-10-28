@@ -52,17 +52,17 @@ if __name__ == '__main__':
         if value is not None:  # Update only if argument is provided
             cfgs[key] = value
     
-            
+    output_dir = os.path.join('experiments', cfgs.learn_obj, cfgs.datasets.test.name ,cfgs.exp_name)        
     if cfgs.distribution_training:
         cudnn.benchmark = True
         ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=False)
         accelerator = Accelerator(kwargs_handlers=[ddp_kwargs], gradient_accumulation_steps=cfgs.trainer.gradient_accumulation_steps)
         device = accelerator.device
         if accelerator.is_main_process:
-            os.makedirs(os.path.join('experiments', cfgs.exp_name), exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)
         
     else:
-        os.makedirs(os.path.join('experiments', cfgs.exp_name), exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
         device = cfgs.device
         accelerator = None
     
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     if cfgs.learn_obj == 'recflow':
         trainer = Reflow_Trainer(cfgs.model.diffusion.version,
                                 cfgs.task,
-                                cfgs.exp_name, 
+                                output_dir, 
                                 cliprlp, 
                                 diffusion_model,
                                 dataloader_pakages,
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     elif cfgs.learn_obj == 'ddpm':
         trainer = DDPM_Trainer(cfgs.model.diffusion.version,
                                 cfgs.task,
-                                cfgs.exp_name, 
+                                output_dir, 
                                 cliprlp, 
                                 diffusion_model,
                                 dataloader_pakages,
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     elif cfgs.learn_obj == 'ddpmpp':
         trainer = DDPMPP_Trainer(cfgs.model.diffusion.version,
                                  cfgs.task,
-                                 cfgs.exp_name, 
+                                 output_dir, 
                                  cliprlp, 
                                  diffusion_model,
                                  dataloader_pakages,
