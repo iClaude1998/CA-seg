@@ -1,46 +1,45 @@
 datasets:
-  batch_size: 4
+  batch_size: 2
   train:
     name: "isic_seg"
     prompt_type: "p6"
     # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
+    images_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
     # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    masks_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/train.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/train.json"
-    image_size: &size
-      - 224
-      - 224
     override_prompt:
     zero_prompt: False
+    image_size:
   val:
     name: "isic_seg"
     prompt_type: "p6"
     # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
+    images_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
     # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    masks_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/val.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/val.json"
-    image_size: *size
     override_prompt:
     zero_prompt: False
+    image_size:
   test:
     name: "isic_seg"
     prompt_type: "p6"
     # images_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
-    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
+    images_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
     # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    masks_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
+    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
     # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/test.json"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/test.json"
-    image_size: *size
     override_prompt:
     zero_prompt: False
+    image_size:
+
 
 model:
   clip:
@@ -52,9 +51,9 @@ model:
     image_size: 224
     in_channels: 4 # 4 for ISIC
     num_channels: 128
-    out_channels: 1
+    out_channels: 2
     num_res_blocks: 2
-    attention_resolutions: "14"
+    attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
     num_classes: # set None for avoid label embeddings (why we have it, strange ???)
@@ -67,17 +66,18 @@ model:
     resblock_updown: False
     use_new_attention_order: False
 
+
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: checkpoint_iter100000.pth # the name of the loaded checkpoint
-  num_timesteps: 1000
+  checkpoint_name: # the name of the loaded checkpoint
+  num_timesteps: 4000
   num_iterations: 100000
   save_interval: 100
-  start_point: "LRP"
+  start_point: "image"
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "tensorboard" # wandb, tensorboard
+log_method: "wandb" # wandb, tensorboard
