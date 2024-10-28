@@ -230,7 +230,7 @@ class DDPMPP_Trainer(object):
         vts, random_batch = self.random_inference()
         self.save_checkpoints(iter_id)
         if self.accelerator.is_local_main_process:
-            self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
+            self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss_dict["loss"]:.4f}, Loss MSE: {mean_loss_dict["mse"]:.4f}, Loss vb: {mean_loss_dict["vb"]:.4f}')
             self.visualize(vts, random_batch, iter_id)
             if self.log_method == 'wandb':
                 wandb.finish() 
