@@ -33,7 +33,7 @@ class Reflow_Trainer(object):
         self,
         diffusion_version,
         task,
-        exp_name,
+        output_dir,
         clip_model,
         diffusion_model,
         dataloaders,
@@ -53,7 +53,7 @@ class Reflow_Trainer(object):
     ):
         # instantiate control module
         self.diffusion_version = diffusion_version
-        self.exp_name = exp_name
+        self.output_dir = output_dir
         self.task = task
         self.num_timesteps = num_timesteps
         self.clip_model = clip_model
@@ -69,9 +69,9 @@ class Reflow_Trainer(object):
         self.clip_grads = clip_grads
         
         self.create_exp_name()
-        self.log_path = os.path.join('experiments', self.exp_name, 'output_logs')
-        self.checkpoint_path = os.path.join('experiments', self.exp_name, 'checkpoints')
-        self.vis_path = os.path.join('experiments', self.exp_name, 'visualizations') 
+        self.log_path = os.path.join(output_dir, 'output_logs')
+        self.checkpoint_path = os.path.join(output_dir, 'checkpoints')
+        self.vis_path = os.path.join(output_dir, 'visualizations') 
         
         # I have to seperate the branches
         if accelerator is None:
@@ -110,7 +110,7 @@ class Reflow_Trainer(object):
         os.makedirs(self.vis_path, exist_ok=True)
     
     def create_exp_name(self):
-        learn_obj, dataset_name, exp_name = self.output_dir.split('/')
+        _, learn_obj, dataset_name, exp_name = self.output_dir.split('/')
         self.exp_name = f"{learn_obj}-{dataset_name}-{exp_name}"
     
     
@@ -237,26 +237,16 @@ class Reflow_Trainer(object):
         B = gt.shape[0]
         # zT = torch.randn_like(sdf_map, device=self.device)
         
-        Rs, intermediate = self.clip_model(images, text_ids)
-        if self.start_point == "LRP":
-            R_h = int(Rs[0].numel() ** 0.5)
-            Rs = Rs.view(B, 1, R_h, R_h)
-            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-            
-            # normalize Rs
-            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-        elif self.start_point == "guassian":
-            Rs = torch.randn_like(images[:, 0:1], device=self.device)
-        else:
-            raise ValueError(f"Unsupported start_point: {self.start_point}")
+        z0, conditions, Rs, intermediate = self.get_conditions(images, text_ids)
         
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
         t_norm = t.float() / (self.num_timesteps - 1)
         t_norm = t_norm.view(B ,1, 1, 1)
 
         # TODO: add noise maybe, (hope not)
-        zt = t_norm * Rs + (1 - t_norm) * gt
-        x = torch.cat([images, zt], dim=1)
+        zt = t_norm * z0 + (1 - t_norm) * gt
+        
+        x = torch.cat([conditions, zt], dim=1)
         if self.diffusion_version == 'v1':
             v = self.diffusion_model(x, t, y=None)
         elif self.diffusion_version == 'v2':
@@ -319,32 +309,42 @@ class Reflow_Trainer(object):
 
         images, text_ids, gt = self.get_input(batch)
         B = gt.shape[0]
-
-        Rs, intermediate = self.clip_model(images, text_ids)
-        if self.start_point == "guassian":
-            Rs = torch.randn_like(images[:, 0:1], device=self.device)
-
-        with torch.no_grad():
-            if self.start_point == "LRP":
-                R_h = int(Rs[0].numel() ** 0.5)
-                Rs = Rs.view(B, 1, R_h, R_h)
-                Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-                
-                # normalize Rs
-                Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-            zt = Rs
-            eular_steps = [999, 749, 499, 249]
-            # eular_steps = [999,899,799,699,599,499,399,299,199,99]
-            # eular_steps = list(range(1000))[::-1]
-            for i, step in enumerate(eular_steps):
-                ts = torch.ones(B, device=self.device) * step
-                x = torch.cat([images, zt], dim=1)
-                if self.diffusion_version == 'v1':
-                    v = self.diffusion_model(x, ts, y=None)
-                elif self.diffusion_version == 'v2':
-                    v = self.diffusion_model(x, ts, intermediate.detach())
-                zt = zt + v / len(eular_steps)
+        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids)
+        eular_steps = [999, 749, 499, 249]
+        # eular_steps = [999,899,799,699,599,499,399,299,199,99]
+        # eular_steps = list(range(1000))[::-1]
+        for i, step in enumerate(eular_steps):
+            ts = torch.ones(B, device=self.device) * step
+            x = torch.cat([conditions, zt], dim=1)
+            if self.diffusion_version == 'v1':
+                v = self.diffusion_model(x, ts, y=None)
+            elif self.diffusion_version == 'v2':
+                v = self.diffusion_model(x, ts, intermediate.detach())
+            zt = zt + v / len(eular_steps)
         return zt, Rs   
+    
+    
+    def get_conditions(self, images, text_ids):
+        Rs, intermediate = self.clip_model(images, text_ids)
+        B = Rs.shape[0]
+        R_h = int(Rs[0].numel() ** 0.5)
+        Rs = Rs.view(B, 1, R_h, R_h)
+        Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+        # normalize Rs
+        Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+        if self.start_point == "LRP":
+            z0 = Rs
+            conditions = images
+        elif self.start_point == "guassian":
+            z0 = torch.randn_like(images[:, 0:1], device=self.device)
+            conditions = images
+        elif self.start_point == "all":
+            z0 = torch.randn_like(images[:, 0:1], device=self.device)
+            conditions = torch.cat([images, Rs], dim=1)
+        else:
+            raise ValueError(f"Unsupported start_point: {self.start_point}")
+        
+        return z0, conditions, Rs, intermediate
     
     
     def distribution_init(self):
