@@ -8,7 +8,6 @@ import logging
 import torchvision
 import pandas as pd
 
-from tqdm import tqdm
 from torch.optim import AdamW
 from torchvision import transforms
 from torch.nn import functional as F
@@ -70,9 +69,9 @@ class DDPMPP_Trainer(object):
         self.clip_grads = clip_grads
         
         self.create_exp_name()
-        self.log_path = os.path.join('experiments', self.output_dir, 'output_logs')
-        self.checkpoint_path = os.path.join('experiments', self.output_dir, 'checkpoints')
-        self.vis_path = os.path.join('experiments', self.output_dir, 'visualizations') 
+        self.log_path = os.path.join(self.output_dir, 'output_logs')
+        self.checkpoint_path = os.path.join(self.output_dir, 'checkpoints')
+        self.vis_path = os.path.join(self.output_dir, 'visualizations') 
         self.generator = torch.Generator(device=self.device).manual_seed(SEED)
         self.infer_algo = infer_algo
 
@@ -114,7 +113,7 @@ class DDPMPP_Trainer(object):
     
     
     def create_exp_name(self):
-        learn_obj, dataset_name, exp_name = self.output_dir.split('/')
+        _, learn_obj, dataset_name, exp_name = self.output_dir.split('/')
         self.exp_name = f"{learn_obj}-{dataset_name}-{exp_name}"
     
     
@@ -278,7 +277,8 @@ class DDPMPP_Trainer(object):
         if not self.load_succeed:
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
         self.diffusion_model.eval()
-        for batch in tqdm(self.test_dataloader):
+        for idx, batch in enumerate(self.test_dataloader):
+            print(f"batch [{idx}/{len(self.test_dataloader)}]")
             preds, Rs = self.test_step(batch)
             images = batch['pixel_values']
             gts = batch[self.gt_type]
@@ -304,7 +304,8 @@ class DDPMPP_Trainer(object):
             dl = self.val_dataloader
         else:
             raise ValueError(f"Unsupported testset: {testset}")
-        for batch in tqdm(dl):
+        for idx, batch in enumerate(dl):
+            print(f"batch [{idx}/{len(dl)}]")
             pred, Rs = self.test_step(batch)
             mask_name = batch['mask_name']
             gts = batch[self.gt_type]
@@ -331,32 +332,32 @@ class DDPMPP_Trainer(object):
         B = gt.shape[0]
         
         zt = torch.randn(images[:, 0:1].shape, device=self.device, generator=self.generator)
-        Ro, intermediate = self.clip_model(images, text_ids)
-        if self.start_point == "LRP":
-            R_h = int(Ro[0].numel() ** 0.5)
-            Rs = Ro.view(B, 1, R_h, R_h)
-            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+        Rs, intermediate = self.clip_model(images, text_ids)
+        
+        R_h = int(Rs[0].numel() ** 0.5)
+        Rs = Rs.view(B, 1, R_h, R_h)
+        Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
             
-            # normalize Rs
-            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-            Rs = torch.cat([images, Rs], dim=1)
+        # normalize Rs
+        Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+        if self.start_point == "LRP":
+            condition = torch.cat([images, Rs], dim=1)
         elif self.start_point == "image":
-            Rs = images
+            condition = images
         else:
             raise ValueError(f"Unsupported start_point: {self.start_point}")
         
-        sample_fn = (self.noise_scheduler.p_sample_loop if not self.infer_algo == 'ddim' else self.noise_scheduler.p_sample_loop_ddim)
+        sample_fn = (self.noise_scheduler.p_sample_loop if self.infer_algo == 'ddpm' else self.noise_scheduler.ddim_sample_loop)
         with torch.no_grad():
             # the sampling happens insde the fn
             shape = tuple([B, 1, images.shape[-2], images.shape[-1]])
-            sample = sample_fn(self.diffusion_model, Rs, intermediate, 
-                               self.diffusion_version, shape, noise=zt, 
-                               clip_denoised=True)
+            sample = sample_fn(self.diffusion_model, condition, intermediate, 
+                               self.diffusion_version, shape, noise=zt, clip_denoised=True, progress=True)
               
         # inverse normalize zt from [-1, 1] to [0, 1]
         sample = (sample / 2 + 0.5).clamp(0, 1)
         
-        return sample, Ro   
+        return sample, Rs   
     
     
     def distribution_init(self):
@@ -473,9 +474,9 @@ class DDPMPP_Trainer(object):
         self.diffusion_model.eval()
         loader_list = list(self.val_dataloader)
         random_batch = random.choice(loader_list)
-        vts, _ = self.test_step(random_batch)
+        sample, _ = self.test_step(random_batch)
         self.diffusion_model.train()
-        return vts.detach().cpu(), random_batch
+        return sample.detach().cpu(), random_batch
     
     
     def init_loggers(self):

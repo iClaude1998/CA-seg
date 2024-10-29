@@ -290,7 +290,6 @@ class ddpmpp_scheduler:
         noise=None,
         clip_denoised=True,
         denoised_fn=None,
-        model_kwargs=None,
         device=None,
         progress=False,
     ):

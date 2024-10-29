@@ -8,10 +8,10 @@ from torch.backends import cudnn
 from argparse import ArgumentParser
 from easydict import EasyDict as edict
 from torch.utils.data import DataLoader
+from accelerate import Accelerator, DistributedDataParallelKwargs
 
 from datasets import build_dataset
-from trainers import Reflow_Trainer, DDPM_Trainer, DDPMPP_Trainer
-from accelerate import Accelerator, DistributedDataParallelKwargs
+from trainers import build_trainer
 from models.build_models import load_clip_and_tokenizer, create_diffusion
 
 
@@ -80,70 +80,8 @@ if __name__ == '__main__':
     dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}
     
     distribution_training = cfgs.distribution_training and cfgs.task == 'train'
-    if cfgs.learn_obj == 'recflow':
-        trainer = Reflow_Trainer(cfgs.model.diffusion.version,
-                                cfgs.task,
-                                output_dir, 
-                                cliprlp, 
-                                diffusion_model,
-                                dataloader_pakages,
-                                cfgs.trainer.learning_rate,
-                                cfgs.trainer.gt_type,
-                                device,
-                                cfgs.trainer.use_ema,
-                                cfgs.load_checkpoint,
-                                cfgs.trainer.checkpoint_name,
-                                cfgs.trainer.num_timesteps,
-                                cfgs.trainer.num_iterations,
-                                cfgs.trainer.save_interval,
-                                accelerator,
-                                cfgs.log_method,
-                                cfgs.trainer.start_point,
-                                clip_grads=cfgs.trainer.clip_grads)
-    elif cfgs.learn_obj == 'ddpm':
-        trainer = DDPM_Trainer(cfgs.model.diffusion.version,
-                                cfgs.task,
-                                output_dir, 
-                                cliprlp, 
-                                diffusion_model,
-                                dataloader_pakages,
-                                cfgs.trainer.learning_rate,
-                                cfgs.trainer.gt_type,
-                                device,
-                                cfgs.trainer.use_ema,
-                                cfgs.load_checkpoint,
-                                cfgs.trainer.checkpoint_name,
-                                cfgs.trainer.num_timesteps,
-                                cfgs.trainer.num_iterations,
-                                cfgs.trainer.save_interval,
-                                accelerator,
-                                cfgs.log_method,
-                                cfgs.trainer.start_point,
-                                clip_grads=cfgs.trainer.clip_grads)
-    elif cfgs.learn_obj == 'ddpmpp':
-        trainer = DDPMPP_Trainer(cfgs.model.diffusion.version,
-                                 cfgs.task,
-                                 output_dir, 
-                                 cliprlp, 
-                                 diffusion_model,
-                                 dataloader_pakages,
-                                 cfgs.trainer.learning_rate,
-                                 cfgs.trainer.gt_type,
-                                 device,
-                                 cfgs.trainer.use_ema,
-                                 cfgs.load_checkpoint,
-                                 cfgs.trainer.checkpoint_name,
-                                 cfgs.trainer.num_timesteps,
-                                 cfgs.trainer.num_iterations,
-                                 cfgs.trainer.save_interval,
-                                 accelerator,
-                                 cfgs.log_method,
-                                 cfgs.trainer.start_point,
-                                 clip_grads=cfgs.trainer.clip_grads,
-                                 infer_algo=cfgs.infer_algo
-                                )
-    else:
-        raise ValueError(f"Unsupported learning objective: {cfgs.learn_obj}, what do you wanna do ???")
+    
+    trainer = build_trainer(cfgs, output_dir, cliprlp, diffusion_model, dataloader_pakages, accelerator, device)
     
     if cfgs.task == 'train':
         if cfgs.distribution_training:

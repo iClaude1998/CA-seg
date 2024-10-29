@@ -40,7 +40,6 @@ datasets:
     zero_prompt: False
     image_size:
 
-
 model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
@@ -49,9 +48,10 @@ model:
   diffusion:
     version: "v1"
     image_size: 224
-    in_channels: 4 # 4 for ISIC
+    in_channels: 5    # 1 for CAM input only and image input only as condition
+    condition_channels: 3
     num_channels: 128
-    out_channels: 2
+    out_channels: 1
     num_res_blocks: 2
     attention_resolutions: "16"
     dropout: 0.0
@@ -66,17 +66,16 @@ model:
     resblock_updown: False
     use_new_attention_order: False
 
-
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint
-  num_timesteps: 4000
+  checkpoint_name: # the name of the loaded checkpoint
+  num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
-  start_point: "image"
+  start_point: "all" 
   gradient_accumulation_steps: 1
   clip_grads:
 

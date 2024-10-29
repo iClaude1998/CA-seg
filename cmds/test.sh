@@ -8,5 +8,13 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 exp_name=$1
 config_file=$2
 test_type=$3
+learn_obj=$4
 
-python main.py --task test --config configs/${config_file} --exp_name ${exp_name} --device cuda --test_type ${test_type} --load_checkpoint
+
+python main.py --task test \
+               --exp_name ${exp_name} \
+               --config configs/${config_file} \
+               --device cuda \
+               --test_type ${test_type} \
+               --learn_obj ${learn_obj} \
+               --load_checkpoint

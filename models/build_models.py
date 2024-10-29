@@ -63,6 +63,7 @@ def create_diffusion(cfgs):
                     num_res_blocks=cfgs.num_res_blocks,
                     attention_resolutions=tuple(attention_ds),
                     dropout=cfgs.dropout,
+                    condition_channels=cfgs.condition_channels,
                     channel_mult=channel_mult,
                     num_classes=cfgs.num_classes,
                     use_checkpoint=cfgs.use_checkpoint,
