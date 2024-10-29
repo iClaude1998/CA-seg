@@ -50,10 +50,10 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/flowmatch/isic/rlpimagegaussian_imagerlp.yaml", 
+                     "--config", "configs/ddpmpp/isic/rlp_clip.yaml", 
                      "--exp_name", "debug", 
                      "--device", "cuda",
-                     "--learn_obj", "recflow"]
+                     "--learn_obj", "ddpmpp"]
         }
     ]
 }
