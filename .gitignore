@@ -1,5 +1,6 @@
 experiments/
 pretrained/
 wandb/
+slurm_cmds/
 .vscode/
 **/__pycache__/
