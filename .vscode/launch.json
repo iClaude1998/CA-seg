@@ -32,7 +32,6 @@
 
 // train
 
-<<<<<<< HEAD
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -51,17 +50,18 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/flow_noise.yaml", 
+                     "--config", "configs/flowmatch/isic/rlpimagegaussian_imagerlp.yaml", 
                      "--exp_name", "debug", 
-                     "--device", "cuda"]
+                     "--device", "cuda",
+                     "--learn_obj", "recflow"]
         }
     ]
 }
 
 
-// // inference
-=======
->>>>>>> 22b1b0e56196a24998cc254e7f4f2355ecdee6b1
+
+// distribute train
+
 // {
 //     // Use IntelliSense to learn about possible attributes.
 //     // Hover to view descriptions of existing attributes.
@@ -72,57 +72,29 @@
 //             "name": "Python Debugger: Current File",
 //             "type": "debugpy",
 //             "request": "launch",
-//             "program": "${file}",
 //             "console": "integratedTerminal",
-//             "justMyCode": false,
-//             "env": {"CUDA_VISIBLE_DEVICES": "1",
+//             "module": "accelerate.commands.launch",
+//             "env": {
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-//             "args": ["--task", "train",
-//                      "--config", "configs/isic_clipcam_flow.yaml", 
+//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips"
+//                 },
+//             "args": ["--multi_gpu",
+//                      "--mixed_precision", "no",
+//                      "--num_machines", "1",
+//                      "--num_processes", "2",
+//                      "--dynamo_backend", "no",
+//                      "main.py",
+//                      "--task", "train",
+//                      "--config", "configs/ddpmpp/isic/image_image.yaml", 
 //                      "--exp_name", "debug", 
-//                      "--device", "cuda"]
+//                      "--device", "cuda",
+//                      "--learn_obj", "ddpmpp",
+//                      "--distribution_training"
+//                     ]
 //         }
 //     ]
 // }
-
-
-
-// distribute train
-
-{
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "module": "accelerate.commands.launch",
-            "env": {
-                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips"
-                },
-            "args": ["--multi_gpu",
-                     "--mixed_precision", "no",
-                     "--num_machines", "1",
-                     "--num_processes", "2",
-                     "--dynamo_backend", "no",
-                     "main.py",
-                     "--task", "train",
-                     "--config", "configs/isic_clipcam_flow.yaml", 
-                     "--exp_name", "debug", 
-                     "--device", "cuda",
-                     "--distribution_training"
-                    ]
-        }
-    ]
-}
 
 
 
@@ -146,11 +118,14 @@
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
 //             "args": ["--task", "test",
-//                      "--config", "configs/isic_clip_attention.yaml", 
-//                      "--exp_name", "imageattndiffPub", 
+//                      "--config", "configs/ddpmpp/isic/image_image_mask.yaml", 
+//                      "--exp_name", "ddpmpp_imagemask", 
 //                      "--device", "cuda",
 //                      "--test_type", "test",
-//                      "--load_checkpoint"]
+//                      "--learn_obj", "ddpmpp",
+//                      "--infer_algo", "ddpm",
+//                      "--load_checkpoint",
+//                     ]
 //         }
 //     ]
 // }

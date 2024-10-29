@@ -62,6 +62,7 @@ class UNetModel_v1preview(nn.Module):
         out_channels,
         num_res_blocks,
         attention_resolutions,
+        condition_channels=3,
         dropout=0,
         channel_mult=(1, 2, 4, 8),
         conv_resample=True,
@@ -83,6 +84,7 @@ class UNetModel_v1preview(nn.Module):
 
         self.image_size = image_size
         self.in_channels = in_channels
+        self.condition_channels = condition_channels
         self.model_channels = model_channels
         self.out_channels = out_channels
         self.num_res_blocks = num_res_blocks
@@ -256,7 +258,7 @@ class UNetModel_v1preview(nn.Module):
         )
 
         features = 32
-        self.hwm = Generic_UNet_v1(3, features, 1, 5, image_size=self.image_size)
+        self.hwm = Generic_UNet_v1(self.condition_channels, features, 1, 5, image_size=self.image_size)
 
     def convert_to_fp16(self):
         """
@@ -281,7 +283,25 @@ class UNetModel_v1preview(nn.Module):
     
     def highway_forward(self, x, hs):
         return self.hwm(x, hs)
-
+    
+    
+    def get_input_conditions(self, x):
+        # x = cat[images, zt] c = 3 + 1 or
+        # x = cat[images, Rs, zt] c = 3 + 1 + 1 for noise
+        h = x.type(self.dtype)
+        c = h[:,:-1,...]
+        if self.in_channels == 1:
+            h = h[:, -1:, ...]
+        elif self.in_channels == 2:
+            c = h[:, :-2, ...] # image channels
+            h = h[:, -2:, ...] # Rs abd noise
+        elif self.in_channels == 5:
+            if self.condition_channels == 3:
+                c = h[:, :-2, ...]
+            elif self.condition_channels == 4:
+                c = h[:, :-1, ...]
+        return h, c
+    
 
     def forward(self, x, timesteps, y=None):
         """
@@ -298,16 +318,13 @@ class UNetModel_v1preview(nn.Module):
 
         hs = []
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
-
+        
         if self.num_classes is not None:
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
 
-        h = x.type(self.dtype)
-        c = h[:,:-1,...]
-        if self.in_channels == 1:
-            h = h[:, :1, ...]
-        hlist= []
+       
+        h, c = self.get_input_conditions(x)
         for ind, module in enumerate(self.input_blocks):
             if len(emb.size()) > 2:
                 emb = emb.squeeze()

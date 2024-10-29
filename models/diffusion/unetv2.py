@@ -295,6 +295,9 @@ class UNetModel_v2preview(nn.Module):
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
 
         h = x.type(self.dtype)
+        if self.in_channels == 1:
+            h = h[:, -1:, ...]
+        
         clip_emb = clip_emb.type(self.dtype)
         for ind, module in enumerate(self.input_blocks):
             if len(emb.size()) > 2:

@@ -8,10 +8,10 @@ from torch.backends import cudnn
 from argparse import ArgumentParser
 from easydict import EasyDict as edict
 from torch.utils.data import DataLoader
+from accelerate import Accelerator, DistributedDataParallelKwargs
 
 from datasets import build_dataset
-from trainer import Reflow_ControlLDM
-from accelerate import Accelerator, DistributedDataParallelKwargs
+from trainers import build_trainer
 from models.build_models import load_clip_and_tokenizer, create_diffusion
 
 
@@ -26,9 +26,11 @@ def parse_args():
     parser = ArgumentParser(description='Reflow')
     parser.add_argument('--task', type=str, default='train', help='the task to performs', choices=['train', 'inf', 'test'])
     parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
+    parser.add_argument('--infer_algo', type=str, default='ddpm', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
     parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
+    parser.add_argument('--learn_obj', type=str, default='recflow', choices=['recflow', 'ddpm', 'ddpmpp'], help='the learning objective')
     parser.add_argument('--distribution_training', action="store_true", help='whether enable distribution training')
     parser.add_argument('--load_checkpoint', action="store_true", help='whether to load checkpoint')
     parser.add_argument('--test_type', type=str, default='test', help='whether to load checkpoint')
@@ -50,17 +52,17 @@ if __name__ == '__main__':
         if value is not None:  # Update only if argument is provided
             cfgs[key] = value
     
-            
+    output_dir = os.path.join('experiments', cfgs.learn_obj, cfgs.datasets.test.name ,cfgs.exp_name)        
     if cfgs.distribution_training:
         cudnn.benchmark = True
         ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=False)
-        accelerator = Accelerator(kwargs_handlers=[ddp_kwargs])
+        accelerator = Accelerator(kwargs_handlers=[ddp_kwargs], gradient_accumulation_steps=cfgs.trainer.gradient_accumulation_steps)
         device = accelerator.device
         if accelerator.is_main_process:
-            os.makedirs(os.path.join('experiments', cfgs.exp_name), exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)
         
     else:
-        os.makedirs(os.path.join('experiments', cfgs.exp_name), exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
         device = cfgs.device
         accelerator = None
     
@@ -78,37 +80,21 @@ if __name__ == '__main__':
     dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}
     
     distribution_training = cfgs.distribution_training and cfgs.task == 'train'
-    trainer = Reflow_ControlLDM(cfgs.model.diffusion.version,
-                                cfgs.task,
-                                cfgs.exp_name, 
-                                cliprlp, 
-                                diffusion_model,
-                                dataloader_pakages,
-                                cfgs.trainer.learning_rate,
-                                cfgs.trainer.gt_type,
-                                device,
-                                cfgs.trainer.use_ema,
-                                cfgs.load_checkpoint,
-                                cfgs.trainer.checkpoint_name,
-                                cfgs.trainer.num_timesteps,
-                                cfgs.trainer.num_iterations,
-                                cfgs.trainer.save_interval,
-                                accelerator,
-                                cfgs.log_method,
-                                cfgs.trainer.start_point)
+    
+    trainer = build_trainer(cfgs, output_dir, cliprlp, diffusion_model, dataloader_pakages, accelerator, device)
     
     if cfgs.task == 'train':
         if cfgs.distribution_training:
             trainer.distribution_train()
         else:
-            trainer.train()
+            trainer.train(cfgs.trainer.gradient_accumulation_steps)
     elif cfgs.task == 'inf':
         trainer.inference() # inference the results for visualization
     elif cfgs.task == 'test':
         outcomes = trainer.test(cfgs.test_type) # test the model on the test set /validation set
         numeric_outcomes = outcomes.select_dtypes(include='number')
         columns_means = numeric_outcomes.mean()
-        print(columns_means)
+        print((columns_means * 100).round(2))
     else:
         raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
         
