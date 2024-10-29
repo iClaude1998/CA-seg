@@ -3,39 +3,30 @@ datasets:
   train:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    images_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    masks_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/train.json"
-    caps_file: "/data/claude/datasets/medisegs/ISIC/anns/train.json"
+    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
+    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/train.json"
     override_prompt:
     zero_prompt: False
     image_size:
   val:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    images_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    masks_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/val.json"
-    caps_file: "/data/claude/datasets/medisegs/ISIC/anns/val.json"
+    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
+    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/val.json"
     override_prompt:
     zero_prompt: False
     image_size:
   test:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
-    images_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    masks_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/test.json"
-    caps_file: "/data/claude/datasets/medisegs/ISIC/anns/test.json"
+    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
+    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
+    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
+    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/test.json"
     override_prompt:
     zero_prompt: False
     image_size:
@@ -53,10 +44,7 @@ model:
     num_channels: 128
     out_channels: 2
     num_res_blocks: 2
-<<<<<<< HEAD
-=======
     condition_channels: 3
->>>>>>> 23edc6749b451f2ee411547c10204592699a6a25
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
@@ -71,20 +59,12 @@ model:
     use_new_attention_order: False
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 23edc6749b451f2ee411547c10204592699a6a25
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-<<<<<<< HEAD
   checkpoint_name: # the name of the loaded checkpoint
-=======
-  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint
->>>>>>> 23edc6749b451f2ee411547c10204592699a6a25
   num_timesteps: 4000
   num_iterations: 100000
   save_interval: 100
@@ -92,4 +72,4 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "wandb" # wandb, tensorboard
+log_method: "tensorboard" # wandb, tensorboard
