@@ -2,6 +2,7 @@ import os
 import torch 
 import matplotlib
 import numpy as np
+import importlib.util
 import blobfile as bf
 
 from torch import nn
@@ -9,7 +10,17 @@ from matplotlib import pyplot as plt
 from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors
 from . import logger
 
+
 INITIAL_LOG_LOSS_SCALE = 20.0
+
+
+def import_or_skip(module_name):
+    if importlib.util.find_spec(module_name) is None:
+        print(f"Skipping import of {module_name}")
+        return None
+    return importlib.import_module(module_name)
+
+
 
 def check_overflow(value):
     return (value == float("inf")) or (value == -float("inf")) or (value != value)

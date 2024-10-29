@@ -18,7 +18,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from models.diffusion import LitEma
 from custom_schedulers import create_ddpmpp_scheduler
-from utils import process_Relevant_score_batch, process_checkpoints, mix_images_with_masks, save_batch, compute_metrics
+from utils import process_Relevant_score_batch, process_checkpoints, mix_images_with_masks, save_batch, compute_metrics, import_or_skip
+wandb = import_or_skip('wandb')
 
 SEED = 0
 
