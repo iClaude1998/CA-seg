@@ -238,7 +238,7 @@ class Reflow_Trainer(object):
         B = gt.shape[0]
         # zT = torch.randn_like(sdf_map, device=self.device)
         
-        z0, conditions, Rs, intermediate = self.get_conditions(images, text_ids)
+        z0, conditions, _, intermediate = self.get_conditions(images, text_ids)
         
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
         t_norm = t.float() / (self.num_timesteps - 1)
@@ -252,7 +252,7 @@ class Reflow_Trainer(object):
             v = self.diffusion_model(x, t, y=None)
         elif self.diffusion_version == 'v2':
             v = self.diffusion_model(x, t, intermediate.detach())
-        loss_mse = self.criterion(gt - zt, v)
+        loss_mse = self.criterion(gt - z0, v)
       
         return loss_mse   #+loss_perc
 
