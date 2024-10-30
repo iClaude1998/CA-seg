@@ -252,7 +252,7 @@ class Reflow_Trainer(object):
             v = self.diffusion_model(x, t, y=None)
         elif self.diffusion_version == 'v2':
             v = self.diffusion_model(x, t, intermediate.detach())
-        loss_mse = self.criterion(gt - Rs, v)
+        loss_mse = self.criterion(gt - zt, v)
       
         return loss_mse   #+loss_perc
 
