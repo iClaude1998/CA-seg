@@ -1,5 +1,4 @@
 import os
-import yaml
 import torch
 import random
 import numpy as np
