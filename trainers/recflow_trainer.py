@@ -2,13 +2,15 @@ import os
 import sys
 sys.path.append('..')
 import torch
-import wandb 
 import random
 import logging
 import torchvision
 import pandas as pd
 
 import torch.nn as nn
+import importlib.util
+if importlib.util.find_spec('wandb') is not None:
+    import wandb
 
 from tqdm import tqdm
 from torch.optim import AdamW

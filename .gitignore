@@ -1,7 +1,11 @@
 experiments/
 pretrained/
 wandb/
+slurm_cmds/
 .vscode/
 **/__pycache__/
+<<<<<<< HEAD
+=======
 pod_cmds/
 pheonix_cmds/
+>>>>>>> a601bee21809dcb0437d279c21e3d8bfcd5e5f4e

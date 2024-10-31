@@ -5,36 +5,66 @@ datasets:
   train:
     name: "isic_seg"
     prompt_type: "p6"
+<<<<<<< HEAD
     images_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
     masks_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     inter_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/train.json"
     inter_layer: *inter_layer
+=======
+    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
+    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
+    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/train.json"
+    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/train.json"
+>>>>>>> f67dc4737232e1c84ef46fce3a7dc4e796bd3115
     override_prompt:
     zero_prompt: False
     image_size: *image_size
   val:
     name: "isic_seg"
     prompt_type: "p6"
+<<<<<<< HEAD
     images_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
     masks_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
     inter_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/val.json"
     inter_layer: *inter_layer
+=======
+    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
+    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
+    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/val.json"
+    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/val.json"
+>>>>>>> f67dc4737232e1c84ef46fce3a7dc4e796bd3115
     override_prompt:
     zero_prompt: False
     image_size: *image_size
   test:
     name: "isic_seg"
     prompt_type: "p6"
+<<<<<<< HEAD
     images_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
     masks_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
     sdf_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
     inter_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_LRP/Pubmedclip/LRP"
     caps_file: "/data/claude/datasets/medisegs/ISIC/anns/test.json"
     inter_layer: *inter_layer
+=======
+    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
+    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
+    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
+    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
+    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
+    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/test.json"
+    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/test.json"
+>>>>>>> f67dc4737232e1c84ef46fce3a7dc4e796bd3115
     override_prompt:
     zero_prompt: False
     image_size: *image_size
@@ -80,4 +110,4 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "wandb" # wandb, tensorboard
+log_method: "tensorboard" # wandb, tensorboard
