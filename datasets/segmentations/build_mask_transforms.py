@@ -30,6 +30,28 @@ def build_mask_transforms(image_resolution):
                 T.Resize(image_resolution, interpolation=InterpolationMode.NEAREST, antialias=True),
                 T.CenterCrop(image_resolution),
                 T.ToTensor()])
+    
+def build_intermap_transforms(image_resolution):
+    return T.Compose([
+                T.ToTensor(),
+                Resize_Interpretability_Map(image_resolution),
+                normalization_usdf])
+
+
+class Resize_Interpretability_Map(object):
+    
+    def __init__(self, image_resolution):
+        if isinstance(image_resolution, int):
+            image_resolution = (image_resolution, image_resolution)
+        self.image_resolution = image_resolution
+        self.resize_pipeline = T.Compose([T.Resize(image_resolution, interpolation=InterpolationMode.BICUBIC, antialias=True),
+                                          T.CenterCrop(image_resolution)])
+        
+    def __call__(self, interpre_map):
+        h, w = interpre_map.shape[-2:]
+        if not (h == self.image_resolution[0] and w == self.image_resolution[1]):
+            interpre_map = self.resize_pipeline(interpre_map)
+        return interpre_map
 
 
 def normalization_usdf(usdf):
@@ -38,3 +60,4 @@ def normalization_usdf(usdf):
         return torch.zeros_like(usdf)
     usdf = (usdf - usdf.min()) / (usdf.max() - usdf.min())
     return usdf
+

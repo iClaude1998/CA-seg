@@ -52,6 +52,7 @@ if __name__ == '__main__':
         if value is not None:  # Update only if argument is provided
             cfgs[key] = value
     
+    
     output_dir = os.path.join('experiments', cfgs.learn_obj, cfgs.datasets.test.name ,cfgs.exp_name)        
     if cfgs.distribution_training:
         cudnn.benchmark = True
@@ -69,9 +70,9 @@ if __name__ == '__main__':
     cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(cfgs.model.clip, 'cpu')
     diffusion_model = create_diffusion(cfgs.model.diffusion)
     
-    train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution])
-    val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution])
-    test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution])
+    train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
+    val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
+    test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
     
     train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
     val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)

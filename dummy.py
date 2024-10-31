@@ -45,36 +45,37 @@ if __name__ == '__main__':
     diffusion_model = create_diffusion(config.model.diffusion).to(device)
 
     # unet = UNetModel_v1preview(config.model.unet)
-    val_dataset = build_dataset(config.datasets.val, [preprocess, tokenizer, resolution])
-    dataloader = DataLoader(val_dataset, batch_size=config.datasets.batch_size, shuffle=False)
+    dataset = build_dataset(config.datasets.test, [preprocess, tokenizer, resolution])
+    dataloader = DataLoader(dataset, batch_size=config.datasets.batch_size, shuffle=False)
     
     for batch in tqdm(dataloader):
         image = batch['pixel_values'].to(device)
         text_ids = batch['input_ids'].to(device)
         sdf_mask = batch['sdf_map'].to(device)
         mask = batch['mask'].to(device)
+        Rs = batch.get("inter_map", None)
         bz = image.size(0)
         h, w = image.size(-2), image.size(-1)
 
-        if args.task == 'rlp':
-            Rs, intermediate = cliprlp(image, text_ids)
-            bz = Rs.size(0)    
-        elif args.task == 'cam':
-            Rs = cliprlp.clip_model.produce_cam(image, text_ids, vis_layer=args.vis_layer)
+        # if args.task == 'rlp':
+        #     Rs, intermediate = cliprlp(image, text_ids)
+        #     bz = Rs.size(0)    
+        # elif args.task == 'cam':
+        #     Rs = cliprlp.clip_model.produce_cam(image, text_ids, vis_layer=args.vis_layer)
         
-        R_h = int(Rs[0].numel() ** 0.5)
-        Rs = Rs.view(bz, 1, R_h, R_h)
-        Rs = F.interpolate(Rs, (h, w), mode='bilinear', align_corners=False)
-        vis_batch(batch, save_dir, Rs)   
+        # R_h = int(Rs[0].numel() ** 0.5)
+        # Rs = Rs.view(bz, 1, R_h, R_h)
+        # Rs = F.interpolate(Rs, (h, w), mode='bilinear', align_corners=False)
+        # vis_batch(batch, save_dir, Rs)   
         
-        # layer 3 7 11
-        if args.run_diffusion:
-            ts = torch.randint(1, 1000, (bz,), device=device).long()
-            if config.model.diffusion.version == 'v1':
-                x = torch.cat([image, Rs], dim=1)
-                out = diffusion_model(x, ts, y=None)
-            elif config.model.diffusion.version == 'v2':
-                out = diffusion_model(Rs, ts, intermediate.detach())
+        # # layer 3 7 11
+        # if args.run_diffusion:
+        #     ts = torch.randint(1, 1000, (bz,), device=device).long()
+        #     if config.model.diffusion.version == 'v1':
+        #         x = torch.cat([image, Rs], dim=1)
+        #         out = diffusion_model(x, ts, y=None)
+        #     elif config.model.diffusion.version == 'v2':
+        #         out = diffusion_model(Rs, ts, intermediate.detach())
         
 
     

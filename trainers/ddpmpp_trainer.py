@@ -68,6 +68,7 @@ class DDPMPP_Trainer(object):
         self.start_point = start_point
         self.noise_scheduler = create_ddpmpp_scheduler(steps=num_timesteps, noise_scheduler='cosine', rescale_loss=True, )
         self.clip_grads = clip_grads
+        self.inter_mode = self.clip_model.inter_mode
         
         self.create_exp_name()
         self.log_path = os.path.join(self.output_dir, 'output_logs')
@@ -246,27 +247,14 @@ class DDPMPP_Trainer(object):
     
     def training_step(self, batch):
        
-        images, text_ids, gt = self.get_input(batch)
-        B = gt.shape[0]
-        Rs, intermediate = self.clip_model(images, text_ids)
-        if self.start_point == "LRP":
-            R_h = int(Rs[0].numel() ** 0.5)
-            Rs = Rs.view(B, 1, R_h, R_h)
-            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-            
-            # normalize Rs
-            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-            conditions = torch.cat([images, Rs], dim=1)
-        elif self.start_point == "image":
-            conditions = images
-        else:
-            raise ValueError(f"Unsupported start_point: {self.start_point}")
-        
+        images, text_ids, gt, Rs = self.get_input(batch)
+        condition, _, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
+        B = images.shape[0]
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
         losses = self.noise_scheduler.training_losses(self.diffusion_model, # model
                                                       gt, # input + condition
                                                       t, # timesteps
-                                                      conditions,
+                                                      condition,
                                                       intermediate, # intermediate layers
                                                       self.diffusion_version, # version
                                                       )
@@ -329,24 +317,11 @@ class DDPMPP_Trainer(object):
     
     def test_step(self, batch):
 
-        images, text_ids, gt = self.get_input(batch)
+        images, text_ids, gt, Rs = self.get_input(batch)
         B = gt.shape[0]
         
         zt = torch.randn(images[:, 0:1].shape, device=self.device, generator=self.generator)
-        Rs, intermediate = self.clip_model(images, text_ids)
-        
-        R_h = int(Rs[0].numel() ** 0.5)
-        Rs = Rs.view(B, 1, R_h, R_h)
-        Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-            
-        # normalize Rs
-        Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
-        if self.start_point == "LRP":
-            condition = torch.cat([images, Rs], dim=1)
-        elif self.start_point == "image":
-            condition = images
-        else:
-            raise ValueError(f"Unsupported start_point: {self.start_point}")
+        condition, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
         
         sample_fn = (self.noise_scheduler.p_sample_loop if self.infer_algo == 'ddpm' else self.noise_scheduler.ddim_sample_loop)
         with torch.no_grad():
@@ -359,6 +334,32 @@ class DDPMPP_Trainer(object):
         sample = (sample / 2 + 0.5).clamp(0, 1)
         
         return sample, Rs   
+
+    
+    def get_conditions(self, images, text_ids, Rs=None):
+        
+        if Rs is None and self.inter_mode:
+            Rs, intermediate = self.clip_model(images, text_ids)
+            B = Rs.shape[0]
+            
+            R_h = int(Rs[0].numel() ** 0.5)
+            Rs = Rs.view(B, 1, R_h, R_h)
+            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+                
+            # normalize Rs
+            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+        else:
+            with torch.no_grad():
+                _, _, intermediate = self.clip_model.clip_model(images, text_ids)
+            
+        if self.start_point == "LRP":
+            condition = torch.cat([images, Rs], dim=1)
+        elif self.start_point == "image":
+            condition = images
+        else:
+            raise ValueError(f"Unsupported start_point: {self.start_point}")
+        
+        return condition, Rs, intermediate
     
     
     def distribution_init(self):
@@ -456,11 +457,15 @@ class DDPMPP_Trainer(object):
             image = batch['pixel_values']
             text_ids = batch['input_ids']
             gt = batch[self.gt_type]
+            Rs = batch.get('inter_map', None)
         else:
             image = batch['pixel_values'].to(self.device)
             text_ids = batch['input_ids'].to(self.device)
             gt = batch[self.gt_type].to(self.device)
-        return image, text_ids, gt
+            Rs = batch.get('inter_map', None)
+            if Rs is not None:
+                Rs = Rs.to(self.device)
+        return image, text_ids, gt, Rs
 
 
     def configure_optimizers(self):
