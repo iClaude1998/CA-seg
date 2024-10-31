@@ -30,7 +30,7 @@ wandb = import_or_skip('wandb')
 
 to_pil = transforms.ToPILImage()
 
-class Reflow_Trainer(object):
+class ReflowTurb_Trainer(object):
     
     def __init__(
         self,
@@ -51,7 +51,6 @@ class Reflow_Trainer(object):
         save_interval=100,
         accelerator=None,
         log_method='wandb',
-        start_point="LRP",
         clip_grads=None,
     ):
         # instantiate control module
@@ -68,7 +67,6 @@ class Reflow_Trainer(object):
         self.device = device
         self.use_ema = use_ema
         self.start_iteration = 0
-        self.start_point = start_point
         self.clip_grads = clip_grads
         self.inter_mode = self.clip_model.inter_mode
         
@@ -247,15 +245,16 @@ class Reflow_Trainer(object):
         t_norm = t.float() / (self.num_timesteps - 1)
         t_norm = t_norm.view(B ,1, 1, 1)
 
-        # TODO: add noise maybe, (hope not)
-        zt = t_norm * z0 + (1 - t_norm) * gt
+        # add noise
+        epi = torch.randn_like(z0, device=z0.device)
+        zt = t_norm * (z0 + epi) + (1 - t_norm) * gt
         
         x = torch.cat([conditions, zt], dim=1)
         if self.diffusion_version == 'v1':
             v = self.diffusion_model(x, t, y=None)
         elif self.diffusion_version == 'v2':
             v = self.diffusion_model(x, t, intermediate.detach())
-        loss_mse = self.criterion(gt - z0, v)
+        loss_mse = self.criterion(gt - z0 - epi, v)
       
         return loss_mse   #+loss_perc
 
@@ -315,6 +314,8 @@ class Reflow_Trainer(object):
         B = gt.shape[0]
         zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
         eular_steps = [999, 749, 499, 249]
+        epi = torch.randn_like(zt, device=zt.device)
+        zt = zt + epi
         # eular_steps = [999,899,799,699,599,499,399,299,199,99]
         # eular_steps = list(range(1000))[::-1]
         for i, step in enumerate(eular_steps):
@@ -340,18 +341,9 @@ class Reflow_Trainer(object):
         else:
             with torch.no_grad():
                 _, _, intermediate = self.clip_model.clip_model(images, text_ids)
-        if self.start_point == "LRP":
             z0 = Rs
             conditions = images
-        elif self.start_point == "guassian":
-            z0 = torch.randn_like(images[:, 0:1], device=images.device)
-            conditions = images
-        elif self.start_point == "all":
-            z0 = torch.randn_like(images[:, 0:1], device=images.device)
-            conditions = torch.cat([images, Rs], dim=1)
-        else:
-            raise ValueError(f"Unsupported start_point: {self.start_point}")
-        
+
         return z0, conditions, Rs, intermediate
     
     

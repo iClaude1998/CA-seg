@@ -295,6 +295,14 @@ class UNetModel_v1preview(nn.Module):
         elif self.in_channels == 2:
             c = h[:, :-2, ...] # image channels
             h = h[:, -2:, ...] # Rs abd noise
+        elif self.in_channels == 4:
+            if x.shape[1] == 5:
+                if self.condition_channels == 3:
+                    c = h[:, :-2, ...]
+                elif self.condition_channels == 4:
+                    c = h[:, :-1, ...]
+                h = h[:, [0, 1, 2, 4], ...]
+                
         elif self.in_channels == 5:
             if self.condition_channels == 3:
                 c = h[:, :-2, ...]
