@@ -4,7 +4,7 @@ datasets:
     - 352
     - 352
   inter_layer: "layer3"
-  basedir: "/data/claude/datasets/medisegs/ISIC"
+  basedir: "/home/yliu/datasets/mediseg/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
