@@ -4,6 +4,7 @@ import torch
 import random
 import numpy as np
 
+from omegaconf import OmegaConf
 from torch.backends import cudnn
 from argparse import ArgumentParser
 from easydict import EasyDict as edict
@@ -42,9 +43,10 @@ if __name__ == '__main__':
     args = parse_args()
     config_file = args.config
     
-    with open(config_file, 'r', encoding='utf-8') as f:
-        cfgs = yaml.safe_load(f)
+    # with open(config_file, 'r', encoding='utf-8') as f:
+    #     cfgs = yaml.safe_load(f)
     
+    cfgs = OmegaConf.load(config_file)
     cfgs = edict(cfgs)
     
     args_dict = vars(args)
