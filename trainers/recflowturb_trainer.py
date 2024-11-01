@@ -51,6 +51,7 @@ class ReflowTurb_Trainer(object):
         save_interval=100,
         accelerator=None,
         log_method='wandb',
+        epi_magnitude=1.,
         clip_grads=None,
     ):
         # instantiate control module
@@ -68,6 +69,7 @@ class ReflowTurb_Trainer(object):
         self.use_ema = use_ema
         self.start_iteration = 0
         self.clip_grads = clip_grads
+        self.epi_magnitude = epi_magnitude
         self.inter_mode = self.clip_model.inter_mode
         
         self.create_exp_name()
@@ -237,7 +239,6 @@ class ReflowTurb_Trainer(object):
        
         images, text_ids, gt, Rs = self.get_input(batch)
         B = gt.shape[0]
-        # zT = torch.randn_like(sdf_map, device=self.device)
         
         z0, conditions, _, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
         
@@ -246,7 +247,7 @@ class ReflowTurb_Trainer(object):
         t_norm = t_norm.view(B ,1, 1, 1)
 
         # add noise
-        epi = torch.randn_like(z0, device=z0.device)
+        epi = torch.randn_like(z0, device=z0.device) * self.epi_magnitude
         zt = t_norm * (z0 + epi) + (1 - t_norm) * gt
         
         x = torch.cat([conditions, zt], dim=1)
@@ -314,7 +315,7 @@ class ReflowTurb_Trainer(object):
         B = gt.shape[0]
         zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
         eular_steps = [999, 749, 499, 249]
-        epi = torch.randn_like(zt, device=zt.device)
+        epi = torch.randn_like(zt, device=zt.device) * self.epi_magnitude
         zt = zt + epi
         # eular_steps = [999,899,799,699,599,499,399,299,199,99]
         # eular_steps = list(range(1000))[::-1]
