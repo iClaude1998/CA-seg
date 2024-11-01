@@ -13,7 +13,7 @@ learn_obj=$4
 
 python main.py --task test \
                --exp_name ${exp_name} \
-               --config configs/${config_file} \
+               --config ${config_file} \
                --device cuda \
                --test_type ${test_type} \
                --learn_obj ${learn_obj} \

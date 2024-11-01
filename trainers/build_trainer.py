@@ -88,6 +88,7 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                      cfgs.trainer.save_interval,
                                      accelerator,
                                      cfgs.log_method,
+                                     epi_magnitude=cfgs.trainer.epi_magnitude,
                                      clip_grads=cfgs.trainer.clip_grads)
     else:
         raise ValueError(f"Unsupported learning objective: {cfgs.learn_obj}, what do you wanna do ???")
