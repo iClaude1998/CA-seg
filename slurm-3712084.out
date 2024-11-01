@@ -1,0 +1,103 @@
+# conda environments:
+#
+base                     /home/a1233646/miniconda3
+MA_detection             /hpcfs/users/a1233646/myconda/envs/MA_detection
+clipflow              *  /hpcfs/users/a1233646/myconda/envs/clipflow
+
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2022 NVIDIA Corporation
+Built on Wed_Sep_21_10:33:58_PDT_2022
+Cuda compilation tools, release 11.8, V11.8.89
+Build cuda_11.8.r11.8/compiler.31833905_0
+Traceback (most recent call last):
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/main.py", line 14, in <module>
+    from trainers import build_trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/__init__.py", line 2, in <module>
+    from .build_trainer import build_trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/build_trainer.py", line 2, in <module>
+    from .ddpm_trainer import DDPM_Trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/ddpm_trainer.py", line 20, in <module>
+    from diffusers import DDPMScheduler
+ModuleNotFoundError: No module named 'diffusers'
+Traceback (most recent call last):
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/main.py", line 14, in <module>
+Traceback (most recent call last):
+      File "/scratchdata1/users/a1233646/myprojects/clipflow2/main.py", line 14, in <module>
+from trainers import build_trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/__init__.py", line 2, in <module>
+    from .build_trainer import build_trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/build_trainer.py", line 2, in <module>
+    from trainers import build_trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/__init__.py", line 2, in <module>
+    from .ddpm_trainer import DDPM_Trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/ddpm_trainer.py", line 20, in <module>
+    from .build_trainer import build_trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/build_trainer.py", line 2, in <module>
+    from diffusers import DDPMScheduler
+ModuleNotFoundError:     No module named 'diffusers'from .ddpm_trainer import DDPM_Trainer
+
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/ddpm_trainer.py", line 20, in <module>
+    from diffusers import DDPMScheduler
+ModuleNotFoundError: No module named 'diffusers'
+Traceback (most recent call last):
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/main.py", line 14, in <module>
+    from trainers import build_trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/__init__.py", line 2, in <module>
+    from .build_trainer import build_trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/build_trainer.py", line 2, in <module>
+    from .ddpm_trainer import DDPM_Trainer
+  File "/scratchdata1/users/a1233646/myprojects/clipflow2/trainers/ddpm_trainer.py", line 20, in <module>
+    from diffusers import DDPMScheduler
+ModuleNotFoundError: No module named 'diffusers'
+[2024-11-02 03:20:39,991] torch.distributed.elastic.multiprocessing.api: [ERROR] failed (exitcode: 1) local_rank: 0 (pid: 971299) of binary: /hpcfs/users/a1233646/myconda/envs/clipflow/bin/python
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/bin/accelerate", line 8, in <module>
+    sys.exit(main())
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/accelerate_cli.py", line 48, in main
+    args.func(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/launch.py", line 1165, in launch_command
+    multi_gpu_launcher(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/accelerate/commands/launch.py", line 799, in multi_gpu_launcher
+    distrib_run.run(args)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/run.py", line 797, in run
+    elastic_launch(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 134, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 264, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+main.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2024-11-02_03:20:39
+  host      : p2-gpu-33.hpc.adelaide.edu.au
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 971300)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[2]:
+  time      : 2024-11-02_03:20:39
+  host      : p2-gpu-33.hpc.adelaide.edu.au
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 971301)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[3]:
+  time      : 2024-11-02_03:20:39
+  host      : p2-gpu-33.hpc.adelaide.edu.au
+  rank      : 3 (local_rank: 3)
+  exitcode  : 1 (pid: 971302)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2024-11-02_03:20:39
+  host      : p2-gpu-33.hpc.adelaide.edu.au
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 971299)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

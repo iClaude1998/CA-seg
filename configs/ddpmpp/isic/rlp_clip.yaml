@@ -1,8 +1,8 @@
 datasets:
   batch_size: 2
   size:
-  inter_layer: "layer3"
-  basedir: "/data/claude/datasets/medisegs/ISIC"
+  inter_layer: "layer11"
+  basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
