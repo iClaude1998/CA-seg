@@ -70,6 +70,7 @@ class Reflow_Trainer(object):
         self.start_iteration = 0
         self.start_point = start_point
         self.clip_grads = clip_grads
+        self.inter_mode = self.clip_model.inter_mode
         
         self.create_exp_name()
         self.log_path = os.path.join(output_dir, 'output_logs')
@@ -236,11 +237,11 @@ class Reflow_Trainer(object):
     
     def training_step(self, batch):
        
-        images, text_ids, gt = self.get_input(batch)
+        images, text_ids, gt, Rs = self.get_input(batch)
         B = gt.shape[0]
         # zT = torch.randn_like(sdf_map, device=self.device)
         
-        z0, conditions, _, intermediate = self.get_conditions(images, text_ids)
+        z0, conditions, _, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
         
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
         t_norm = t.float() / (self.num_timesteps - 1)
@@ -310,9 +311,9 @@ class Reflow_Trainer(object):
     
     def test_step(self, batch):
 
-        images, text_ids, gt = self.get_input(batch)
+        images, text_ids, gt, Rs = self.get_input(batch)
         B = gt.shape[0]
-        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids)
+        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
         eular_steps = [999, 749, 499, 249]
         # eular_steps = [999,899,799,699,599,499,399,299,199,99]
         # eular_steps = list(range(1000))[::-1]
@@ -327,22 +328,26 @@ class Reflow_Trainer(object):
         return zt, Rs   
     
     
-    def get_conditions(self, images, text_ids):
-        Rs, intermediate = self.clip_model(images, text_ids)
-        B = Rs.shape[0]
-        R_h = int(Rs[0].numel() ** 0.5)
-        Rs = Rs.view(B, 1, R_h, R_h)
-        Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
-        # normalize Rs
-        Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+    def get_conditions(self, images, text_ids, Rs=None):
+        if Rs is None and self.inter_mode:
+            Rs, intermediate = self.clip_model(images, text_ids)
+            B = Rs.shape[0]
+            R_h = int(Rs[0].numel() ** 0.5)
+            Rs = Rs.view(B, 1, R_h, R_h)
+            Rs = F.interpolate(Rs, images.shape[-2:], mode='bilinear', align_corners=False)
+            # normalize Rs
+            Rs = process_Relevant_score_batch(Rs, images.shape[-2:])
+        else:
+            with torch.no_grad():
+                _, _, intermediate = self.clip_model.clip_model(images, text_ids)
         if self.start_point == "LRP":
             z0 = Rs
             conditions = images
         elif self.start_point == "guassian":
-            z0 = torch.randn_like(images[:, 0:1], device=self.device)
+            z0 = torch.randn_like(images[:, 0:1], device=images.device)
             conditions = images
         elif self.start_point == "all":
-            z0 = torch.randn_like(images[:, 0:1], device=self.device)
+            z0 = torch.randn_like(images[:, 0:1], device=images.device)
             conditions = torch.cat([images, Rs], dim=1)
         else:
             raise ValueError(f"Unsupported start_point: {self.start_point}")
@@ -352,8 +357,6 @@ class Reflow_Trainer(object):
     
     def distribution_init(self):
         
-        # if self.accelerator.is_local_main_process:
-        #     self.logger.info(f"Total CUDA devices: {torch.cuda.device_count()}")
         self.accelerator.print(f"Total CUDA devices: {torch.cuda.device_count()}")
         
         # init model, optimizers, and dataloaders
@@ -445,11 +448,16 @@ class Reflow_Trainer(object):
             image = batch['pixel_values']
             text_ids = batch['input_ids']
             gt = batch[self.gt_type]
+            Rs = batch.get('inter_map', None)
         else:
             image = batch['pixel_values'].to(self.device)
             text_ids = batch['input_ids'].to(self.device)
             gt = batch[self.gt_type].to(self.device)
-        return image, text_ids, gt
+            Rs = batch.get('inter_map', None)
+            if Rs is not None:
+                Rs = Rs.to(self.device)
+            
+        return image, text_ids, gt, Rs
 
 
     def configure_optimizers(self):

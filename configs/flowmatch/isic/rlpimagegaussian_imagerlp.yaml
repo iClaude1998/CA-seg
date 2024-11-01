@@ -1,50 +1,51 @@
 datasets:
   batch_size: 2
+  size:
+  inter_layer: "layer3"
+  basedir: "/data/claude/datasets/medisegs/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    images_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    masks_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/train.json"
-    caps_file: "/data/claude/datasets/medisegs/ISIC/anns/train.json"
+    images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
+    masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
+    caps_file: "${datasets.basedir}/anns/train.json"
+    inter_layer: "${datasets.inter_layer}"
     override_prompt:
     zero_prompt: False
-    image_size:
+    image_size: "${datasets.size}"
   val:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    images_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    masks_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/val.json"
-    caps_file: "/data/claude/datasets/medisegs/ISIC/anns/val.json"
+    images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
+    masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
+    caps_file: "${datasets.basedir}/anns/val.json"
+    inter_layer: "${datasets.inter_layer}"
     override_prompt:
     zero_prompt: False
-    image_size:
+    image_size: "${datasets.size}"
   test:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
-    images_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    masks_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    sdf_dir: "/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/test.json"
-    caps_file: "/data/claude/datasets/medisegs/ISIC/anns/test.json"
+    images_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_Data"
+    masks_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
+    inter_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_LRP/Pubmedclip/LRP"
+    caps_file: "${datasets.basedir}/anns/test.json"
+    inter_layer: "${datasets.inter_layer}"
     override_prompt:
     zero_prompt: False
-    image_size:
+    image_size: "${datasets.size}"
 
 model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       - 11
+    inter_mode: False
   diffusion:
     version: "v1"
     image_size: 224
@@ -71,7 +72,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: # the name of the loaded checkpoint
+  checkpoint_name: checkpoint_iter100000.pth # the name of the loaded checkpoint
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100

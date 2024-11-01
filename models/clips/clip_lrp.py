@@ -10,21 +10,25 @@ from .auxilary import MultiheadAttention
 
 class CustomVisionRLPBlock(nn.Module):
   
-    def __init__(self, block):
+    def __init__(self, block, inter_mode=True):
         super().__init__()
         for k, v in vars(block).items():
             setattr(self, k, v)
         self.num_heads = self.attn.num_heads
         self.d_model = self.attn.embed_dim
-        self.attn = MultiheadAttention(self.attn)
+        self.inter_mode = inter_mode
+        if inter_mode:
+            self.attn = MultiheadAttention(self.attn)
         self.attn_grad = None
         self.attn_prob = None
 
     def attention(self, x, attn_mask: Optional[torch.Tensor] = None):
 
         attn_mask = attn_mask.to(x.dtype) if attn_mask is not None else None
-        return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask, attention_probs_forward_hook=self.set_attn_prob,
-                         attention_probs_backwards_hook=self.set_attn_grad)[0]
+        if self.inter_mode:
+            return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask, attention_probs_forward_hook=self.set_attn_prob,
+                             attention_probs_backwards_hook=self.set_attn_grad)[0]
+        return self.attn(x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
     
     def set_attn_grad(self, attn_grad):
         self.attn_grad = attn_grad
@@ -43,7 +47,7 @@ class CustomVisionRLPBlock(nn.Module):
 class CustomTransformer(nn.Module):
     """A customized Transformer to support CAM calculation."""
 
-    def __init__(self, transformer, outlayers):
+    def __init__(self, transformer, outlayers, inter_mode=True):
         """Initialize the wrapper.
 
         Args:
@@ -59,7 +63,7 @@ class CustomTransformer(nn.Module):
             if hasattr(self, module):
                 delattr(self, module)
 
-        self.resblocks = nn.Sequential(*[CustomVisionRLPBlock(block) for block in self.resblocks])
+        self.resblocks = nn.Sequential(*[CustomVisionRLPBlock(block, inter_mode) for block in self.resblocks])
         self.layers = len(self.resblocks)
         self.outlayers = outlayers
 
@@ -75,7 +79,7 @@ class CustomTransformer(nn.Module):
 class CustomVisionTransformer(nn.Module):
     """A customized VisionTransformer to support CAM calculation."""
 
-    def __init__(self, model, default_imgsize, outlayers):
+    def __init__(self, model, default_imgsize, outlayers, inter_mode=True):
         """Initialize the wrapper.
 
         Args:
@@ -86,7 +90,7 @@ class CustomVisionTransformer(nn.Module):
             setattr(self, k, v)
         patch_size = self.conv1.weight.shape[-1]
         self.outlayers = outlayers
-        self.transformer = CustomTransformer(self.transformer, outlayers)
+        self.transformer = CustomTransformer(self.transformer, outlayers, inter_mode)
         self.default_num_patches = (default_imgsize // patch_size) ** 2
 
     def _patch_embed(self, x):
@@ -157,7 +161,7 @@ class CustomVisionTransformer(nn.Module):
 class CLIPWrapper(nn.Module):
     """A wrapper for CLIP to support forward with a list of text inputs."""
 
-    def __init__(self, clip_model, default_imgsize, outlayers):
+    def __init__(self, clip_model, default_imgsize, outlayers, inter_mode=True):
         """Initialize the wrapper.
 
         Args:
@@ -167,7 +171,8 @@ class CLIPWrapper(nn.Module):
         # copy all attributes from clip_model to self
         for k, v in vars(clip_model).items():
             setattr(self, k, v)
-        self.visual = CustomVisionTransformer(self.visual, default_imgsize, outlayers)
+        self.inter_mode = inter_mode
+        self.visual = CustomVisionTransformer(self.visual, default_imgsize, outlayers, inter_mode)
         self.transformer.batch_first = True
         
 
@@ -201,7 +206,7 @@ class CLIPWrapper(nn.Module):
         return F.normalize(x, dim=-1) if normalize else x
         
 
-    def forward(self, image, text_ids, normalize=False):
+    def forward(self, image, text_ids, normalize=True):
         image_features, intermediates = self.encode_image(image, normalize)
         text_features = self.encode_text(text_ids, normalize)
         if not normalize:
@@ -233,6 +238,7 @@ class CLIPLRP:
     def __init__(self, clip_model, device):
         self.device = device
         self.clip_model = clip_model.to(device)
+        self.inter_mode = self.clip_model.inter_mode
         self.clip_model.eval()
     
     def to(self, device):

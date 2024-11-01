@@ -8,7 +8,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from typing import Any, Dict, Optional
 
-from .build_mask_transforms import build_usdf_transforms, build_mask_transforms, refine_image_transforms
+from .build_mask_transforms import build_usdf_transforms, build_mask_transforms, refine_image_transforms, build_intermap_transforms
 
 
 class ISIC_seg(Dataset):
@@ -40,6 +40,8 @@ class ISIC_seg(Dataset):
         images_dir: str,
         masks_dir: str,
         sdf_dir: str,
+        inter_dir: Optional[str] = None,
+        inter_layer: Optional[str] = None, # layer11, layer7, layer3
         caps_file: Optional[str] = None,
         override_prompt: Optional[str] = None,
         zero_prompt: bool = False,
@@ -51,6 +53,8 @@ class ISIC_seg(Dataset):
         self.images_dir = images_dir
         self.masks_dir = masks_dir
         self.sdf_dir = sdf_dir
+        self.inter_dir = inter_dir
+        self.inter_layer = inter_layer
 
         self.preprocess, self.tokenizer, image_resolution = preprocessors
 
@@ -61,6 +65,8 @@ class ISIC_seg(Dataset):
             self.preprocess = refine_image_transforms(self.preprocess, image_resolution)
         self.mask_transforms = build_mask_transforms(image_resolution)
         self.usdf_transforms = build_usdf_transforms(image_resolution)
+        if self.inter_layer is not None:
+            self.intermap_transforms = build_intermap_transforms(image_resolution)
 
         with open(caps_file, "r") as fp:
             self.imgs_captions = json.load(fp)
@@ -78,6 +84,9 @@ class ISIC_seg(Dataset):
         image = Image.open(f"{self.images_dir}/{cap['img_name']}").convert("RGB")
         mask = Image.open(f"{self.masks_dir}/{mask_name}")
         sdf_map = np.load(f"{self.sdf_dir}/{name}.npy")
+        if self.inter_dir is not None:
+            assert self.inter_layer is not None, "Please provide the layer for the interpretability map"
+            inter_map = np.load(f"{self.inter_dir}/{name}_{self.inter_layer}.npy")
 
         h, w = mask.height, mask.width
 
@@ -97,6 +106,8 @@ class ISIC_seg(Dataset):
         image = self.preprocess(image)
         mask = self.mask_transforms(mask)
         sdf_map = self.usdf_transforms(sdf_map)
+        if self.inter_layer is not None:
+            inter_map = self.intermap_transforms(inter_map)
         text_enc = self.tokenizer(prompt)
         
         return_dict = dict(
@@ -115,4 +126,7 @@ class ISIC_seg(Dataset):
             return_dict["attention_mask"] = text_enc["attention_mask"][0]
         elif isinstance(text_enc, torch.Tensor):
             return_dict["input_ids"] = text_enc[0]
+        
+        if self.inter_layer is not None:
+            return_dict["inter_map"] = inter_map
         return return_dict

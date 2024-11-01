@@ -11,15 +11,18 @@ from .utils import interpolate_position_embeddings
 
 class CustomVisionRLPBlock(nn.Module):
     
-    def __init__(self, block):
+    def __init__(self, block, inter_mode=True):
         super().__init__()
         for k, v in vars(block).items():
             setattr(self, k, v)
         
         self.num_heads = self.attn.num_heads
         self.d_model = self.attn.embed_dim
+        self.inter_mode = inter_mode
+        
+        if inter_mode:
+            self.attn = MultiheadAttention(self.attn)
 
-        self.attn = MultiheadAttention(self.attn)
     
     def set_attn_grad(self, attn_grad):
         self.attn_grad = attn_grad
@@ -30,8 +33,12 @@ class CustomVisionRLPBlock(nn.Module):
     def attention(self, x, attn_mask: Optional[torch.Tensor] = None):
 
         attn_mask = attn_mask.to(x.dtype) if attn_mask is not None else None
-        return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask, attention_probs_forward_hook=self.set_attn_prob,
-                         attention_probs_backwards_hook=self.set_attn_grad)[0]
+        if self.inter_mode:
+            return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask, attention_probs_forward_hook=self.set_attn_prob,
+                             attention_probs_backwards_hook=self.set_attn_grad)[0]
+        else:
+            return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask)[0]
+
 
     def forward(self, x: torch.Tensor):
         x = x + self.attention(self.ln_1(x))
@@ -40,7 +47,7 @@ class CustomVisionRLPBlock(nn.Module):
 
 
 class CustomTransformer(nn.Module):
-    def __init__(self, transformer,out_layers=[2, 5, 8, 11]):
+    def __init__(self, transformer,out_layers=[2, 5, 8, 11], inter_mode=True):
         super().__init__()
         # for k, v in transformer.named_parameters():
         #   print(k)
@@ -50,8 +57,8 @@ class CustomTransformer(nn.Module):
         for module in ['cls_token', 'pos_embed', 'patch_embed', 'norm', 'projects']:
             if hasattr(self, module):
                 delattr(self, module)
-
-        self.resblocks = nn.Sequential(*[CustomVisionRLPBlock(block) for block in self.resblocks])
+        self.inter_mode = inter_mode
+        self.resblocks = nn.Sequential(*[CustomVisionRLPBlock(block, inter_mode) for block in self.resblocks])
         self.layers = len(self.resblocks)
         self.out_layers = out_layers
 
@@ -67,7 +74,7 @@ class CustomTransformer(nn.Module):
 class CustomVisionTransformer(nn.Module):
     """A customized VisionTransformer to support CAM calculation."""
 
-    def __init__(self, model, default_imgsize, output_layers=[2, 5, 8, 11]):
+    def __init__(self, model, default_imgsize, output_layers=[2, 5, 8, 11], inter_mode=True):
         """Initialize the wrapper.
 
         Args:
@@ -77,7 +84,7 @@ class CustomVisionTransformer(nn.Module):
         for k, v in vars(model).items():
             setattr(self, k, v)
         patch_size = self.conv1.weight.shape[-1]
-        self.transformer = CustomTransformer(self.transformer, output_layers)
+        self.transformer = CustomTransformer(self.transformer, output_layers, inter_mode)
         self.default_num_patches = (default_imgsize // patch_size) ** 2
 
     def _patch_embed(self, x):
@@ -136,7 +143,7 @@ class CustomVisionTransformer(nn.Module):
 class PUBMEDCLIPWrapper(nn.Module):
     """A wrapper for CLIP to support forward with a list of text inputs."""
 
-    def __init__(self, clip_model, default_imgsize, outlayers=[2, 5, 8, 11]):
+    def __init__(self, clip_model, default_imgsize, outlayers=[2, 5, 8, 11], inter_mode=True):
         """Initialize the wrapper.
 
         Args:
@@ -146,7 +153,8 @@ class PUBMEDCLIPWrapper(nn.Module):
         # copy all attributes from clip_model to self
         for k, v in vars(clip_model).items():
             setattr(self, k, v)
-        self.visual = CustomVisionTransformer(self.visual, default_imgsize, outlayers)
+        self.inter_mode = inter_mode
+        self.visual = CustomVisionTransformer(self.visual, default_imgsize, outlayers, inter_mode)
         
 
     @property
@@ -207,17 +215,13 @@ class PUBMEDCLIPLRP:
     def __init__(self, clip_model, device):
         self.device = device
         self.clip_model = clip_model.to(device)
+        self.inter_mode = clip_model.inter_mode
         self.clip_model.eval()
         
     def to(self, device):
         self.clip_model = self.clip_model.to(device)
         self.device = device
         
-    
-    
-    def to(self, device):
-        self.clip_model = self.clip_model.to(device)
-        self.device = device
     
     def __call__(self, image, text_tokens, start_layer=-1):
 

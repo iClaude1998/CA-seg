@@ -1,53 +1,53 @@
 datasets:
   batch_size: 2
+  size:
+  inter_layer: "layer3"
+  basedir: "/data/claude/datasets/medisegs/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/train.json"
-    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/train.json"
+    images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
+    masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
+    caps_file: "${datasets.basedir}/anns/train.json"
+    inter_layer: "${datasets.inter_layer}"
     override_prompt:
     zero_prompt: False
-    image_size:
+    image_size: "${datasets.size}"
   val:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/val.json"
-    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/val.json"
+    images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
+    masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
+    caps_file: "${datasets.basedir}/anns/val.json"
+    inter_layer: "${datasets.inter_layer}"
     override_prompt:
     zero_prompt: False
-    image_size:
+    image_size: "${datasets.size}"
   test:
     name: "isic_seg"
     prompt_type: "p6"
-    # images_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
-    images_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_Data"
-    # masks_dir: "/home/yliu/datasets/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    masks_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    sdf_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
-    # caps_file: "/home/yliu/datasets/mediseg/ISIC/anns/test.json"
-    caps_file: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC/anns/test.json"
+    images_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_Data"
+    masks_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
+    inter_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_LRP/Pubmedclip/LRP"
+    caps_file: "${datasets.basedir}/anns/test.json"
+    inter_layer: "${datasets.inter_layer}"
     override_prompt:
     zero_prompt: False
-    image_size:
+    image_size: "${datasets.size}"
 
 model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
-      - 2
-      - 5
-      - 8
+      - 3
+      - 7
       - 11
+    inter_mode: True
   diffusion:
     version: "v1"
     image_size: 224

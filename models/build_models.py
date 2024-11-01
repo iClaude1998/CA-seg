@@ -16,7 +16,7 @@ def load_clip_and_tokenizer(cfgs, device):
         resolution = model.visual.preprocess_cfg['size']
         tokenizer = open_clip.get_tokenizer('ViT-B-32')
         default_imgsize = 224
-        model = CLIPLRP(CLIPWrapper(model, default_imgsize, cfgs.outlayers), device)
+        model = CLIPLRP(CLIPWrapper(model, default_imgsize, cfgs.outlayers, cfgs.inter_mode), device)
     elif cfgs.pretrain == "MedICaT":
         model, _ , preprocess = open_clip.create_model_and_transforms('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
         resolution = model.visual.preprocess_cfg['size']
@@ -30,7 +30,7 @@ def load_clip_and_tokenizer(cfgs, device):
         resolution = model.visual.input_resolution
         tokenizer = clip.tokenize
         default_imgsize = 224
-        model = PUBMEDCLIPLRP(PUBMEDCLIPWrapper(model, default_imgsize, cfgs.outlayers), device)
+        model = PUBMEDCLIPLRP(PUBMEDCLIPWrapper(model, default_imgsize, cfgs.outlayers, cfgs.inter_mode), device)
     return model, tokenizer, preprocess, resolution
 
 
