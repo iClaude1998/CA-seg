@@ -45,7 +45,7 @@ model:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       - 11
-    inter_mode: False # get RLP from dataset/ clip 
+    inter_mode: True # get RLP from dataset/ clip 
   diffusion:
     version: "v1"
     image_size: 224
