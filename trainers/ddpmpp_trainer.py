@@ -169,7 +169,8 @@ class DDPMPP_Trainer(object):
             iter_id += 1
         
         # let's do the last inference and log
-        self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss.item():.4f}, Loss MSE: {loss_dict["mse"].item():.4f}, Loss vb: {loss_dict["vb"].item():.4f}')
+        mse, vb = loss_dict["mse"].mean().item(), loss_dict["vb"].mean().item()
+        self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss.item():.4f}, Loss MSE: {mse:.4f}, Loss vb: {vb:.4f}')
         vts, random_batch = self.random_inference()
         self.visualize(vts, random_batch, iter_id)
         self.save_checkpoints(iter_id)

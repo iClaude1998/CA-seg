@@ -1,8 +1,13 @@
 datasets:
-  batch_size: 2
+  batch_size: 8
   size:
+<<<<<<< HEAD
   inter_layer: "layer3"
   basedir: "/home/yliu/datasets/mediseg/ISIC"
+=======
+  inter_layer: "layer11"
+  basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
+>>>>>>> c7a4fb365378acd92d9efa0636f07879c62b1bd9
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -13,7 +18,6 @@ datasets:
     caps_file: "${datasets.basedir}/anns/train.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
-    zero_prompt: False
     image_size: "${datasets.size}"
   val:
     name: "isic_seg"
@@ -25,7 +29,6 @@ datasets:
     caps_file: "${datasets.basedir}/anns/val.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
-    zero_prompt: False
     image_size: "${datasets.size}"
   test:
     name: "isic_seg"
@@ -37,7 +40,6 @@ datasets:
     caps_file: "${datasets.basedir}/anns/test.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
-    zero_prompt: False
     image_size: "${datasets.size}"
 
 
@@ -48,7 +50,7 @@ model:
       - 3
       - 7
       - 11
-    inter_mode: True
+    inter_mode: False
   diffusion:
     version: "v2"
     image_size: 224
@@ -60,7 +62,7 @@ model:
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
-    use_checkpoint: False
+    use_checkpoint: True
     use_fp16: False
     num_heads: 1
     num_head_channels: -1
