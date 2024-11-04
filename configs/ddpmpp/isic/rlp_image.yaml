@@ -1,7 +1,7 @@
 datasets:
-  batch_size: 2
+  batch_size: 8
   size:
-  inter_layer: "layer3"
+  inter_layer: "layer11"
   basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
   train:
     name: "isic_seg"
@@ -46,7 +46,7 @@ model:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       - 11
-    inter_mode: True
+    inter_mode: False
   diffusion:
     version: "v1"
     image_size: 224
@@ -59,7 +59,7 @@ model:
     dropout: 0.0
     channel_mult: ""
     num_classes: # set None for avoid label embeddings (why we have it, strange ???)
-    use_checkpoint: False
+    use_checkpoint: True
     use_fp16: False
     num_heads: 1
     num_head_channels: -1
