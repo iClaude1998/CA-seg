@@ -1,13 +1,8 @@
 datasets:
   batch_size: 2
   size:
-<<<<<<< HEAD:configs/flowmatch/isic/rlpimagegaussian_image.yaml
   inter_layer: "layer3"
   basedir: "/home/yliu/datasets/mediseg/ISIC"
-=======
-  inter_layer: "layer11"
-  basedir: "/data/claude/datasets/medisegs/ISIC"
->>>>>>> c7a4fb365378acd92d9efa0636f07879c62b1bd9:configs/flowmatch/isic/rlp11imagegaussian_image.yaml
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -48,7 +43,6 @@ model:
     outlayers: 
       - 11
     inter_mode: True
-    proj_patch: True
   diffusion:
     version: "v1"
     image_size: 224

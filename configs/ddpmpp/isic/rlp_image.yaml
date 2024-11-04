@@ -1,13 +1,8 @@
 datasets:
   batch_size: 8
   size:
-<<<<<<< HEAD
   inter_layer: "layer3"
   basedir: "/home/yliu/datasets/mediseg/ISIC"
-=======
-  inter_layer: "layer11"
-  basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
->>>>>>> c7a4fb365378acd92d9efa0636f07879c62b1bd9
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -49,7 +44,6 @@ model:
     outlayers: 
       - 11
     inter_mode: False
-    proj_patch: True
   diffusion:
     version: "v1"
     image_size: 224
