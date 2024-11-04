@@ -74,7 +74,7 @@ class CustomTransformer(nn.Module):
 class CustomVisionTransformer(nn.Module):
     """A customized VisionTransformer to support CAM calculation."""
 
-    def __init__(self, model, default_imgsize, output_layers=[2, 5, 8, 11], inter_mode=True):
+    def __init__(self, model, default_imgsize, output_layers=[2, 5, 8, 11], inter_mode=True, proj_patch=True):
         """Initialize the wrapper.
 
         Args:
@@ -86,6 +86,7 @@ class CustomVisionTransformer(nn.Module):
         patch_size = self.conv1.weight.shape[-1]
         self.transformer = CustomTransformer(self.transformer, output_layers, inter_mode)
         self.default_num_patches = (default_imgsize // patch_size) ** 2
+        self.proj_patch = proj_patch
 
     def _patch_embed(self, x):
 
@@ -133,7 +134,7 @@ class CustomVisionTransformer(nn.Module):
     def forward_patch(self, x):
         x = torch.cat(x, dim=0).permute(0, 2, 1, 3)[..., 1:, :] # [num_layers, B, num_patch, d]
         x = self.ln_post(x)
-        if self.proj is not None:
+        if self.proj is not None and self.proj_patch:
             x = torch.matmul(x, self.proj)
         return x
         
@@ -143,7 +144,7 @@ class CustomVisionTransformer(nn.Module):
 class PUBMEDCLIPWrapper(nn.Module):
     """A wrapper for CLIP to support forward with a list of text inputs."""
 
-    def __init__(self, clip_model, default_imgsize, outlayers=[2, 5, 8, 11], inter_mode=True):
+    def __init__(self, clip_model, default_imgsize, outlayers=[2, 5, 8, 11], inter_mode=True, proj_patch=True):
         """Initialize the wrapper.
 
         Args:
@@ -154,7 +155,7 @@ class PUBMEDCLIPWrapper(nn.Module):
         for k, v in vars(clip_model).items():
             setattr(self, k, v)
         self.inter_mode = inter_mode
-        self.visual = CustomVisionTransformer(self.visual, default_imgsize, outlayers, inter_mode)
+        self.visual = CustomVisionTransformer(self.visual, default_imgsize, outlayers, inter_mode, proj_patch)
         
 
     @property

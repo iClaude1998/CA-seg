@@ -651,6 +651,8 @@ class CLIPAttentionBlock(nn.Module):
         emb = emb.permute(0, 2, 1)
         if self.linear_allignment:
             emb = self.clip_projector(emb)
+        
+        
         # cat them together
         hkv = torch.cat([x_k.reshape(b, c, -1), emb], dim=2)
         hidden_kv = self.linear_kv(self.norm_kv(hkv))

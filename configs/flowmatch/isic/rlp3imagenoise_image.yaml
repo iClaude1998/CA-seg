@@ -43,6 +43,7 @@ model:
     outlayers: 
       - 11
     inter_mode: False
+    proj_patch: True
   diffusion:
     version: "v1"
     image_size: 224
