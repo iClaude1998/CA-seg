@@ -1,7 +1,7 @@
 datasets:
-  batch_size: 4
+  batch_size: 8
   size:
-  inter_layer: "layer11"
+  inter_layer: "layer3"
   basedir: "/data/claude/datasets/medisegs/ISIC"
   train:
     name: "isic_seg"
@@ -42,11 +42,11 @@ model:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       - 11
-    inter_mode: False # get RLP from dataset/ clip 
+    inter_mode: False
   diffusion:
     version: "v1"
     image_size: 224
-    in_channels: 4    # 1 for CAM input only and image input only as condition
+    in_channels: 5    # 1 for CAM input only and image input only as condition
     condition_channels: 3
     num_channels: 128
     out_channels: 1
@@ -64,8 +64,6 @@ model:
     resblock_updown: False
     use_new_attention_order: False
 
-
-
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
@@ -75,9 +73,8 @@ trainer:
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
-  start_point: "LRP"
+  start_point: "all" 
   gradient_accumulation_steps: 1
-  epi_magnitude: 1.
   clip_grads:
 
 log_method: "wandb" # wandb, tensorboard

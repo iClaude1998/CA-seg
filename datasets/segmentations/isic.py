@@ -44,7 +44,6 @@ class ISIC_seg(Dataset):
         inter_layer: Optional[str] = None, # layer11, layer7, layer3
         caps_file: Optional[str] = None,
         override_prompt: Optional[str] = None,
-        zero_prompt: bool = False,
         image_size=None
     ) -> None:
         super().__init__()
@@ -58,7 +57,6 @@ class ISIC_seg(Dataset):
 
         self.preprocess, self.tokenizer, image_resolution = preprocessors
 
-        self.zero_prompt = zero_prompt
         self.override_prompt = override_prompt
         if image_size is not None and image_size != image_resolution:
             image_resolution = image_size
