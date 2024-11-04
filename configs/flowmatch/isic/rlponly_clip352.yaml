@@ -15,7 +15,6 @@ datasets:
     caps_file: "${datasets.basedir}/anns/train.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
-    zero_prompt: False
     image_size: "${datasets.size}"
   val:
     name: "isic_seg"
@@ -27,7 +26,6 @@ datasets:
     caps_file: "${datasets.basedir}/anns/val.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
-    zero_prompt: False
     image_size: "${datasets.size}"
   test:
     name: "isic_seg"
@@ -39,7 +37,6 @@ datasets:
     caps_file: "${datasets.basedir}/anns/test.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
-    zero_prompt: False
     image_size: "${datasets.size}"
 
 model:
