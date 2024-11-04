@@ -46,6 +46,7 @@ model:
       - 7
       - 11
     inter_mode: False
+    proj_patch: True
   diffusion:
     version: "v2"
     image_size: 224

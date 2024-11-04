@@ -50,10 +50,10 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/flowmatchturb/isic/imgrlp_img05.yaml", 
+                     "--config", "configs/flowmatch/isic/gaussianimage_cliptune768.yaml", 
                      "--exp_name", "debug", 
                      "--device", "cuda",
-                     "--learn_obj", "recflowturb"]
+                     "--learn_obj", "recflow"]
         }
     ]
 }
