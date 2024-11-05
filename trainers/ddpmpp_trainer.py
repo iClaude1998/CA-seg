@@ -225,7 +225,7 @@ class DDPMPP_Trainer(object):
                     self.writer.add_scalar('MSE', mean_loss_dict['mse'], iter_id)
                     self.writer.add_scalar('Training Loss', mean_loss_dict["vb"], iter_id)
             
-            if iter_id % (self.save_interval * 100) == 0:
+            if iter_id % (self.save_interval * 500) == 0:
                 vts, random_batch = self.random_inference()
                 if self.accelerator.is_local_main_process:
                     self.visualize(vts, random_batch, iter_id)
