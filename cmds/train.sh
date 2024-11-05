@@ -18,6 +18,5 @@ if [ "$DISTRIBUTED_TRAINING" == "y" ]; then
     accelerate launch --multi-gpu --num_processes=2 --num_machines=1 --mixed-precision=no --dynamo_backend=no main.py --exp_name ${exp_name} --task train --config ${config_file} --num_workers 4 --learn_obj ${learn_obj} --distribution_training
 else
     echo "Distributed training not enabled. Running single-node training commands..."
-    export CUDA_VISIBLE_DEVICES=1
-    python main.py --exp_name ${exp_name} --task train --config ${config_file} --num_workers 4 --learn_obj ${learn_obj} --distribution_training
+    python main.py --exp_name ${exp_name} --task train --config ${config_file} --num_workers 4 --learn_obj ${learn_obj}
 fi
