@@ -2,7 +2,7 @@ datasets:
   batch_size: 8
   size:
   inter_layer: "layer11"
-  basedir: "/home/yliu/datasets/mediseg/ISIC"
+  basedir: "/data/claude/datasets/medisegs/ISIC"
   train:
     name: "isic_attr"
     prompt_type: "p9"
@@ -50,6 +50,7 @@ model:
     version: "v1"
     image_size: 224
     in_channels: 1    # 1 for CAM input only and image input only as condition
+    condition_channels: 3
     num_channels: 128
     out_channels: 1
     num_res_blocks: 2
@@ -71,7 +72,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: # the name of the loaded checkpoint
+  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
