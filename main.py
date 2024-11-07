@@ -2,6 +2,7 @@ import os
 import torch
 import random
 import numpy as np
+import pandas as pd 
 
 from omegaconf import OmegaConf
 from torch.backends import cudnn
@@ -96,7 +97,10 @@ if __name__ == '__main__':
         outcomes = trainer.test(cfgs.test_type) # test the model on the test set /validation set
         numeric_outcomes = outcomes.select_dtypes(include='number')
         columns_means = numeric_outcomes.mean()
-        print((columns_means * 100).round(2))
+        res = (columns_means * 100).round(2)
+        res = pd.DataFrame(res)
+        res.to_csv(os.path.join(output_dir, 'output_logs', f'{cfgs.test_type}_results.csv'))
+
     else:
         raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
         
