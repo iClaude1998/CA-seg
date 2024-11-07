@@ -1,8 +1,8 @@
 datasets:
   batch_size: 8
   size:
-  inter_layer: "layer11"
-  basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
+  inter_layer: "layer3"
+  basedir: "/home/yliu/datasets/mediseg/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"

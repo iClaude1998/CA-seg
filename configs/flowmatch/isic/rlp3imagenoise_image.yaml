@@ -2,7 +2,7 @@ datasets:
   batch_size: 8
   size:
   inter_layer: "layer3"
-  basedir: "/data/claude/datasets/medisegs/ISIC"
+  basedir: "/home/yliu/datasets/mediseg/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -43,6 +43,7 @@ model:
     outlayers: 
       - 11
     inter_mode: False
+    proj_patch: True
   diffusion:
     version: "v1"
     image_size: 224

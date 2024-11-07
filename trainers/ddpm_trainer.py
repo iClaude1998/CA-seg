@@ -155,7 +155,7 @@ class DDPM_Trainer(object):
                 elif self.log_method == 'tensorboard':
                     self.writer.add_scalar('Training Loss', loss_mse.detach().cpu().numpy(), iter_id)
             
-            if iter_id % (self.save_interval * 100) == 0:
+            if iter_id % (self.save_interval * 500) == 0:
                 vts, random_batch = self.random_inference()
                 self.visualize(vts, random_batch, iter_id)
                 self.save_checkpoints(iter_id)

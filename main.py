@@ -100,7 +100,10 @@ if __name__ == '__main__':
         res = (columns_means * 100).round(2)
         res = pd.DataFrame(res)
         res.to_csv(os.path.join(output_dir, 'output_logs', f'{cfgs.test_type}_results.csv'))
+<<<<<<< HEAD
 
+=======
+>>>>>>> 746be98a9cca6855a5cd96a9fdde8a41a40643bf
     else:
         raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
         
