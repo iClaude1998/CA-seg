@@ -770,6 +770,70 @@ def count_flops_attn(model, _x, y):
     # the combination of the value vectors.
     matmul_ops = 2 * b * (num_spatial ** 2) * c
     model.total_ops += torch.DoubleTensor([matmul_ops])
+
+
+
+
+class TwoD_position_embedding(nn.Module):
+    
+    def __init__(self, d_model, height, widths, combine='concat'):
+        super(TwoD_position_embedding, self).__init__()
+        assert combine in set(['concat', 'add', 'series', 'multiply'])
+        self.d_model = d_model
+        
+        self.height = height
+        self.widths = widths
+        self.combine = combine
+        assert d_model  % 2 == 0, 'd_model must be even'
+        self.generate_d_single()
+        hs, ws = torch.meshgrid(torch.arange(height), torch.arange(widths), indexing='ij')
+        hs_emb = self.generate_1d_position_embedding(hs) # [height, width, d // 2, 2]
+        ws_emb = self.generate_1d_position_embedding(ws) # [height, width, d // 2, 2]  
+        emb = self.generate_2d_position_embedding(hs_emb, ws_emb) # [height, width, d_model]
+        emb = emb.permute(2, 0, 1).unsqueeze(0) # [1, d_model, height, width]
+        self.register_buffer("positional_embedding", emb)
+        
+    def generate_d_single(self):
+        if self.combine == 'concat':
+            assert self.d_model % 2 == 0, 'd_model must be even'
+            self.d_single = self.d_model // 2
+        elif self.combine == 'add' or self.combine == 'multiply':
+            self.d_single = self.d_model
+        elif self.combine == 'series':
+            self.d_single = self.d_model // 2
+                               
+    def generate_1d_position_embedding(self, pos):
+        # pos shape [height, width]
+        ds = torch.arange(self.d_single // 2)[None, None, :]
+        sin_branch = torch.sin(pos[..., None] / 10000 ** (4 * ds / self.d_single)) # [height, width, d // 2]
+        cos_branch = torch.cos(pos[..., None] ** (4 * ds / self.d_single)) # [height, width, d // 2]
+        
+        return torch.stack([cos_branch, sin_branch], dim=-1) # [height, width, d // 2, 2]
+      
+    def generate_2d_position_embedding(self, hs_emb, ws_emb):
+        # hs_emb shape [height, width, self.d_single // 2, 2]
+        # ws_emb shape [height, width, dself.d_single // 2, 2]
+        if self.combine == 'concat':
+            hs_emb = hs_emb.reshape(self.height, self.widths, -1)
+            ws_emb = ws_emb.reshape(self.height, self.widths, -1)
+            return torch.cat([hs_emb, ws_emb], dim=-1)
+        elif self.combine == 'add':
+            hs_emb = hs_emb.reshape(self.height, self.widths, -1)
+            ws_emb = ws_emb.reshape(self.height, self.widths, -1)
+            return hs_emb + ws_emb
+        elif self.combine == 'multiply':
+            hs_emb = hs_emb.reshape(self.height, self.widths, -1)
+            ws_emb = ws_emb.reshape(self.height, self.widths, -1)
+            return hs_emb * ws_emb
+        elif self.combine == 'series':
+            emb = hs_emb.unsqueeze(-1) * ws_emb.unsqueeze(-2)
+            return emb.reshape(self.height, self.widths, -1)
+                  
+    def forward(self, x):
+        bs = x.size(0)
+        pos = self.positional_embedding.repeat(bs, 1, 1, 1)
+        
+        return torch.cat([x, pos], dim=1)
     
 
     

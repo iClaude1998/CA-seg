@@ -1,8 +1,8 @@
 datasets:
   batch_size: 2
   size:
-  inter_layer: "layer3"
-  basedir: "/home/yliu/datasets/mediseg/ISIC"
+  inter_layer: "layer11"
+  basedir: "/data/claude/datasets/medisegs/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -41,15 +41,14 @@ model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
-      - 3
-      - 7
       - 11
     inter_mode: True
     proj_patch: True
   diffusion:
     version: "v1"
     image_size: 224
-    in_channels: 4 # 4 for ISIC
+    in_channels: 5    # 1 for CAM input only and image input only as condition
+    condition_channels: 4
     num_channels: 128
     out_channels: 1
     num_res_blocks: 2
@@ -75,8 +74,8 @@ trainer:
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
-  start_point: "guassian"
+  start_point: "all" 
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "tensorboard" # wandb, tensorboard
+log_method: "wandb" # wandb, tensorboard
