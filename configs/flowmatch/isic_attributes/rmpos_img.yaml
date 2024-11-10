@@ -54,7 +54,8 @@ model:
     condition_channels: 3
     num_channels: 128
     out_channels: 1
-    combine: "concat" # 'concat', 'add', 'series', 'multiply'
+    combine: "series" # 'concat', 'add', 'series', 'multiply'
+    fuse: 'concat'
     num_res_blocks: 2
     attention_resolutions: "16"
     dropout: 0.0

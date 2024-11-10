@@ -56,7 +56,8 @@ model:
     out_channels: 1
     channels_clip: 512
     num_res_blocks: 2
-    combine: "concat" # 'concat', 'add', 'series', 'multiply'
+    combine: "series" # 'concat', 'add', 'series', 'multiply'
+    fuse: 'concat'
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""

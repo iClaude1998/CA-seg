@@ -36,6 +36,7 @@ datasets:
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
     image_size: "${datasets.size}"
+    
 
 model:
   clip:
@@ -49,14 +50,14 @@ model:
   diffusion:
     version: "v2p"
     image_size: 224
-    pos_embed_dim: 64
-    in_channels: 1    # 1 for CAM input only and image input only as condition
+    pos_embed_dim: 128
+    in_channels: 4    # 1 for CAM input only and image input only as condition
     num_channels: 128
     out_channels: 1
     channels_clip: 512
-    combine: "series" # 'concat', 'add', 'series', 'multiply'
-    fuse: 'concat'
     num_res_blocks: 2
+    combine: "series" # 'concat', 'add', 'series', 'multiply'
+    fuse: 'add'
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
@@ -67,7 +68,6 @@ model:
     num_heads_upsample: -1
     use_scale_shift_norm: -1
     clip_allignment: # set to None, linear or linear_gelu 
-
 
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
@@ -82,4 +82,4 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "tensorboard" # wandb, tensorboard
+log_method: "wandb" # wandb, tensorboard
