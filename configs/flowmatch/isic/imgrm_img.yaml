@@ -1,8 +1,8 @@
 datasets:
   batch_size: 2
   size:
-  inter_layer: "layer3"
-  basedir: "/home/yliu/datasets/mediseg/ISIC"
+  inter_layer: "layer11"
+  basedir: "/data/claude/datasets/medisegs/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -42,12 +42,13 @@ model:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       - 11
-    inter_mode: True
+    inter_mode: False
     proj_patch: True
   diffusion:
     version: "v1"
     image_size: 224
     in_channels: 4 # 4 for ISIC
+    condition_channels: 3
     num_channels: 128
     out_channels: 1
     num_res_blocks: 2

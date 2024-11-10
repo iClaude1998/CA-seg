@@ -251,9 +251,9 @@ class ReflowTurb_Trainer(object):
         zt = t_norm * (z0 + epi) + (1 - t_norm) * gt
         
         x = torch.cat([conditions, zt], dim=1)
-        if self.diffusion_version == 'v1':
+        if self.diffusion_version == 'v1' or self.diffusion_version == 'v1p':
             v = self.diffusion_model(x, t, y=None)
-        elif self.diffusion_version == 'v2':
+        elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
             v = self.diffusion_model(x, t, intermediate.detach())
         loss_mse = self.criterion(gt - z0 - epi, v)
       
@@ -322,9 +322,9 @@ class ReflowTurb_Trainer(object):
         for i, step in enumerate(eular_steps):
             ts = torch.ones(B, device=self.device) * step
             x = torch.cat([conditions, zt], dim=1)
-            if self.diffusion_version == 'v1':
+            if self.diffusion_version == 'v1' or self.diffusion_version == 'v1p':
                 v = self.diffusion_model(x, ts, y=None)
-            elif self.diffusion_version == 'v2':
+            elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
                 v = self.diffusion_model(x, ts, intermediate.detach())
             zt = zt + v / len(eular_steps)
         return zt, Rs   

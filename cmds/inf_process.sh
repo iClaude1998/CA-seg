@@ -9,11 +9,9 @@ exp_name=$1
 config_file=$2
 learn_obj=$3
 
-python main.py --task inf \
+python main.py --task vis_process \
                --exp_name ${exp_name} \
                --config ${config_file} \
                --device cuda \
                --learn_obj ${learn_obj} \
                --load_checkpoint
-
-

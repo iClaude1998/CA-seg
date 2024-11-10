@@ -1,38 +1,38 @@
 datasets:
-  batch_size: 2
+  batch_size: 8
   size:
-  inter_layer: "layer3"
-  basedir: "/home/yliu/datasets/mediseg/ISIC"
+  inter_layer: "layer11"
+  basedir: "/data/claude/datasets/medisegs/ISIC"
   train:
-    name: "isic_seg"
-    prompt_type: "p6"
+    name: "isic_attr"
+    prompt_type: "p9"
     images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
     masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
     sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
-    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
-    caps_file: "${datasets.basedir}/anns/train.json"
+    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/mulitokenRLP"
+    caps_file: "${datasets.basedir}/anns/attribute_train.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
     image_size: "${datasets.size}"
   val:
-    name: "isic_seg"
-    prompt_type: "p6"
+    name: "isic_attr"
+    prompt_type: "p9"
     images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
     masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
     sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
-    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
-    caps_file: "${datasets.basedir}/anns/val.json"
+    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/mulitokenRLP"
+    caps_file: "${datasets.basedir}/anns/attribute_val.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
     image_size: "${datasets.size}"
   test:
-    name: "isic_seg"
-    prompt_type: "p6"
+    name: "isic_attr"
+    prompt_type: "p9"
     images_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_Data"
     masks_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
     sdf_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
-    inter_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_LRP/Pubmedclip/LRP"
-    caps_file: "${datasets.basedir}/anns/test.json"
+    inter_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_LRP/Pubmedclip/mulitokenRLP"
+    caps_file: "${datasets.basedir}/anns/attribute_test.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
     image_size: "${datasets.size}"
@@ -44,20 +44,22 @@ model:
       - 3
       - 7
       - 11
-    inter_mode: True
+    inter_mode: False
     proj_patch: True
   diffusion:
-    version: "v2"
+    version: "v2p"
     image_size: 224
-    in_channels: 4    # 1 for CAM input only and image input only as condition
+    pos_embed_dim: 64
+    in_channels: 1    # 1 for CAM input only and image input only as condition
     num_channels: 128
     out_channels: 1
     channels_clip: 512
+    combine: "concat" # 'concat', 'add', 'series', 'multiply'
     num_res_blocks: 2
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
-    use_checkpoint: False
+    use_checkpoint: True
     use_fp16: False
     num_heads: 1
     num_head_channels: -1
@@ -65,17 +67,18 @@ model:
     use_scale_shift_norm: -1
     clip_allignment: # set to None, linear or linear_gelu 
 
+
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: checkpoint_iter100000.pth # the name of the loaded checkpoint
+  checkpoint_name: # the name of the loaded checkpoint
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
-  start_point: "guassian"
+  start_point: "LRP"
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "wandb" # wandb, tensorboard
+log_method: "tensorboard" # wandb, tensorboard

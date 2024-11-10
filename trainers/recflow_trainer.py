@@ -15,10 +15,12 @@ if importlib.util.find_spec('wandb') is not None:
 from tqdm import tqdm
 from torch.optim import AdamW
 from torchvision import transforms
+from matplotlib import pyplot as plt
 from torch.nn import functional as F
 from contextlib import contextmanager
 from torch.nn.utils import clip_grad_norm_
 from collections import defaultdict as dedict
+
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -76,6 +78,7 @@ class Reflow_Trainer(object):
         self.log_path = os.path.join(output_dir, 'output_logs')
         self.checkpoint_path = os.path.join(output_dir, 'checkpoints')
         self.vis_path = os.path.join(output_dir, 'visualizations') 
+        self.vis_process_path = os.path.join(output_dir, 'vis_process') 
         
         # I have to seperate the branches
         if accelerator is None:
@@ -112,6 +115,7 @@ class Reflow_Trainer(object):
         os.makedirs(self.log_path, exist_ok=True)  
         os.makedirs(self.checkpoint_path, exist_ok=True)
         os.makedirs(self.vis_path, exist_ok=True)
+        os.makedirs(self.vis_process_path, exist_ok=True)
     
     def create_exp_name(self):
         _, learn_obj, dataset_name, exp_name = self.output_dir.split('/')
@@ -251,9 +255,9 @@ class Reflow_Trainer(object):
         zt = t_norm * z0 + (1 - t_norm) * gt
         
         x = torch.cat([conditions, zt], dim=1)
-        if self.diffusion_version == 'v1':
+        if self.diffusion_version == 'v1' or self.diffusion_version == 'v1p':
             v = self.diffusion_model(x, t, y=None)
-        elif self.diffusion_version == 'v2':
+        elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
             v = self.diffusion_model(x, t, intermediate.detach())
         loss_mse = self.criterion(gt - z0, v)
       
@@ -311,21 +315,39 @@ class Reflow_Trainer(object):
     
     def test_step(self, batch):
 
-        images, text_ids, gt, Rs = self.get_input(batch)
+        images, text_ids, gt, Rs = self.get_input(batch)            
         B = gt.shape[0]
         zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
-        eular_steps = [999, 749, 499, 249]
+        eular_steps = [999, 749, 499, 249]            
         # eular_steps = [999,899,799,699,599,499,399,299,199,99]
         # eular_steps = list(range(1000))[::-1]
         for i, step in enumerate(eular_steps):
             ts = torch.ones(B, device=self.device) * step
             x = torch.cat([conditions, zt], dim=1)
-            if self.diffusion_version == 'v1':
+            if self.diffusion_version == 'v1' or self.diffusion_version == 'v1p':
                 v = self.diffusion_model(x, ts, y=None)
-            elif self.diffusion_version == 'v2':
+            elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
                 v = self.diffusion_model(x, ts, intermediate.detach())
             zt = zt + v / len(eular_steps)
         return zt, Rs   
+    
+    
+    def test_step_process(self, batch):
+        images, text_ids, gt, Rs = self.get_input(batch)            
+        B = gt.shape[0]
+        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
+        eular_steps = list(range(1000))[::-1]
+        with torch.no_grad():           
+            for i, step in enumerate(eular_steps):
+                ts = torch.ones(B, device=self.device) * step
+                x = torch.cat([conditions, zt], dim=1)
+                if self.diffusion_version == 'v1' or self.diffusion_version == 'v1p':
+                    v = self.diffusion_model(x, ts, y=None)
+                elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
+                    v = self.diffusion_model(x, ts, intermediate.detach())
+                zt = zt + v / len(eular_steps)
+                yield zt
+        
     
     
     def get_conditions(self, images, text_ids, Rs=None):
@@ -511,6 +533,52 @@ class Reflow_Trainer(object):
             gt_grids = torchvision.utils.make_grid(torch.from_numpy(mixed_img_gts).permute(0, 3, 1, 2), nrow=B)
             self.writer.add_image(f'Predictions on iter {step}', pred_grids)
             self.writer.add_image(f'Ground Truths on iter {step}', gt_grids)
+    
+    
+    def random_inference_process(self):
+        self.diffusion_model.eval()
+        loader_list = list(self.val_dataloader)
+        random_batch = random.choice(loader_list)
+        images = random_batch['pixel_values']
+        gts = random_batch[self.gt_type]
+        mask_names = random_batch['mask_name']
+        B = images.shape[0]
+        mixed_img_gts = mix_images_with_masks(images, gts) 
+        for i, vt in enumerate(tqdm(self.test_step_process(random_batch))):
+            mixed_img_predit = mix_images_with_masks(images, vt)
+            for b in range(B):
+                prefix = os.path.splitext(mask_names[b])[0]
+                save_dir = os.path.join(self.vis_process_path, f'{prefix}')
+                os.makedirs(save_dir, exist_ok=True)
+                plt.figure(figsize=(10, 5))
+                plt.imshow(mixed_img_predit[b])
+                plt.axis('off')
+                plt.title(f'step {i}')
+                plt.savefig(os.path.join(save_dir, f"step_{i}.png"))
+                plt.close()
+        
+        for b in range(B):
+            prefix = os.path.splitext(mask_names[b])[0]
+            save_dir = os.path.join(self.vis_process_path, f'{prefix}')
+            os.makedirs(save_dir, exist_ok=True)
+            plt.figure(figsize=(10, 5))
+            plt.imshow(mixed_img_gts[b])
+            plt.axis('off')
+            plt.title(f'GT')
+            plt.savefig(os.path.join(save_dir, f"GT.png")) 
+            plt.close()
+                
+                
+            
+            
+        
+    
+    
+
+        
+        
+    
+
         
         
 
