@@ -25,9 +25,8 @@ torch.manual_seed(SEED)
 
 def parse_args():
     parser = ArgumentParser(description='Reflow')
-    parser.add_argument('--task', type=str, default='train', help='the task to performs', choices=['train', 'inf', 'test'])
+    parser.add_argument('--task', type=str, default='train', help='the task to performs', choices=['train', 'inf', 'test', 'vis_process'])
     parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
-    parser.add_argument('--infer_algo', type=str, default='ddpm', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
     parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
@@ -100,6 +99,8 @@ if __name__ == '__main__':
         res = (columns_means * 100).round(2)
         res = pd.DataFrame(res)
         res.to_csv(os.path.join(output_dir, 'output_logs', f'{cfgs.test_type}_results.csv'))
+    elif cfgs.task == 'vis_process':
+        trainer.random_inference_process()
     else:
         raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
         
