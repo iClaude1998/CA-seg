@@ -45,7 +45,7 @@ model:
       - 3
       - 7
       - 11
-    inter_mode: True
+    inter_mode: False
     proj_patch: True
   diffusion:
     version: "v2"
