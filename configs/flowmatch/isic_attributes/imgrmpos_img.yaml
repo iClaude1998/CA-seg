@@ -55,7 +55,7 @@ model:
     out_channels: 1
     num_res_blocks: 2
     attention_resolutions: "16"
-    combine: "concat" # 'concat', 'add', 'series', 'multiply'
+    combine: "series" # 'concat', 'add', 'series', 'multiply'
     dropout: 0.0
     channel_mult: ""
     num_classes: # set None for avoid label embeddings (why we have it, strange ???)
