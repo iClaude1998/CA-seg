@@ -837,6 +837,8 @@ class TwoD_position_embedding(nn.Module):
             return torch.cat([x, pos], dim=1)
         elif self.fuse == 'add':
             return x + pos
+        elif self.fuse == 'multiply':
+            return x * pos
     
 
     
