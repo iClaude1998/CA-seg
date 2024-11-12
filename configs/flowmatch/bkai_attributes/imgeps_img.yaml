@@ -9,7 +9,7 @@ datasets:
     images_dir: "${datasets.basedir}/train/train"
     masks_dir: "${datasets.basedir}/train_gt/train_gt"
     sdf_dir: "${datasets.basedir}/train_gt_usdf"
-    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
+    inter_dir: "${datasets.basedir}/multiLRP/Pubmedclip/mulitokenRLP"
     caps_file: "${datasets.basedir}/anns/train.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
@@ -20,7 +20,7 @@ datasets:
     images_dir: "${datasets.basedir}/train/train"
     masks_dir: "${datasets.basedir}/train_gt/train_gt"
     sdf_dir: "${datasets.basedir}/val_gt_usdf"
-    inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
+    inter_dir: "${datasets.basedir}/multiLRP/Pubmedclip/mulitokenRLP"
     caps_file: "${datasets.basedir}/anns/val.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
@@ -31,7 +31,7 @@ datasets:
     images_dir: "${datasets.basedir}/train/train"
     masks_dir: "${datasets.basedir}/train_gt/train_gt"
     sdf_dir: "${datasets.basedir}/test_gt_usdf"
-    inter_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_LRP/Pubmedclip/LRP"
+    inter_dir: "${datasets.basedir}/multiLRP/Pubmedclip/mulitokenRLP"
     caps_file: "${datasets.basedir}/anns/test.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
