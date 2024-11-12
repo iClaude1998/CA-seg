@@ -55,10 +55,7 @@ model:
     num_channels: 128
     out_channels: 1
     combine: "series" # 'concat', 'add', 'series', 'multiply'
-<<<<<<< HEAD
-=======
     fuse: 'concat'
->>>>>>> e8a91723ec03fb933f88971aa984658857ccea30
     num_res_blocks: 2
     attention_resolutions: "16"
     dropout: 0.0

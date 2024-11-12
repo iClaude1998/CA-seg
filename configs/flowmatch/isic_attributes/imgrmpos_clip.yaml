@@ -57,10 +57,7 @@ model:
     channels_clip: 512
     num_res_blocks: 2
     combine: "series" # 'concat', 'add', 'series', 'multiply'
-<<<<<<< HEAD
-=======
     fuse: 'concat'
->>>>>>> e8a91723ec03fb933f88971aa984658857ccea30
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
