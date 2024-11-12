@@ -113,7 +113,7 @@ class UNetModel_v2position(nn.Module):
                     )
                 ]
             )
-        elif self.fuse == 'add':
+        elif (self.fuse == 'add' or self.fuse == 'multiply'):
             self.input_blocks = nn.ModuleList(
                 [
                     TimestepEmbedSequential(
@@ -326,7 +326,7 @@ class UNetModel_v2position(nn.Module):
             else:
                 cem = None
             h = module(h, emb, cem)
-            if ind == 0 and self.fuse == 'add':
+            if ind == 0 and (self.fuse == 'add' or self.fuse == 'multiply'):
                 h = self.poditional_embedding(h)
             hs.append(h)
         

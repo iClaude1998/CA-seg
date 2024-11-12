@@ -2,35 +2,35 @@ datasets:
   batch_size: 2
   size:
   inter_layer: "layer11"
-  basedir: "/data/claude/datasets/medisegs/ISIC"
+  basedir: "/data/claude/datasets/medisegs/bkai-igh-neopolyp"
   train:
-    name: "isic_seg"
+    name: "bkai_attr"
     prompt_type: "p6"
-    images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
-    masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    images_dir: "${datasets.basedir}/train/train"
+    masks_dir: "${datasets.basedir}/train_gt/train_gt"
+    sdf_dir: "${datasets.basedir}/train_gt_usdf"
     inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
     caps_file: "${datasets.basedir}/anns/train.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
     image_size: "${datasets.size}"
   val:
-    name: "isic_seg"
+    name: "bkai_attr"
     prompt_type: "p6"
-    images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
-    masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
-    sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    images_dir: "${datasets.basedir}/train/train"
+    masks_dir: "${datasets.basedir}/train_gt/train_gt"
+    sdf_dir: "${datasets.basedir}/val_gt_usdf"
     inter_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_LRP/Pubmedclip/LRP"
     caps_file: "${datasets.basedir}/anns/val.json"
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
     image_size: "${datasets.size}"
   test:
-    name: "isic_seg"
+    name: "bkai_attr"
     prompt_type: "p6"
-    images_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_Data"
-    masks_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
-    sdf_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
+    images_dir: "${datasets.basedir}/train/train"
+    masks_dir: "${datasets.basedir}/train_gt/train_gt"
+    sdf_dir: "${datasets.basedir}/test_gt_usdf"
     inter_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_LRP/Pubmedclip/LRP"
     caps_file: "${datasets.basedir}/anns/test.json"
     inter_layer: "${datasets.inter_layer}"
@@ -41,14 +41,16 @@ model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
+      - 3
+      - 7
       - 11
-    inter_mode: True
+    inter_mode: False
     proj_patch: True
   diffusion:
     version: "v1"
     image_size: 224
-    in_channels: 5    # 1 for CAM input only and image input only as condition
-    condition_channels: 4
+    in_channels: 4 # 4 for ISIC
+    condition_channels: 3
     num_channels: 128
     out_channels: 1
     num_res_blocks: 2
@@ -70,11 +72,11 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: checkpoint_iter100000.pth # the name of the loaded checkpoint
+  checkpoint_name: # the name of the loaded checkpoint
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
-  start_point: "all" 
+  start_point: "guassian"
   gradient_accumulation_steps: 1
   clip_grads:
 

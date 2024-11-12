@@ -36,28 +36,24 @@ datasets:
     inter_layer: "${datasets.inter_layer}"
     override_prompt:
     image_size: "${datasets.size}"
-    
 
 model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
+      - 3
+      - 7
       - 11
-      - 11
-      - 11
-    inter_mode: False
+    inter_mode: False # online or offline interpretering
     proj_patch: True
   diffusion:
-    version: "v2p"
+    version: "v2"
     image_size: 224
-    pos_embed_dim: 128
-    in_channels: 4    # 1 for CAM input only and image input only as condition
+    in_channels: 5    # 1 for CAM input only and image input only as condition
     num_channels: 128
     out_channels: 1
     channels_clip: 512
     num_res_blocks: 2
-    combine: "series" # 'concat', 'add', 'series', 'multiply'
-    fuse: "concat" # concat, add, multiply
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
@@ -78,7 +74,7 @@ trainer:
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
-  start_point: "LRP"
+  start_point: "all" 
   gradient_accumulation_steps: 1
   clip_grads:
 

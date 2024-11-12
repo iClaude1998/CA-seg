@@ -121,7 +121,7 @@ class UNetModel_v1position(nn.Module):
                     )
                 ]
             )
-        elif self.fuse == 'add':
+        elif (self.fuse == 'add' or self.fuse == 'multiply'):
             self.input_blocks = nn.ModuleList(
                 [
                     TimestepEmbedSequential(
@@ -352,7 +352,7 @@ class UNetModel_v1position(nn.Module):
             if len(emb.size()) > 2:
                 emb = emb.squeeze()
             h = module(h, emb)
-            if ind == 0 and self.fuse == 'add':
+            if ind == 0 and (self.fuse == 'add' or self.fuse == 'multiply'):
                 h = self.poditional_embedding(h)
             hs.append(h)
         uemb = self.highway_forward(c, [hs[3],hs[6],hs[9],hs[12]])
