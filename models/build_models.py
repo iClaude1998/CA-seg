@@ -140,3 +140,6 @@ def create_diffusion(cfgs):
                         use_scale_shift_norm=cfgs.use_scale_shift_norm,
                         clip_allignment=cfgs.clip_allignment,
         )
+
+
+

@@ -2,15 +2,13 @@ import os
 import yaml
 import torch 
 
-from tqdm import tqdm 
+from tqdm import tqdm
 from datasets import build_dataset
-from torch.nn import functional as F
+from argparse import ArgumentParser
 from easydict import EasyDict as edict
 from torch.utils.data import DataLoader
 
-
-from utils.vis import vis_batch
-from argparse import ArgumentParser
+from models.clips import ClipCBN
 from models.build_models import load_clip_and_tokenizer, create_diffusion
 
 
@@ -36,46 +34,34 @@ if __name__ == '__main__':
         config_dict = yaml.safe_load(f)
     
     os.makedirs(save_dir, exist_ok=True)
+    model = ClipCBN("PubMedCLIP", 45).to("cuda")
+    dummy = torch.randn(4, 3, 224, 224).to("cuda")
     
-    config = edict(config_dict)
+    out = model(dummy)
+    print(out.size())
     
-    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     
-    cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(config.model.clip, device)
-    diffusion_model = create_diffusion(config.model.diffusion).to(device)
+    
+    # config = edict(config_dict)
+    
+    # device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    
+    # cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(config.model.clip, device)
+    # diffusion_model = create_diffusion(config.model.diffusion).to(device)
 
-    # unet = UNetModel_v1preview(config.model.unet)
-    dataset = build_dataset(config.datasets.test, [preprocess, tokenizer, resolution])
-    dataloader = DataLoader(dataset, batch_size=config.datasets.batch_size, shuffle=False)
+    # # unet = UNetModel_v1preview(config.model.unet)
+    # dataset = build_dataset(config.datasets.test, [preprocess, tokenizer, resolution])
+    # dataloader = DataLoader(dataset, batch_size=config.datasets.batch_size, shuffle=False)
     
-    for batch in tqdm(dataloader):
-        image = batch['pixel_values'].to(device)
-        text_ids = batch['input_ids'].to(device)
-        sdf_mask = batch['sdf_map'].to(device)
-        mask = batch['mask'].to(device)
-        Rs = batch.get("inter_map", None)
-        bz = image.size(0)
-        h, w = image.size(-2), image.size(-1)
+    # for batch in tqdm(dataloader):
+    #     image = batch['pixel_values'].to(device)
+    #     text_ids = batch['input_ids'].to(device)
+    #     sdf_mask = batch['sdf_map'].to(device)
+    #     mask = batch['mask'].to(device)
+    #     Rs = batch.get("inter_map", None)
+    #     bz = image.size(0)
+    #     h, w = image.size(-2), image.size(-1)
 
-        # if args.task == 'rlp':
-        #     Rs, intermediate = cliprlp(image, text_ids)
-        #     bz = Rs.size(0)    
-        # elif args.task == 'cam':
-        #     Rs = cliprlp.clip_model.produce_cam(image, text_ids, vis_layer=args.vis_layer)
-        
-        # R_h = int(Rs[0].numel() ** 0.5)
-        # Rs = Rs.view(bz, 1, R_h, R_h)
-        # Rs = F.interpolate(Rs, (h, w), mode='bilinear', align_corners=False)
-        # vis_batch(batch, save_dir, Rs)   
-        
-        # # layer 3 7 11
-        # if args.run_diffusion:
-        #     ts = torch.randint(1, 1000, (bz,), device=device).long()
-        #     if config.model.diffusion.version == 'v1':
-        #         x = torch.cat([image, Rs], dim=1)
-        #         out = diffusion_model(x, ts, y=None)
-        #     elif config.model.diffusion.version == 'v2':
-        #         out = diffusion_model(Rs, ts, intermediate.detach())
         
 
     
