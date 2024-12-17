@@ -161,7 +161,7 @@ class DDPMPP_Trainer(object):
                     self.writer.add_scalar('Loss MSE', mse, iter_id)
                     self.writer.add_scalar('Loss vb', vb, iter_id)
             
-            if iter_id % (self.save_interval * 100) == 0:
+            if iter_id % (self.save_interval * 500) == 0:
                 vts, random_batch = self.random_inference()
                 self.visualize(vts, random_batch, iter_id)
                 self.save_checkpoints(iter_id)

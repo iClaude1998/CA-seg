@@ -1,4 +1,4 @@
-from .segmentations import ISIC_seg, ISICattribute_seg, Bkaiattributes_seg
+from .segmentations import ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, camusattributes_seg
 
 
 def build_dataset(config, preprocessors, inter_mode=True):
@@ -9,6 +9,10 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_isicattr_dataset(config, preprocessors, inter_mode)
     elif config.name == "bkai_attr":
         return build_bkaiattr_dataset(config, preprocessors, inter_mode)
+    elif config.name == "busi_attr":
+        return build_busiattr_dataset(config, preprocessors, inter_mode)
+    elif config.name == "camus_attr":
+        return build_camusattr_dataset(config, preprocessors, inter_mode)
 
 
 
@@ -51,6 +55,38 @@ def build_bkaiattr_dataset(config, preprocessors, inter_mode=True):
         config.inter_dir = None
         config.inter_layer = None
     return Bkaiattributes_seg(preprocessors, 
+                              config.prompt_type,
+                              config.images_dir, 
+                              config.masks_dir, 
+                              config.sdf_dir,
+                              config.inter_dir,
+                              config.inter_layer,
+                              config.caps_file, 
+                              image_size=tuple(config.image_size) if config.image_size is not None else None,)
+    
+
+
+
+def build_busiattr_dataset(config, preprocessors, inter_mode=True):
+    if inter_mode:
+        config.inter_dir = None
+        config.inter_layer = None
+    return busiattributes_seg(preprocessors, 
+                              config.prompt_type,
+                              config.images_dir, 
+                              config.masks_dir, 
+                              config.sdf_dir,
+                              config.inter_dir,
+                              config.inter_layer,
+                              config.caps_file, 
+                              image_size=tuple(config.image_size) if config.image_size is not None else None,)
+    
+
+def build_camusattr_dataset(config, preprocessors, inter_mode=True):
+    if inter_mode:
+        config.inter_dir = None
+        config.inter_layer = None
+    return camusattributes_seg(preprocessors, 
                               config.prompt_type,
                               config.images_dir, 
                               config.masks_dir, 

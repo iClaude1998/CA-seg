@@ -68,7 +68,7 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                  cfgs.log_method,
                                  cfgs.trainer.start_point,
                                  clip_grads=cfgs.trainer.clip_grads,
-                                 infer_algo=cfgs.infer_algo
+                                 infer_algo=cfgs.trainer.infer_algo
                                 )
     elif cfgs.learn_obj == 'recflowturb':
         trainer = ReflowTurb_Trainer(cfgs.model.diffusion.version,
