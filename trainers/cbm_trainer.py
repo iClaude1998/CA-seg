@@ -17,7 +17,10 @@ from torch.nn.utils import clip_grad_norm_
 from collections import defaultdict as dedict
 from torch.utils.tensorboard import SummaryWriter
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 from utils import process_checkpoints, compute_metrics, mix_images_with_masks, save_batch, WarmupExponentialLR
 
 
@@ -296,6 +299,10 @@ class CLIPCBM_Trainer(object):
             images = batch['pixel_values'].to(self.device)
             cams = batch['inter_map'].to(self.device)
             sdf_maps = batch['sdf_map'].to(self.device)
+<<<<<<< HEAD
+=======
+            onehot_maps = batch['mask'].to(self.device)
+>>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
             mask_name = batch['mask_name']
             
             with torch.no_grad():
@@ -455,9 +462,12 @@ class CLIPCBM_Trainer(object):
     
     
 
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 class TqdmLoggingHandler(logging.Handler):
     def __init__(self):
         super().__init__()
@@ -476,7 +486,10 @@ def postprocess_pred(preds):
     # R -> [-1, 1]
     preds = 2 * (torch.sigmoid(preds) - 0.5)
     return torch.clamp(preds, min=0)
+<<<<<<< HEAD
     
     
     
+=======
+>>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
     

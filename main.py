@@ -64,7 +64,11 @@ if __name__ == '__main__':
         os.makedirs(output_dir, exist_ok=True)
         device = cfgs.device
         accelerator = None
+<<<<<<< HEAD
         
+=======
+    
+>>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
     if cfgs.learn_obj != 'bmc':
         cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(cfgs.model.clip, 'cpu')
         diffusion_model = create_diffusion(cfgs.model.diffusion)
@@ -98,6 +102,7 @@ if __name__ == '__main__':
         numeric_outcomes = outcomes.select_dtypes(include='number')
         columns_means = numeric_outcomes.mean()
         res = (columns_means * 100).round(2)
+        print(res)
         res = pd.DataFrame(res)
         res.to_csv(os.path.join(output_dir, 'output_logs', f'{cfgs.test_type}_results.csv'))
     elif cfgs.task == 'vis_process':

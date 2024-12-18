@@ -1,4 +1,3 @@
-
 from .ddpm_trainer import DDPM_Trainer
 from .cbm_trainer import CLIPCBM_Trainer
 from .ddpmpp_trainer import DDPMPP_Trainer
@@ -69,7 +68,7 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                  cfgs.log_method,
                                  cfgs.trainer.start_point,
                                  clip_grads=cfgs.trainer.clip_grads,
-                                 infer_algo=cfgs.infer_algo
+                                 infer_algo=cfgs.trainer.infer_algo
                                 )
     elif cfgs.learn_obj == 'recflowturb':
         trainer = ReflowTurb_Trainer(cfgs.model.diffusion.version,
@@ -91,7 +90,10 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                      cfgs.log_method,
                                      epi_magnitude=cfgs.trainer.epi_magnitude,
                                      clip_grads=cfgs.trainer.clip_grads)
+<<<<<<< HEAD
         
+=======
+>>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
     elif cfgs.learn_obj == 'bmc':
         trainer = CLIPCBM_Trainer(cfgs.task,
                                   output_dir, 
@@ -108,7 +110,10 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                   accelerator,
                                   cfgs.log_method,
                                   clip_grads=cfgs.trainer.clip_grads)
+<<<<<<< HEAD
         
+=======
+>>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
     else:
         raise ValueError(f"Unsupported learning objective: {cfgs.learn_obj}, what do you wanna do ???")
     return trainer
