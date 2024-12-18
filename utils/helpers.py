@@ -323,7 +323,7 @@ def process_checkpoints(checkpoint):
     checkpoint['model'] = new_state_dict_model
     
     new_state_dict_model = {}
-    if checkpoint['model_ema'] is not None:
+    if checkpoint.get('model_ema', None) is not None:
         for key in checkpoint['model_ema'].keys():
             new_key = key.replace("module.", "")  # Remove 'module.' prefix
             new_state_dict_model[new_key] = checkpoint['model_ema'][key]
@@ -360,12 +360,12 @@ def compute_metrics(preds, gts, mask_name, metric, thresh=126, gt_type='sdf_map'
     preds = preds.squeeze(1).cpu().numpy()
     gts = gts.squeeze(1).cpu().numpy()
     preds = min_max_normalize(preds)
-    gts = min_max_normalize(gts)
+    # gts = min_max_normalize(gts)
     if gt_type == 'mask':
         thresh = 127
     
     preds = (255 * preds >= thresh)
-    gts = (255 * gts >= 1)
+    gts = (255 * gts > 0)
     # visualization_for_debug(preds, gts, mask_name)
     if metric == 'iou':
         intersection = np.logical_and(preds, gts)

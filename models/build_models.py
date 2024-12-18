@@ -1,12 +1,13 @@
-import os
 import clip 
 import torch
 import open_clip
 
-from transformers import PreTrainedTokenizerFast
+from transformers import AutoTokenizer
+from open_clip import create_model_from_pretrained, get_tokenizer
 
 from .diffusion import UNetModel_v1preview, UNetModel_v2preview, UNetModel_v1position, UNetModel_v2position
-from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper
+from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN
+
 
 
 
@@ -140,3 +141,45 @@ def create_diffusion(cfgs):
                         use_scale_shift_norm=cfgs.use_scale_shift_norm,
                         clip_allignment=cfgs.clip_allignment,
         )
+
+
+def load_clipcbn_preprocessor(cfgs):
+    if cfgs.pretrain == 'ViT-B-32':
+        model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+        resolution = model.visual.preprocess_cfg['size']
+        tokenizer = open_clip.get_tokenizer('ViT-B-32')
+        backbone = model.visual
+        in_features = 512
+    elif cfgs.pretrain == "MedICaT":
+        model, _ , preprocess = open_clip.create_model_and_transforms('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
+        resolution = model.visual.preprocess_cfg['size']
+        tokenizer = open_clip.get_tokenizer('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
+        backbone = model.visual
+        in_features = 768
+    elif cfgs.pretrain == "Pubmedclip":
+        clip_model = torch.load("pretrained/PubMedCLIP_ViT32.pth")
+        model, preprocess = clip.load("ViT-B/32", jit=False, download_root="pretrained/clips")
+        model.load_state_dict(clip_model['state_dict'])
+        resolution = model.visual.input_resolution
+        tokenizer = clip.tokenize
+        backbone = model.visual
+        in_features = 512
+    elif cfgs.pretrain == "BiomedCLIP":
+        model, preprocess = create_model_from_pretrained('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224', 
+                                                cache_dir="pretrained/huggingface_hub/biomedclip")
+        tokenizer = get_tokenizer('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
+        backbone = model.visual
+        resolution = 224
+        in_features = 512
+    elif cfgs.pretrain == "PMC_CLIP":
+        model = ModifiedResNet(layers=[3, 4, 6, 3], output_dim=768, heads=8, image_size=224, width=64)
+        model.load_state_dict(torch.load('pretrained/pmc_clip/image_encoder(resnet50).pth'))
+        preprocess = image_transform(224)
+        backbone = model
+        tokenizer = AutoTokenizer.from_pretrained('microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract')
+        resolution = 224
+        in_features = 768
+        
+    model = ClipCBN(backbone, in_features, cfgs.num_concepts)
+    
+    return model, tokenizer, preprocess, resolution
