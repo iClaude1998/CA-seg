@@ -1,8 +1,10 @@
 import torch
 
 from torch import nn 
+from typing import Optional, Tuple
 from collections import OrderedDict
 from torch.nn import functional as F
+from torchvision.transforms import Normalize, Compose, InterpolationMode, ToTensor, Resize, CenterCrop
 
 
 # %%
@@ -181,3 +183,33 @@ class ModifiedResNet(nn.Module):
         x = self.layer4(x)
         x = self.attnpool(x)
         return x[0]
+
+
+def _convert_to_rgb(image):
+    return image.convert('RGB')
+
+
+def image_transform(
+        image_size: int,
+        mean: Optional[Tuple[float, ...]] = None,
+        std: Optional[Tuple[float, ...]] = None,
+        fill_color: int = 0,
+):
+    if isinstance(image_size, (list, tuple)) and image_size[0] == image_size[1]:
+        # for square size, pass size as int so that Resize() uses aspect preserving shortest edge
+        image_size = image_size[0]
+
+    mean = mean or (0.48145466, 0.4578275, 0.40821073)  # OpenAI dataset mean
+    std = std or (0.26862954, 0.26130258, 0.27577711)  # OpenAI dataset std
+    normalize = Normalize(mean=mean, std=std)
+
+    transforms = [
+        Resize(image_size, interpolation=InterpolationMode.BICUBIC),
+        CenterCrop(image_size),
+    ]
+    transforms.extend([
+        _convert_to_rgb,
+        ToTensor(),
+        normalize,
+    ])
+    return Compose(transforms)

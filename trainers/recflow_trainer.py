@@ -435,7 +435,6 @@ class Reflow_Trainer(object):
         if self.use_ema:
             self.model_ema = self.model_ema.to(self.device) 
             
-        
             
     def load_checkpoint(self, checkpoint_path):
         # check whether the path exist, if not, find the ckpt according to the exp_name

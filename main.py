@@ -13,11 +13,11 @@ from accelerate import Accelerator, DistributedDataParallelKwargs
 
 from datasets import build_dataset
 from trainers import build_trainer
-from models.build_models import load_clip_and_tokenizer, create_diffusion
+from models.build_models import load_clip_and_tokenizer, create_diffusion, load_clipcbn_preprocessor
 
 
 # Setting reproducibility
-SEED = 0
+SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
@@ -30,10 +30,10 @@ def parse_args():
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
     parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
-    parser.add_argument('--learn_obj', type=str, default='recflow', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb'], help='the learning objective')
+    parser.add_argument('--learn_obj', type=str, default='recflow', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'bmc'], help='the learning objective')
     parser.add_argument('--distribution_training', action="store_true", help='whether enable distribution training')
     parser.add_argument('--load_checkpoint', action="store_true", help='whether to load checkpoint')
-    parser.add_argument('--test_type', type=str, default='test', help='whether to load checkpoint')
+    parser.add_argument('--test_type', type=str, default='test', help='The test dataset')
     return parser.parse_args()
 
 
@@ -64,9 +64,13 @@ if __name__ == '__main__':
         os.makedirs(output_dir, exist_ok=True)
         device = cfgs.device
         accelerator = None
-    
-    cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(cfgs.model.clip, 'cpu')
-    diffusion_model = create_diffusion(cfgs.model.diffusion)
+        
+    if cfgs.learn_obj != 'bmc':
+        cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(cfgs.model.clip, 'cpu')
+        diffusion_model = create_diffusion(cfgs.model.diffusion)
+    else:
+        cliprlp, tokenizer, preprocess, resolution = load_clipcbn_preprocessor(cfgs.model.clip)
+        diffusion_model = None
     
     train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
     val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
