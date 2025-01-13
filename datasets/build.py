@@ -31,6 +31,7 @@ def build_isic_dataset(config, preprocessors, inter_mode=True):
                     config.inter_layer,
                     config.caps_file, 
                     config.override_prompt, 
+                    config.inter_norm,
                     image_size=tuple(config.image_size) if config.image_size is not None else None,)
 
     
