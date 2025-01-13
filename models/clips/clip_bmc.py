@@ -1,11 +1,6 @@
 from torch import nn
 
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 class ClipCBN(nn.Module):
     def __init__(self, backbone, in_features, num_cocncepts):
         super(ClipCBN, self).__init__()
@@ -25,10 +20,4 @@ class ClipCBN(nn.Module):
     def freeze_backbone(self):
         self.backbone.eval()
         for param in self.backbone.parameters():
-<<<<<<< HEAD
             param.requires_grad = False
-
-    
-=======
-            param.requires_grad = False
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a

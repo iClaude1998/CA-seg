@@ -7,10 +7,6 @@ from open_clip import create_model_from_pretrained, get_tokenizer
 
 from .diffusion import UNetModel_v1preview, UNetModel_v2preview, UNetModel_v1position, UNetModel_v2position
 from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN
-<<<<<<< HEAD
-=======
-
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 
 
 
@@ -146,10 +142,6 @@ def create_diffusion(cfgs):
         )
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 def load_clipcbn_preprocessor(cfgs):
     if cfgs.pretrain == 'ViT-B-32':
         model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
@@ -189,12 +181,4 @@ def load_clipcbn_preprocessor(cfgs):
         
     model = ClipCBN(backbone, in_features, cfgs.num_concepts)
     
-<<<<<<< HEAD
     return model, tokenizer, preprocess, resolution
-        
-    
-
-
-=======
-    return model, tokenizer, preprocess, resolution
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a

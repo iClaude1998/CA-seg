@@ -27,10 +27,6 @@
 
 
 // train
-<<<<<<< HEAD
-
-=======
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 // {
 //     // Use IntelliSense to learn about possible attributes.
 //     // Hover to view descriptions of existing attributes.
@@ -49,18 +45,10 @@
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
 //             "args": ["--task", "train",
-<<<<<<< HEAD
-//                      "--config", "configs/cbmmap/pmc_clip.yaml",
-//                      "--num_workers", "0",
-//                      "--exp_name", "debug", 
-//                      "--device", "cuda",
-//                      "--learn_obj", "bmc"]
-=======
 //                      "--config", "configs/ddpmpp/busi/img_img.yaml",
 //                      "--exp_name", "debug", 
 //                      "--device", "cuda",
 //                      "--learn_obj", "recflow"]
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 //         }
 //     ]
 // }
@@ -107,38 +95,6 @@
 
 
 // inference
-{
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "env": {"CUDA_VISIBLE_DEVICES": "0",
-                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-            "args": ["--task", "inf",
-                     "--config", "configs/cbmmap/pmc_clip.yaml", 
-                     "--exp_name", "pmc_clip", 
-                     "--device", "cuda",
-                     "--test_type", "test",
-                     "--learn_obj", "bmc",
-                    //  "--infer_algo", "ddpm",
-                     "--load_checkpoint",
-                    ]
-        }
-    ]
-}
-
-// test
-<<<<<<< HEAD
 // {
 //     // Use IntelliSense to learn about possible attributes.
 //     // Hover to view descriptions of existing attributes.
@@ -156,9 +112,9 @@
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-//             "args": ["--task", "test",
-//                      "--config", "configs/cbmmap/pmc_clip.yaml",
-//                      "--exp_name", "pmc_clip",
+//             "args": ["--task", "inf",
+//                      "--config", "configs/cbmmap/pmc_clip.yaml", 
+//                      "--exp_name", "pmc_clip", 
 //                      "--device", "cuda",
 //                      "--test_type", "test",
 //                      "--learn_obj", "bmc",
@@ -168,7 +124,8 @@
 //         }
 //     ]
 // }
-=======
+
+// test
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -199,7 +156,6 @@
 }
 
 
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 
 
 // inference process

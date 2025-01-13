@@ -96,10 +96,6 @@ class ISIC_image(Dataset):
                         img_path=f"{self.images_dir}/{cap['img_name']}",
                         mask_path=f"{self.masks_dir}/{mask_name}"
         )
-<<<<<<< HEAD
-        return return_dict
-=======
         return return_dict
 
 
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a

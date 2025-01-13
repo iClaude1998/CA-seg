@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-from .segmentations import ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, ISIC_image
-=======
 from .segmentations import ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, camusattributes_seg, ISIC_image
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 
 
 def build_dataset(config, preprocessors, inter_mode=True):
@@ -13,13 +9,10 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_isicattr_dataset(config, preprocessors, inter_mode)
     elif config.name == "bkai_attr":
         return build_bkaiattr_dataset(config, preprocessors, inter_mode)
-<<<<<<< HEAD
-=======
     elif config.name == "busi_attr":
         return build_busiattr_dataset(config, preprocessors, inter_mode)
     elif config.name == "camus_attr":
         return build_camusattr_dataset(config, preprocessors, inter_mode)
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
     elif config.name == "isic_image":
         return build_isic_image_dataset(config, preprocessors)
 

@@ -64,11 +64,7 @@ if __name__ == '__main__':
         os.makedirs(output_dir, exist_ok=True)
         device = cfgs.device
         accelerator = None
-<<<<<<< HEAD
-        
-=======
     
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
     if cfgs.learn_obj != 'bmc':
         cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(cfgs.model.clip, 'cpu')
         diffusion_model = create_diffusion(cfgs.model.diffusion)

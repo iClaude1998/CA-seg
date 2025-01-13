@@ -90,10 +90,6 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                      cfgs.log_method,
                                      epi_magnitude=cfgs.trainer.epi_magnitude,
                                      clip_grads=cfgs.trainer.clip_grads)
-<<<<<<< HEAD
-        
-=======
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
     elif cfgs.learn_obj == 'bmc':
         trainer = CLIPCBM_Trainer(cfgs.task,
                                   output_dir, 
@@ -110,10 +106,6 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                   accelerator,
                                   cfgs.log_method,
                                   clip_grads=cfgs.trainer.clip_grads)
-<<<<<<< HEAD
-        
-=======
->>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
     else:
         raise ValueError(f"Unsupported learning objective: {cfgs.learn_obj}, what do you wanna do ???")
     return trainer
