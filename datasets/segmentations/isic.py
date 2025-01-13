@@ -44,6 +44,7 @@ class ISIC_seg(Dataset):
         inter_layer: Optional[str] = None, # layer11, layer7, layer3
         caps_file: Optional[str] = None,
         override_prompt: Optional[str] = None,
+        inter_norm: Optional[str] = 'minmax',
         image_size=None
     ) -> None:
         super().__init__()
@@ -64,7 +65,7 @@ class ISIC_seg(Dataset):
         self.mask_transforms = build_mask_transforms(image_resolution)
         self.usdf_transforms = build_usdf_transforms(image_resolution)
         if self.inter_layer is not None:
-            self.intermap_transforms = build_intermap_transforms(image_resolution)
+            self.intermap_transforms = build_intermap_transforms(image_resolution, inter_norm)
 
         with open(caps_file, "r") as fp:
             self.imgs_captions = json.load(fp)

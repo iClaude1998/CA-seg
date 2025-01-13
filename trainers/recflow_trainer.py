@@ -4,6 +4,7 @@ sys.path.append('..')
 import torch
 import random
 import logging
+import statistics
 import torchvision
 import pandas as pd
 
@@ -226,7 +227,6 @@ class Reflow_Trainer(object):
             if self.accelerator.is_local_main_process:
                 print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
-        
         # perfect ending
         vts, random_batch = self.random_inference()
         self.save_checkpoints(iter_id)
@@ -296,20 +296,13 @@ class Reflow_Trainer(object):
         for batch in tqdm(dl):
             vts, Rs = self.test_step(batch)
             mask_name = batch['mask_name']
-            gts = batch[self.gt_type]
-            onehot_mask = batch['mask']
+            gts = batch['mask']
             with torch.no_grad():
-                # iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=66, gt_type=self.gt_type) # stage I
-                # iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
+                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
+                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
                 
-                # dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=66, gt_type=self.gt_type) # stage I
-                # dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
-                
-                iou_batch_I = compute_metrics(Rs, onehot_mask, mask_name, metric='iou', thresh=66, gt_type=self.gt_type) # stage I
-                iou_batch_II = compute_metrics(vts, onehot_mask, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
-                
-                dice_batch_I = compute_metrics(Rs, onehot_mask, mask_name, metric='dice', thresh=66, gt_type=self.gt_type) # stage I
-                dice_batch_II = compute_metrics(vts, onehot_mask, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
+                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=17) # stage I
+                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
                 
                 outcomes['mask_name'].extend(mask_name)
                 outcomes['iou_I'].extend(iou_batch_I)
@@ -320,6 +313,31 @@ class Reflow_Trainer(object):
         outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_{self.checkpoint_name}.csv'), index=False)
         return outcomes
     
+    
+    def thresh_search(self, metric='dice'):
+        if not self.load_succeed:
+            raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
+        self.diffusion_model.eval()
+        
+        best_thresh, best_outcome = 0, 0
+        for thresh in range(1, 256):
+            results = []
+            for batch in tqdm(self.val_dataloader):
+                
+                mask_name = batch['mask_name']
+                gts = batch['mask']
+                vts, _ = self.test_step(batch)
+                with torch.no_grad():
+                    result = compute_metrics(vts, gts, mask_name, metric=metric, thresh=thresh) # stage II
+                    results.extend(result)
+                
+            results = statistics.mean(results)
+            if results > best_outcome:
+                best_outcome = results
+                best_thresh = thresh
+        
+        return best_thresh, best_outcome
+                    
     
     def test_step(self, batch):
 
@@ -470,6 +488,7 @@ class Reflow_Trainer(object):
         self.val_dataloader = dataloaders.get('val', None)
         self.test_dataloader = dataloaders.get('test', None)
     
+    
      
     @torch.no_grad()
     def get_input(self, batch):
@@ -489,12 +508,14 @@ class Reflow_Trainer(object):
         return image, text_ids, gt, Rs
 
 
+
     def configure_optimizers(self):
         
         lr = self.learning_rate
         params = list(self.diffusion_model.parameters())
         opt = AdamW(params, lr=lr)
         return opt
+    
     
     
     def random_inference(self):
@@ -504,6 +525,7 @@ class Reflow_Trainer(object):
         vts, _ = self.test_step(random_batch)
         self.diffusion_model.train()
         return vts.detach().cpu(), random_batch
+    
     
     
     def init_loggers(self):
@@ -524,6 +546,7 @@ class Reflow_Trainer(object):
                 self.writer = SummaryWriter(self.log_path)
     
     
+    
     def visualize(self, vts, random_batch, step):
         # it is move effectively
         images = random_batch['pixel_values']
@@ -540,6 +563,7 @@ class Reflow_Trainer(object):
             gt_grids = torchvision.utils.make_grid(torch.from_numpy(mixed_img_gts).permute(0, 3, 1, 2), nrow=B)
             self.writer.add_image(f'Predictions on iter {step}', pred_grids)
             self.writer.add_image(f'Ground Truths on iter {step}', gt_grids)
+    
     
     
     def random_inference_process(self):
@@ -563,7 +587,6 @@ class Reflow_Trainer(object):
                 plt.title(f'step {i}')
                 plt.savefig(os.path.join(save_dir, f"step_{i}.png"))
                 plt.close()
-        
         for b in range(B):
             prefix = os.path.splitext(mask_names[b])[0]
             save_dir = os.path.join(self.vis_process_path, f'{prefix}')

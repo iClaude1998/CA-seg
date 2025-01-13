@@ -356,14 +356,11 @@ def mix_images_with_masks(images, masks, alpha_heatmap=0.5, colormap='jet'):
     return np.clip(overlayed_images, a_min=0., a_max=1.)
 
 
-def compute_metrics(preds, gts, mask_name, metric, thresh=126, gt_type='sdf_map'):
+def compute_metrics(preds, gts, mask_name, metric, thresh=126):
     preds = preds.squeeze(1).cpu().numpy()
     gts = gts.squeeze(1).cpu().numpy()
     preds = min_max_normalize(preds)
-    # gts = min_max_normalize(gts)
-    if gt_type == 'mask':
-        thresh = 127
-    
+
     preds = (255 * preds >= thresh)
     gts = (255 * gts > 0)
     # visualization_for_debug(preds, gts, mask_name)
@@ -447,6 +444,18 @@ def visualization_for_debug(preds, gts, mask_name, save_dir='experiments/check_r
         ax[1].set_title('GroundTruth')  
         plt.savefig(os.path.join(save_dir, mask_name[i]))
         plt.close(fig)
+     
+        
+def produce_out_dir(cfgs):
+    if 'ISIC' in cfgs.datasets.basedir:
+        clip_model = cfgs.model.clip.pretrain
+        val_dir = train_outdir = f'/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_LRP/{clip_model}'
+        test_outdir = f'/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_LRP/{clip_model}'
+    else:
+        raise ValueError(f"Unsupported dataset: {cfgs.datasets.basedir}, what do you wanna do ???")
+    for adir in [train_outdir, val_dir, test_outdir]:
+        os.makedirs(adir, exist_ok=True)
+    return train_outdir, val_dir, test_outdir
     
     
 
