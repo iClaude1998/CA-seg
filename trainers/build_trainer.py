@@ -90,7 +90,7 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                      cfgs.log_method,
                                      epi_magnitude=cfgs.trainer.epi_magnitude,
                                      clip_grads=cfgs.trainer.clip_grads)
-    elif cfgs.learn_obj == 'bmc':
+    elif cfgs.learn_obj == 'cbm':
         trainer = CLIPCBM_Trainer(cfgs.task,
                                   output_dir, 
                                   clip_model, 
@@ -103,6 +103,10 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                   cfgs.trainer.save_interval,
                                   cfgs.trainer.valiation_interval,
                                   cfgs.trainer.gamma,
+                                  cfgs.trainer.alpha,
+                                  cfgs.trainer.beta,
+                                  cfgs.trainer.temperature,
+                                  cfgs.trainer.with_sigmoid,
                                   accelerator,
                                   cfgs.log_method,
                                   clip_grads=cfgs.trainer.clip_grads)

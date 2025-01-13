@@ -1,0 +1,59 @@
+datasets:
+  batch_size: 64
+  size:
+  featuremap_size: 7
+  basedir: "/data/claude/datasets/medisegs/ISIC"
+  train:
+    name: "isic_image"
+    images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
+    masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    layercam_dir: "${datasets.basedir}/Train/eigengradcam_old_cam"
+    caps_file: "${datasets.basedir}/anns/train.json"
+    image_size: "${datasets.size}"
+    featuremap_size: "${datasets.featuremap_size}"
+  val:
+    name: "isic_image"
+    images_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_Data"
+    masks_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Train/ISBI2016_ISIC_Part1_Training_GroundTruth_USDF"
+    layercam_dir: "${datasets.basedir}/Train/eigengradcam_old_cam"
+    caps_file: "${datasets.basedir}/anns/val.json"
+    image_size: "${datasets.size}"
+    featuremap_size: "${datasets.featuremap_size}"
+  test:
+    name: "isic_image"
+    images_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_Data"
+    masks_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth"
+    sdf_dir: "${datasets.basedir}/Test/ISBI2016_ISIC_Part1_Test_GroundTruth_USDF"
+    layercam_dir: "${datasets.basedir}/Test/eigengradcam_old_cam"
+    caps_file: "${datasets.basedir}/anns/test.json"
+    image_size: "${datasets.size}"
+    featuremap_size: "${datasets.featuremap_size}"
+
+
+model:
+  clip:
+    pretrain: "Pubmedclip"
+    num_concepts: 45
+    inter_mode: False 
+
+
+trainer:
+  learning_rate: 1.0e-4
+  output: "output_logs" # experiments/exp_name/logs 
+  use_ema: False
+  checkpoint_name: "best.pth" # the name of the loaded checkpoint "best.pth"
+  num_epoch: 100
+  save_interval: 20
+  valiation_interval: 1
+  gamma: 0.98 # the gamma of the Exp learning rate scheduler, normally 0.9~0.99
+  alpha: 0.33
+  beta: 0.33
+  temperature: 1.0
+  with_sigmoid: False
+  gradient_accumulation_steps: 1
+  clip_grads:
+
+
+log_method: "wandb" # wandb, tensorboard

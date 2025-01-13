@@ -76,7 +76,7 @@ class ISIC_image(Dataset):
         image = Image.open(f"{self.images_dir}/{cap['img_name']}").convert("RGB")
         mask = Image.open(f"{self.masks_dir}/{mask_name}")
         sdf_map = np.load(f"{self.sdf_dir}/{name}.npy")
-        inter_map = np.load(f"{self.layercam_dir}/{name}_layercam.npy")
+        inter_map = np.load(f"{self.layercam_dir}/{name}_Segmentation_gcam.npy")
         
         h, w = mask.height, mask.width
         
