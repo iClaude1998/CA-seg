@@ -323,7 +323,7 @@ def process_checkpoints(checkpoint):
     checkpoint['model'] = new_state_dict_model
     
     new_state_dict_model = {}
-    if checkpoint['model_ema'] is not None:
+    if checkpoint.get('model_ema', None) is not None:
         for key in checkpoint['model_ema'].keys():
             new_key = key.replace("module.", "")  # Remove 'module.' prefix
             new_state_dict_model[new_key] = checkpoint['model_ema'][key]
@@ -356,16 +356,13 @@ def mix_images_with_masks(images, masks, alpha_heatmap=0.5, colormap='jet'):
     return np.clip(overlayed_images, a_min=0., a_max=1.)
 
 
-def compute_metrics(preds, gts, mask_name, metric, thresh=126, gt_type='sdf_map'):
+def compute_metrics(preds, gts, mask_name, metric, thresh=126):
     preds = preds.squeeze(1).cpu().numpy()
     gts = gts.squeeze(1).cpu().numpy()
     preds = min_max_normalize(preds)
-    gts = min_max_normalize(gts)
-    if gt_type == 'mask':
-        thresh = 127
-    
+
     preds = (255 * preds >= thresh)
-    gts = (255 * gts >= 1)
+    gts = (255 * gts > 0)
     # visualization_for_debug(preds, gts, mask_name)
     if metric == 'iou':
         intersection = np.logical_and(preds, gts)
@@ -392,20 +389,33 @@ def compute_metrics(preds, gts, mask_name, metric, thresh=126, gt_type='sdf_map'
     
     
 def save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, vis_path):
-    num_examples = mixed_img_predits_I.shape[0]
-    for i in range(num_examples):
-        fig, ax = plt.subplots(1, 3, figsize=(10, 5))
-        ax[0].imshow(mixed_img_predits_I[i])
-        ax[0].axis('off')
-        ax[0].set_title('Predictions I')   
-        ax[1].imshow(mixed_img_predits_II[i])
-        ax[1].axis('off')
-        ax[1].set_title('Predictions II')   
-        ax[2].imshow(mixed_img_gts[i])
-        ax[2].axis('off')
-        ax[2].set_title('Ground truths')   
-        plt.savefig(os.path.join(vis_path, mask_names[i]))
-        plt.close(fig)
+    num_examples = mixed_img_gts.shape[0]
+    if mixed_img_predits_I is None:
+        
+        for i in range(num_examples):
+            fig, ax = plt.subplots(1, 2, figsize=(10, 5))  
+            ax[0].imshow(mixed_img_predits_II[i])
+            ax[0].axis('off')
+            ax[0].set_title('Predictions')   
+            ax[1].imshow(mixed_img_gts[i])
+            ax[1].axis('off')
+            ax[1].set_title('Ground truths')   
+            plt.savefig(os.path.join(vis_path, mask_names[i]))
+            plt.close(fig)
+    else:
+        for i in range(num_examples):
+            fig, ax = plt.subplots(1, 3, figsize=(10, 5))
+            ax[0].imshow(mixed_img_predits_I[i])
+            ax[0].axis('off')
+            ax[0].set_title('Predictions I')   
+            ax[1].imshow(mixed_img_predits_II[i])
+            ax[1].axis('off')
+            ax[1].set_title('Predictions II')   
+            ax[2].imshow(mixed_img_gts[i])
+            ax[2].axis('off')
+            ax[2].set_title('Ground truths')   
+            plt.savefig(os.path.join(vis_path, mask_names[i]))
+            plt.close(fig)
         
         
         
@@ -434,6 +444,18 @@ def visualization_for_debug(preds, gts, mask_name, save_dir='experiments/check_r
         ax[1].set_title('GroundTruth')  
         plt.savefig(os.path.join(save_dir, mask_name[i]))
         plt.close(fig)
+     
+        
+def produce_out_dir(cfgs):
+    if 'ISIC' in cfgs.datasets.basedir:
+        clip_model = cfgs.model.clip.pretrain
+        val_dir = train_outdir = f'/data/claude/datasets/medisegs/ISIC/Train/ISBI2016_ISIC_Part1_Training_LRP/{clip_model}'
+        test_outdir = f'/data/claude/datasets/medisegs/ISIC/Test/ISBI2016_ISIC_Part1_Test_LRP/{clip_model}'
+    else:
+        raise ValueError(f"Unsupported dataset: {cfgs.datasets.basedir}, what do you wanna do ???")
+    for adir in [train_outdir, val_dir, test_outdir]:
+        os.makedirs(adir, exist_ok=True)
+    return train_outdir, val_dir, test_outdir
     
     
 

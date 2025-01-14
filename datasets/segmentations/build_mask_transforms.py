@@ -23,7 +23,8 @@ def build_usdf_transforms(image_resolution):
                 T.ToTensor(),
                 T.Resize(image_resolution, interpolation=InterpolationMode.BICUBIC, antialias=True),
                 T.CenterCrop(image_resolution),
-                normalization_usdf])
+                minmx_normalization_usdf])
+    
     
 def build_mask_transforms(image_resolution):
     return T.Compose([
@@ -31,11 +32,22 @@ def build_mask_transforms(image_resolution):
                 T.CenterCrop(image_resolution),
                 T.ToTensor()])
     
-def build_intermap_transforms(image_resolution):
-    return T.Compose([
+    
+def build_intermap_transforms(image_resolution, norm='minmax'):
+    if norm == 'minmax':
+       return T.Compose([
                 T.ToTensor(),
                 Resize_Interpretability_Map(image_resolution),
-                normalization_usdf])
+                minmx_normalization_usdf])
+    elif norm == 'sigmoid':
+        return T.Compose([
+                T.ToTensor(),
+                Resize_Interpretability_Map(image_resolution),
+                sigmoid_normalization_usdf])
+        # sigmoid_normalization_usdf
+    else:
+        raise ValueError(f"unsupported normalization method: {norm}")
+    
 
 
 class Resize_Interpretability_Map(object):
@@ -54,10 +66,16 @@ class Resize_Interpretability_Map(object):
         return interpre_map
 
 
-def normalization_usdf(usdf):
+def minmx_normalization_usdf(usdf):
     # normalize all to be in [0, 1] for guidance image
     if usdf.max() == 0:
         return torch.zeros_like(usdf)
     usdf = (usdf - usdf.min()) / (usdf.max() - usdf.min())
     return usdf
+
+def sigmoid_normalization_usdf(usdf):
+    # R -> [-1, 1]
+    usdf = torch.sigmoid(usdf)
+    usdf = 2 * (usdf - 0.5)
+    return torch.clamp(usdf, min=0)
 

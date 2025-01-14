@@ -62,6 +62,7 @@ class UNetModel_v1position(nn.Module):
         num_res_blocks,
         attention_resolutions,
         combine='concat',
+        fuse='concat',
         condition_channels=3,
         dropout=0,
         channel_mult=(1, 2, 4, 8),
@@ -99,9 +100,10 @@ class UNetModel_v1position(nn.Module):
         self.num_head_channels = num_head_channels
         self.num_heads_upsample = num_heads_upsample
         self.combine = combine
+        self.fuse = fuse
 
         time_embed_dim = model_channels * 4
-        self.poditional_embedding = TwoD_position_embedding(pos_embed_dim, image_size, image_size, combine)
+        self.poditional_embedding = TwoD_position_embedding(pos_embed_dim, image_size, image_size, combine, fuse)
         self.time_embed = nn.Sequential(
             linear(model_channels, time_embed_dim),
             nn.SiLU(),
@@ -111,13 +113,22 @@ class UNetModel_v1position(nn.Module):
         if self.num_classes is not None:
             self.label_emb = nn.Embedding(num_classes, time_embed_dim)
 
-        self.input_blocks = nn.ModuleList(
-            [
-                TimestepEmbedSequential(
-                    conv_nd(dims, in_channels+pos_embed_dim, model_channels, 3, padding=1)
-                )
-            ]
-        )
+        if self.fuse == 'concat':
+            self.input_blocks = nn.ModuleList(
+                [
+                    TimestepEmbedSequential(
+                        conv_nd(dims, in_channels+pos_embed_dim, model_channels, 3, padding=1)
+                    )
+                ]
+            )
+        elif (self.fuse == 'add' or self.fuse == 'multiply'):
+            self.input_blocks = nn.ModuleList(
+                [
+                    TimestepEmbedSequential(
+                        conv_nd(dims, in_channels, model_channels, 3, padding=1)
+                    )
+                ]
+            )
 
         self._feature_size = model_channels
         input_block_chans = [model_channels]
@@ -335,11 +346,14 @@ class UNetModel_v1position(nn.Module):
 
        
         h, c = self.get_input_conditions(x)
-        h = self.poditional_embedding(h)
+        if self.fuse == 'concat':
+            h = self.poditional_embedding(h)
         for ind, module in enumerate(self.input_blocks):
             if len(emb.size()) > 2:
                 emb = emb.squeeze()
             h = module(h, emb)
+            if ind == 0 and (self.fuse == 'add' or self.fuse == 'multiply'):
+                h = self.poditional_embedding(h)
             hs.append(h)
         uemb = self.highway_forward(c, [hs[3],hs[6],hs[9],hs[12]])
 

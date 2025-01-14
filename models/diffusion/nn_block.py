@@ -776,7 +776,7 @@ def count_flops_attn(model, _x, y):
 
 class TwoD_position_embedding(nn.Module):
     
-    def __init__(self, d_model, height, widths, combine='concat'):
+    def __init__(self, d_model, height, widths, combine='concat', fuse='concat'):
         super(TwoD_position_embedding, self).__init__()
         assert combine in set(['concat', 'add', 'series', 'multiply'])
         self.d_model = d_model
@@ -784,6 +784,7 @@ class TwoD_position_embedding(nn.Module):
         self.height = height
         self.widths = widths
         self.combine = combine
+        self.fuse = fuse
         assert d_model  % 2 == 0, 'd_model must be even'
         self.generate_d_single()
         hs, ws = torch.meshgrid(torch.arange(height), torch.arange(widths), indexing='ij')
@@ -832,8 +833,12 @@ class TwoD_position_embedding(nn.Module):
     def forward(self, x):
         bs = x.size(0)
         pos = self.positional_embedding.repeat(bs, 1, 1, 1)
-        
-        return torch.cat([x, pos], dim=1)
+        if self.fuse == 'concat':
+            return torch.cat([x, pos], dim=1)
+        elif self.fuse == 'add':
+            return x + pos
+        elif self.fuse == 'multiply':
+            return x * pos
     
 
     

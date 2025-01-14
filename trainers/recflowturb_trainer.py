@@ -4,6 +4,7 @@ sys.path.append('..')
 import torch
 import random
 import logging
+import statistics
 import torchvision
 import pandas as pd
 
@@ -292,13 +293,13 @@ class ReflowTurb_Trainer(object):
         for batch in tqdm(dl):
             vts, Rs = self.test_step(batch)
             mask_name = batch['mask_name']
-            gts = batch[self.gt_type]
+            gts = batch['mask']
             with torch.no_grad():
-                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=66, gt_type=self.gt_type) # stage I
-                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
+                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
+                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
                 
-                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=66, gt_type=self.gt_type) # stage I
-                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
+                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=17) # stage I
+                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
                 outcomes['mask_name'].extend(mask_name)
                 outcomes['iou_I'].extend(iou_batch_I)
                 outcomes['iou_II'].extend(iou_batch_II)
@@ -307,6 +308,31 @@ class ReflowTurb_Trainer(object):
         outcomes = pd.DataFrame(outcomes)
         outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_{self.checkpoint_name}.csv'), index=False)
         return outcomes
+    
+    
+    def thresh_search(self, metric='dice'):
+        if not self.load_succeed:
+            raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
+        self.diffusion_model.eval()
+        
+        best_thresh, best_outcome = 0, 0
+        for thresh in range(1, 256):
+            results = []
+            for batch in tqdm(self.val_dataloader):
+                
+                mask_name = batch['mask_name']
+                gts = batch['mask']
+                vts, _ = self.test_step(batch)
+                with torch.no_grad():
+                    result = compute_metrics(vts, gts, mask_name, metric=metric, thresh=thresh) # stage II
+                    results.extend(result)
+            
+            results = statistics.mean(results)
+            if results > best_outcome:
+                best_outcome = results
+                best_thresh = thresh
+        
+        return best_thresh, best_outcome
     
     
     def test_step(self, batch):

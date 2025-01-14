@@ -61,6 +61,7 @@ class UNetModel_v2position(nn.Module):
         num_res_blocks,
         attention_resolutions,
         combine='concat',
+        fuse='concat',
         dropout=0,
         channel_mult=(1, 2, 4, 8),
         conv_resample=True,
@@ -95,6 +96,7 @@ class UNetModel_v2position(nn.Module):
         self.num_head_channels = num_head_channels
         self.num_heads_upsample = num_heads_upsample
         self.clip_allignment = clip_allignment
+        self.fuse = fuse
 
         time_embed_dim = model_channels * 4
         self.time_embed = nn.Sequential(
@@ -102,14 +104,23 @@ class UNetModel_v2position(nn.Module):
             nn.SiLU(),
             linear(time_embed_dim, time_embed_dim),
         )
-        self.poditional_embedding = TwoD_position_embedding(pos_embed_dim, image_size, image_size, combine)
-        self.input_blocks = nn.ModuleList(
-            [
-                TimestepEmbedSequential(
-                    conv_nd(dims, in_channels+pos_embed_dim, model_channels, 3, padding=1)
-                )
-            ]
-        )
+        self.poditional_embedding = TwoD_position_embedding(pos_embed_dim, image_size, image_size, combine, fuse)
+        if self.fuse == 'concat':
+            self.input_blocks = nn.ModuleList(
+                [
+                    TimestepEmbedSequential(
+                        conv_nd(dims, in_channels+pos_embed_dim, model_channels, 3, padding=1)
+                    )
+                ]
+            )
+        elif (self.fuse == 'add' or self.fuse == 'multiply'):
+            self.input_blocks = nn.ModuleList(
+                [
+                    TimestepEmbedSequential(
+                        conv_nd(dims, in_channels, model_channels, 3, padding=1)
+                    )
+                ]
+            )
 
         self._feature_size = model_channels
         input_block_chans = [model_channels]
@@ -302,8 +313,8 @@ class UNetModel_v2position(nn.Module):
             h = h[:, -1:, ...]
         elif self.in_channels == 2:
             h = h[:, -2:, ...]
-        
-        h = self.poditional_embedding(h)
+        if self.fuse == 'concat':
+            h = self.poditional_embedding(h)
         clip_emb = clip_emb.type(self.dtype)
         for ind, module in enumerate(self.input_blocks):
             if len(emb.size()) > 2:
@@ -315,6 +326,8 @@ class UNetModel_v2position(nn.Module):
             else:
                 cem = None
             h = module(h, emb, cem)
+            if ind == 0 and (self.fuse == 'add' or self.fuse == 'multiply'):
+                h = self.poditional_embedding(h)
             hs.append(h)
         
         # clip 

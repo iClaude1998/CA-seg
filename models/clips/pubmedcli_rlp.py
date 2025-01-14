@@ -60,14 +60,15 @@ class CustomTransformer(nn.Module):
         self.inter_mode = inter_mode
         self.resblocks = nn.Sequential(*[CustomVisionRLPBlock(block, inter_mode) for block in self.resblocks])
         self.layers = len(self.resblocks)
-        self.out_layers = out_layers
+        self.out_layers = torch.tensor(out_layers)
 
     def forward(self, x: torch.Tensor):
         intermediate = []
         for i in range(self.layers):
             x = self.resblocks[i](x)
             if i in self.out_layers:
-                intermediate.append(x[None, ...])
+                for _ in range(self.out_layers[self.out_layers == i].shape[0]):
+                    intermediate.append(x[None, ...])
         return x, intermediate
 
 

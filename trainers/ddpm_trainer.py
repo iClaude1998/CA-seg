@@ -298,13 +298,13 @@ class DDPM_Trainer(object):
         for batch in dl:
             pred, Rs = self.test_step(batch)
             mask_name = batch['mask_name']
-            gts = batch[self.gt_type]
+            gts = batch['mask']
             with torch.no_grad():
-                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=66, gt_type=self.gt_type) # stage I
-                iou_batch_II = compute_metrics(pred, gts, mask_name, metric='iou', thresh=33, gt_type=self.gt_type) # stage II
+                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
+                iou_batch_II = compute_metrics(pred, gts, mask_name, metric='iou', thresh=17) # stage II
                 
-                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=66, gt_type=self.gt_type) # stage I
-                dice_batch_II = compute_metrics(pred, gts, mask_name, metric='dice', thresh=33, gt_type=self.gt_type) # stage II
+                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=17) # stage I
+                dice_batch_II = compute_metrics(pred, gts, mask_name, metric='dice', thresh=17) # stage II
                 outcomes['mask_name'].extend(mask_name)
                 outcomes['iou_I'].extend(iou_batch_I)
                 outcomes['iou_II'].extend(iou_batch_II)
