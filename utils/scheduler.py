@@ -437,6 +437,10 @@ class LearningRateFinder:
 
 
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 2cefacd321e42a9c9dc5f831ec0484f7c258df5a
 class WarmupExponentialLR(_LRScheduler):
     def __init__(self, optimizer, warmup_steps, gamma, last_epoch=-1):
         

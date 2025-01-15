@@ -20,7 +20,7 @@ from models.build_models import load_clip_and_tokenizer, create_diffusion, load_
 
 
 # Setting reproducibility
-SEED = 0
+SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
@@ -37,7 +37,7 @@ def parse_args():
     parser.add_argument('--learn_obj', type=str, default='recflow', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'cbm'], help='the learning objective')
     parser.add_argument('--distribution_training', action="store_true", help='whether enable distribution training')
     parser.add_argument('--load_checkpoint', action="store_true", help='whether to load checkpoint')
-    parser.add_argument('--test_type', type=str, default='test', help='whether to load checkpoint')
+    parser.add_argument('--test_type', type=str, default='test', help='The test dataset')
     return parser.parse_args()
 
 

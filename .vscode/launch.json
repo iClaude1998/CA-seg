@@ -13,18 +13,14 @@
 //             "program": "${file}",
 //             "console": "integratedTerminal",
 //             "justMyCode": false,
-//             "env": {"CUDA_VISIBLE_DEVICES": "1",
+//             "env": {"CUDA_VISIBLE_DEVICES": "0",
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",
 //                     },
-//             "args": ["--task", "rlp",
-//                      "--vis_layer", "11",
-//                      "--config", "configs/ddpmpp/isic/image_clip.yaml", 
+//             "args": ["--config", "configs/cbmmap/pmc_clip.yaml", 
 //                      "--exp_name", "debug", 
-//                      "--device", "cuda",
-//                     //  "--run_diffusion"
-//                     ]
+//                      "--device", "cuda",]
 //         }
 //     ]
 // }
@@ -111,17 +107,17 @@
 //             "program": "${file}",
 //             "console": "integratedTerminal",
 //             "justMyCode": false,
-//             "env": {"CUDA_VISIBLE_DEVICES": "1",
+//             "env": {"CUDA_VISIBLE_DEVICES": "0",
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-//             "args": ["--task", "test",
-//                      "--config", "configs/ddpmpp/isic/image_image_mask.yaml", 
-//                      "--exp_name", "ddpmpp_imagemask", 
+//             "args": ["--task", "inf",
+//                      "--config", "configs/cbmmap/pmc_clip.yaml", 
+//                      "--exp_name", "pmc_clip", 
 //                      "--device", "cuda",
 //                      "--test_type", "test",
-//                      "--learn_obj", "ddpmpp",
-//                      "--infer_algo", "ddpm",
+//                      "--learn_obj", "bmc",
+//                     //  "--infer_algo", "ddpm",
 //                      "--load_checkpoint",
 //                     ]
 //         }
@@ -160,6 +156,7 @@
 
 
 
+
 // inference process
 // {
 //     // Use IntelliSense to learn about possible attributes.
@@ -174,7 +171,7 @@
 //             "program": "${file}",
 //             "console": "integratedTerminal",
 //             "justMyCode": false,
-//             "env": {"CUDA_VISIBLE_DEVICES": "1",
+//             "env": {"CUDA_VISIBLE_DEVICES": "0",
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},

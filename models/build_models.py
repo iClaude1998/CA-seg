@@ -10,7 +10,6 @@ from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, Modif
 
 
 
-
 def load_clip_and_tokenizer(cfgs, device):
     if cfgs.pretrain == 'ViT-B-32':
         model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')

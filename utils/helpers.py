@@ -389,20 +389,33 @@ def compute_metrics(preds, gts, mask_name, metric, thresh=126):
     
     
 def save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, vis_path):
-    num_examples = mixed_img_predits_I.shape[0]
-    for i in range(num_examples):
-        fig, ax = plt.subplots(1, 3, figsize=(10, 5))
-        ax[0].imshow(mixed_img_predits_I[i])
-        ax[0].axis('off')
-        ax[0].set_title('Predictions I')   
-        ax[1].imshow(mixed_img_predits_II[i])
-        ax[1].axis('off')
-        ax[1].set_title('Predictions II')   
-        ax[2].imshow(mixed_img_gts[i])
-        ax[2].axis('off')
-        ax[2].set_title('Ground truths')   
-        plt.savefig(os.path.join(vis_path, mask_names[i]))
-        plt.close(fig)
+    num_examples = mixed_img_gts.shape[0]
+    if mixed_img_predits_I is None:
+        
+        for i in range(num_examples):
+            fig, ax = plt.subplots(1, 2, figsize=(10, 5))  
+            ax[0].imshow(mixed_img_predits_II[i])
+            ax[0].axis('off')
+            ax[0].set_title('Predictions')   
+            ax[1].imshow(mixed_img_gts[i])
+            ax[1].axis('off')
+            ax[1].set_title('Ground truths')   
+            plt.savefig(os.path.join(vis_path, mask_names[i]))
+            plt.close(fig)
+    else:
+        for i in range(num_examples):
+            fig, ax = plt.subplots(1, 3, figsize=(10, 5))
+            ax[0].imshow(mixed_img_predits_I[i])
+            ax[0].axis('off')
+            ax[0].set_title('Predictions I')   
+            ax[1].imshow(mixed_img_predits_II[i])
+            ax[1].axis('off')
+            ax[1].set_title('Predictions II')   
+            ax[2].imshow(mixed_img_gts[i])
+            ax[2].axis('off')
+            ax[2].set_title('Ground truths')   
+            plt.savefig(os.path.join(vis_path, mask_names[i]))
+            plt.close(fig)
         
         
         
