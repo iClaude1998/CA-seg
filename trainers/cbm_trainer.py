@@ -401,7 +401,7 @@ class CLIPCBM_Trainer(object):
                 save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
     
     
-    def produce_cam(self, train_outdir, val_outdir, test_outdir):
+    def produce_cam(self, train_outdir, val_outdir, test_outdir, interpolate=True):
         """
         Produce the results for stage II clipflow refinements
         """
@@ -419,13 +419,19 @@ class CLIPCBM_Trainer(object):
                 with torch.no_grad():
                     concept_weights = self.model(images)
                     preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
-                    preds = F.interpolate(preds, size=(h, w), mode='bilinear', align_corners=False).detach().cpu().numpy()
+                    if interpolate:
+                        preds = F.interpolate(preds, size=(h, w), mode='bilinear', align_corners=False).detach().cpu().numpy()
+                    else:
+                        preds = preds.detach().cpu().numpy()
                     for i in range(preds.shape[0]):
                         cam = preds[i, 0]
                         mask_name = mask_names[i]
                         mask_name = os.path.splitext(mask_name)[0]
                         dataset_name, idx, _ = mask_name.split('_')
-                        np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer4.npy'), cam)
+                        if interpolate:
+                            np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer4.npy'), cam)
+                        else:
+                            np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer4s.npy'), cam)
                         
                     
                 
