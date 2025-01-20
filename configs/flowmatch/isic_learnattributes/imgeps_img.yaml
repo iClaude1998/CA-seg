@@ -3,7 +3,7 @@ datasets:
   size:
   inter_layer: "layer4"
   inter_norm: "sigmoid"
-  basedir: "/data/claude/datasets/medisegs/ISIC"
+  basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -40,7 +40,6 @@ datasets:
     inter_norm: "${datasets.inter_norm}"
     override_prompt:
     image_size: "${datasets.size}"
-    
 
 model:
   clip:
@@ -63,7 +62,7 @@ model:
     dropout: 0.0
     channel_mult: ""
     num_classes: # set None for avoid label embeddings (why we have it, strange ???)
-    use_checkpoint: False
+    use_checkpoint: True
     use_fp16: False
     num_heads: 1
     num_head_channels: -1
@@ -77,7 +76,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint
+  checkpoint_name: # the name of the loaded checkpoint "checkpoint_iter100000.pth"
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100

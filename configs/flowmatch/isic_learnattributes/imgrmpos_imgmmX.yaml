@@ -2,7 +2,7 @@ datasets:
   batch_size: 8
   size:
   inter_layer: "layer4"
-  inter_norm: "sigmoid"
+  inter_norm: "minmax"
   basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
   train:
     name: "isic_seg"
@@ -40,34 +40,38 @@ datasets:
     inter_norm: "${datasets.inter_norm}"
     override_prompt:
     image_size: "${datasets.size}"
+    
 
 model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       - 11
-      - 11
-      - 11
     inter_mode: False
     proj_patch: True
   diffusion:
-    version: "v2"
+    version: "v1p"
     image_size: 224
-    in_channels: 1    # 1 for CAM input only and image input only as condition
+    pos_embed_dim: 128
+    in_channels: 4 # 4 for ISIC
+    condition_channels: 3
     num_channels: 128
     out_channels: 1
-    channels_clip: 512
     num_res_blocks: 2
     attention_resolutions: "16"
+    combine: "series" # 'concat', 'add', 'series', 'multiply'
+    fuse: 'multiply'
     dropout: 0.0
     channel_mult: ""
+    num_classes: # set None for avoid label embeddings (why we have it, strange ???)
     use_checkpoint: True
     use_fp16: False
     num_heads: 1
     num_head_channels: -1
     num_heads_upsample: -1
     use_scale_shift_norm: -1
-    clip_allignment: # set to None, linear or linear_gelu 
+    resblock_updown: False
+    use_new_attention_order: False
 
 
 trainer:

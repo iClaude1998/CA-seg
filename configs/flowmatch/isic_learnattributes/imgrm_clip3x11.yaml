@@ -3,7 +3,7 @@ datasets:
   size:
   inter_layer: "layer4"
   inter_norm: "sigmoid"
-  basedir: "/data/claude/datasets/medisegs/ISIC"
+  basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -75,7 +75,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: # the name of the loaded checkpoint
+  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
@@ -83,4 +83,4 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "wandb" # wandb, tensorboard
+log_method: "tensorboard" # wandb, tensorboard
