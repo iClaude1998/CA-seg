@@ -43,7 +43,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: # the name of the loaded checkpoint "best.pth"
+  checkpoint_name: "best.pth" # the name of the loaded checkpoint "best.pth"
   num_epoch: 100
   save_interval: 20
   valiation_interval: 1
