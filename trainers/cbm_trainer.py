@@ -429,9 +429,9 @@ class CLIPCBM_Trainer(object):
                         mask_name = os.path.splitext(mask_name)[0]
                         dataset_name, idx, _ = mask_name.split('_')
                         if interpolate:
-                            np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer4.npy'), cam)
+                            np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer3.npy'), cam)
                         else:
-                            np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer4s.npy'), cam)
+                            np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer3s.npy'), cam)
                         
                     
                 

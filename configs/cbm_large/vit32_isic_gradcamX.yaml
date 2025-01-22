@@ -40,7 +40,7 @@ model:
 
 
 trainer:
-  learning_rate: 1.0e-4
+  learning_rate: 3.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
   checkpoint_name: "best.pth" # the name of the loaded checkpoint "best.pth"
@@ -50,7 +50,7 @@ trainer:
   gamma: 0.98 # the gamma of the Exp learning rate scheduler, normally 0.9~0.99
   alpha: 0.33
   beta: 0.33
-  temperature: 100
+  temperature: 50
   with_sigmoid: True
   gradient_accumulation_steps: 1
   clip_grads:

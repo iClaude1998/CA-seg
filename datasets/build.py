@@ -32,6 +32,7 @@ def build_isic_dataset(config, preprocessors, inter_mode=True):
                     config.caps_file, 
                     config.override_prompt, 
                     config.inter_norm,
+                    config.resize,
                     image_size=tuple(config.image_size) if config.image_size is not None else None,)
 
     
@@ -67,6 +68,7 @@ def build_bkaiattr_dataset(config, preprocessors, inter_mode=True):
                               config.caps_file, 
                               image_size=tuple(config.image_size) if config.image_size is not None else None,)
     
+
     
 def build_isic_image_dataset(config, preprocessors):
     return ISIC_image(preprocessors, 
@@ -79,11 +81,6 @@ def build_isic_image_dataset(config, preprocessors):
                       featuremap_size=config.featuremap_size,
                       )
     
-    
-
-
-    
-
 
 
 def build_busiattr_dataset(config, preprocessors, inter_mode=True):

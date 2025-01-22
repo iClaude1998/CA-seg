@@ -1,9 +1,10 @@
 datasets:
   batch_size: 8
   size:
-  inter_layer: "layer4"
-  inter_norm: "minmax"
+  inter_layer: "layer3"
+  inter_norm: "sigmoid"
   basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
+  resize: True
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -16,6 +17,7 @@ datasets:
     inter_norm: "${datasets.inter_norm}"
     override_prompt:
     image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
   val:
     name: "isic_seg"
     prompt_type: "p6"
@@ -28,6 +30,7 @@ datasets:
     inter_norm: "${datasets.inter_norm}"
     override_prompt:
     image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
   test:
     name: "isic_seg"
     prompt_type: "p6"
@@ -40,6 +43,7 @@ datasets:
     inter_norm: "${datasets.inter_norm}"
     override_prompt:
     image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
     
 
 model:

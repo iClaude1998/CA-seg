@@ -33,20 +33,15 @@ def build_mask_transforms(image_resolution):
                 T.ToTensor()])
     
     
-def build_intermap_transforms(image_resolution, norm='minmax'):
+def build_intermap_transforms(image_resolution, norm='minmax', resize=True):
+    transforms = [T.ToTensor(),]
+    if resize:
+        transforms.append(Resize_Interpretability_Map(image_resolution))
     if norm == 'minmax':
-       return T.Compose([
-                T.ToTensor(),
-                Resize_Interpretability_Map(image_resolution),
-                minmx_normalization_usdf])
+        transforms.append(minmx_normalization_usdf)
     elif norm == 'sigmoid':
-        return T.Compose([
-                T.ToTensor(),
-                Resize_Interpretability_Map(image_resolution),
-                sigmoid_normalization_usdf])
-        # sigmoid_normalization_usdf
-    else:
-        raise ValueError(f"unsupported normalization method: {norm}")
+        transforms.append(sigmoid_normalization_usdf)
+    return T.Compose(transforms)
     
 
 
@@ -78,4 +73,6 @@ def sigmoid_normalization_usdf(usdf):
     usdf = torch.sigmoid(usdf)
     usdf = 2 * (usdf - 0.5)
     return torch.clamp(usdf, min=0)
+
+
 

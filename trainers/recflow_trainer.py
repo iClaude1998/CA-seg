@@ -245,7 +245,7 @@ class Reflow_Trainer(object):
         B = gt.shape[0]
         # zT = torch.randn_like(sdf_map, device=self.device)
         
-        z0, conditions, _, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
+        z0, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
         
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
         t_norm = t.float() / (self.num_timesteps - 1)
@@ -259,6 +259,8 @@ class Reflow_Trainer(object):
             v = self.diffusion_model(x, t, y=None)
         elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
             v = self.diffusion_model(x, t, intermediate.detach())
+        elif self.diffusion_version == 'v3p':
+            v = self.diffusion_model(x, t, Rs)
         loss_mse = self.criterion(gt - z0, v)
       
         return loss_mse   #+loss_perc
@@ -295,8 +297,11 @@ class Reflow_Trainer(object):
             raise ValueError(f"Unsupported testset: {testset}")
         for batch in tqdm(dl):
             vts, Rs = self.test_step(batch)
+            
             mask_name = batch['mask_name']
             gts = batch['mask']
+            if Rs.shape[2:] != gts.shape[2:]:
+                Rs = F.interpolate(Rs, gts.shape[-2:], mode='bilinear', align_corners=False)
             with torch.no_grad():
                 iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
                 iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
@@ -354,6 +359,8 @@ class Reflow_Trainer(object):
                 v = self.diffusion_model(x, ts, y=None)
             elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
                 v = self.diffusion_model(x, ts, intermediate.detach())
+            elif self.diffusion_version == 'v3p':
+                v = self.diffusion_model(x, ts, Rs)
             zt = zt + v / len(eular_steps)
         return zt, Rs   
     
