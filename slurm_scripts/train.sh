@@ -30,7 +30,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 
 python main.py --task train \
-       --exp_name imgeps_imgmm \
-       --config configs/flowmatch/isic_learnattributes/imgeps_imgmm.yaml \
+       --exp_name imgeps_imgmmX \
+       --config configs/flowmatch/isic_learnattributes/imgeps_imgmmX.yaml \
        --num_workers 8 \
        --learn_obj recflow \

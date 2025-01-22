@@ -25,8 +25,8 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=imgrmpos_imgmm
-config_file=configs/flowmatch/isic_learnattributes/imgrmpos_imgmm.yaml
+exp_name=imgrmpos_clipmmX
+config_file=configs/flowmatch/isic_learnattributes/imgrmpos_clipmmX.yaml
 test_type=test
 learn_obj=recflow
 
