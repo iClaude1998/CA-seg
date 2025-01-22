@@ -45,7 +45,7 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/flowmatch/isic_learnattributes/imgrm_clip3x11.yaml",
+                     "--config", "configs/flowmatch/isic_learnattributes/imgeps_rmv3.yaml",
                      "--exp_name", "debug", 
                      "--device", "cuda",
                      "--learn_obj", "recflow"]

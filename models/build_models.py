@@ -5,8 +5,9 @@ import open_clip
 from transformers import AutoTokenizer
 from open_clip import create_model_from_pretrained, get_tokenizer
 
-from .diffusion import UNetModel_v1preview, UNetModel_v2preview, UNetModel_v1position, UNetModel_v2position
 from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN
+from .diffusion import (UNetModel_v1preview, UNetModel_v2preview, UNetModel_v1position, 
+                        UNetModel_v2position, UNetModel_v3position)
 
 
 
@@ -139,6 +140,30 @@ def create_diffusion(cfgs):
                         num_heads_upsample=cfgs.num_heads_upsample,
                         use_scale_shift_norm=cfgs.use_scale_shift_norm,
                         clip_allignment=cfgs.clip_allignment,
+        )
+    elif cfgs.version == 'v3p':
+        return UNetModel_v3position(
+            image_size=cfgs.image_size,
+                    in_channels=cfgs.in_channels,
+                    pos_embed_dim=cfgs.pos_embed_dim,
+                    model_channels=cfgs.num_channels,
+                    out_channels=cfgs.out_channels, #(3 if not learn_sigma else 6),
+                    combine=cfgs.combine,
+                    fuse=cfgs.fuse,
+                    num_res_blocks=cfgs.num_res_blocks,
+                    attention_resolutions=tuple(attention_ds),
+                    dropout=cfgs.dropout,
+                    channel_mult=channel_mult,
+                    num_classes=cfgs.num_classes,
+                    use_checkpoint=cfgs.use_checkpoint,
+                    use_fp16=cfgs.use_fp16,
+                    num_heads=cfgs.num_heads,
+                    num_head_channels=cfgs.num_head_channels,
+                    num_heads_upsample=cfgs.num_heads_upsample,
+                    use_scale_shift_norm=cfgs.use_scale_shift_norm,
+                    resblock_updown=cfgs.resblock_updown,
+                    use_new_attention_order=cfgs.use_new_attention_order,
+                    norm_type=cfgs.norm_type
         )
 
 
