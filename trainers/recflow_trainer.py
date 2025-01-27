@@ -259,7 +259,7 @@ class Reflow_Trainer(object):
             v = self.diffusion_model(x, t, y=None)
         elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
             v = self.diffusion_model(x, t, intermediate.detach())
-        elif self.diffusion_version == 'v3p':
+        elif self.diffusion_version == 'v3' or self.diffusion_version == 'v3p':
             v = self.diffusion_model(x, t, Rs)
         loss_mse = self.criterion(gt - z0, v)
       
@@ -359,7 +359,7 @@ class Reflow_Trainer(object):
                 v = self.diffusion_model(x, ts, y=None)
             elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
                 v = self.diffusion_model(x, ts, intermediate.detach())
-            elif self.diffusion_version == 'v3p':
+            elif self.diffusion_version == 'v3' or self.diffusion_version == 'v3p':
                 v = self.diffusion_model(x, ts, Rs)
             zt = zt + v / len(eular_steps)
         return zt, Rs   
