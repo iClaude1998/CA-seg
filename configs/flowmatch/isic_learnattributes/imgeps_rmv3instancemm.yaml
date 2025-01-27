@@ -1,10 +1,10 @@
 datasets:
   batch_size: 8
   size:
-  inter_layer: "layer3"
+  inter_layer: "layer4s"
   inter_norm: "minmax"
   basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
-  resize: True
+  resize: False
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -44,26 +44,26 @@ datasets:
     override_prompt:
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-    
 
 model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       - 11
+      - 11
+      - 11
     inter_mode: False
     proj_patch: True
   diffusion:
-    version: "v1p"
+    version: "v3p"
     image_size: 224
     pos_embed_dim: 128
     in_channels: 4 # 4 for ISIC
-    condition_channels: 3
     num_channels: 128
     out_channels: 1
     num_res_blocks: 2
     attention_resolutions: "16"
-    combine: "series" # 'concat', 'add', 'series', 'multiply'
+    combine: "series"
     fuse: 'multiply'
     dropout: 0.0
     channel_mult: ""
@@ -76,7 +76,7 @@ model:
     use_scale_shift_norm: -1
     resblock_updown: False
     use_new_attention_order: False
-
+    norm_type: "instancenorm"
 
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
@@ -87,7 +87,7 @@ trainer:
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
-  start_point: "LRP"
+  start_point: "guassian"
   gradient_accumulation_steps: 1
   clip_grads:
 

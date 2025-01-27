@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=imgeps_imgmm # job name
+#SBATCH --job-name=imgeps_rmv3instance # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=1          # number of tasks (multi-thread job starts 4 tasks)
@@ -30,7 +30,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 
 python main.py --task train \
-       --exp_name imgeps_imgmmX \
-       --config configs/flowmatch/isic_learnattributes/imgeps_imgmmX.yaml \
+       --exp_name imgeps_rmv3instance \
+       --config configs/flowmatch/isic_learnattributes/imgeps_imgrmv3instance.yaml \
        --num_workers 8 \
        --learn_obj recflow \
