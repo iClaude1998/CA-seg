@@ -15,14 +15,12 @@ from .nn_block import (
     AttentionBlock,
     Downsample,
     Upsample,
-    TwoD_position_embedding,
-    
 )
 
 NUM_CLASSES = 2
 
 
-class UNetModel_v3position(nn.Module):
+class UNetModel_v3preview(nn.Module):
     """
     The full UNet model with attention and timestep embedding.
     :param in_channels: channels in the input Tensor.
@@ -56,13 +54,10 @@ class UNetModel_v3position(nn.Module):
         self,
         image_size,
         in_channels,
-        pos_embed_dim,
         model_channels,
         out_channels,
         num_res_blocks,
         attention_resolutions,
-        combine='concat',
-        fuse='concat',
         dropout=0,
         channel_mult=(1, 2, 4, 8),
         conv_resample=True,
@@ -98,11 +93,8 @@ class UNetModel_v3position(nn.Module):
         self.num_heads = num_heads
         self.num_head_channels = num_head_channels
         self.num_heads_upsample = num_heads_upsample
-        self.combine = combine
-        self.fuse = fuse
         
         time_embed_dim = model_channels * 4
-        self.poditional_embedding = TwoD_position_embedding(pos_embed_dim, image_size, image_size, combine, fuse)
         self.time_embed = nn.Sequential(
             linear(model_channels, time_embed_dim),
             nn.SiLU(),
@@ -112,22 +104,15 @@ class UNetModel_v3position(nn.Module):
         if self.num_classes is not None:
             self.label_emb = nn.Embedding(num_classes, time_embed_dim)
 
-        if self.fuse == 'concat':
-            self.input_blocks = nn.ModuleList(
-                [
-                    TimestepEmbedSequential(
-                        conv_nd(dims, in_channels+pos_embed_dim, model_channels, 3, padding=1)
-                    )
-                ]
-            )
-        elif (self.fuse == 'add' or self.fuse == 'multiply'):
-            self.input_blocks = nn.ModuleList(
-                [
-                    TimestepEmbedSequential(
-                        conv_nd(dims, in_channels, model_channels, 3, padding=1)
-                    )
-                ]
-            )
+        
+        self.input_blocks = nn.ModuleList(
+            [
+                TimestepEmbedSequential(
+                    conv_nd(dims, in_channels, model_channels, 3, padding=1)
+                )
+            ]
+        )
+
 
         self._feature_size = model_channels
         input_block_chans = [model_channels]
@@ -313,14 +298,11 @@ class UNetModel_v3position(nn.Module):
         hs = []
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
         
-        if self.fuse == 'concat':
-            h = self.poditional_embedding(h)
-        for ind, module in enumerate(self.input_blocks):
+        for module in self.input_blocks:
             if len(emb.size()) > 2:
                 emb = emb.squeeze()
             h = module(h, emb)
-            if ind == 0 and (self.fuse == 'add' or self.fuse == 'multiply'):
-                h = self.poditional_embedding(h)
+
             hs.append(h)
             
         # conditions
