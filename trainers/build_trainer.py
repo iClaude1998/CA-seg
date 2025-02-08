@@ -102,6 +102,7 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                   cfgs.trainer.num_epoch,
                                   cfgs.trainer.save_interval,
                                   cfgs.trainer.valiation_interval,
+                                  cfgs.trainer.sum_for_last,
                                   cfgs.trainer.gamma,
                                   cfgs.trainer.alpha,
                                   cfgs.trainer.beta,

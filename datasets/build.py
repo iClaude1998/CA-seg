@@ -1,4 +1,4 @@
-from .segmentations import ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, camusattributes_seg, ISIC_image
+from .segmentations import ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, camusattributes_seg, ISIC_image, Bioparse_image
 
 
 def build_dataset(config, preprocessors, inter_mode=True):
@@ -15,6 +15,8 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_camusattr_dataset(config, preprocessors, inter_mode)
     elif config.name == "isic_image":
         return build_isic_image_dataset(config, preprocessors)
+    elif config.name == "bioparse_image":
+        return build_bioparse_image_dataset(config, preprocessors)
 
 
 
@@ -124,5 +126,16 @@ def build_isic_image_dataset(config, preprocessors):
                       image_size=tuple(config.image_size) if config.image_size is not None else None,
                       featuremap_size=config.featuremap_size,
                       )
+
+
+def build_bioparse_image_dataset(config, preprocessors):
+    return Bioparse_image(preprocessors, 
+                          config.modality, 
+                          config.organ, 
+                          config.root_dir, 
+                          config.split, 
+                          config.train_rate,
+                          image_size=tuple(config.image_size) if config.image_size is not None else None,
+                          featuremap_size=config.featuremap_size,)
     
 
