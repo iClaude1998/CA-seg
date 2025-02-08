@@ -4,6 +4,7 @@ datasets:
   inter_layer: "layer4"
   inter_norm: "sigmoid"
   basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
+  resize: True
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -16,6 +17,7 @@ datasets:
     inter_norm: "${datasets.inter_norm}"
     override_prompt:
     image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
   val:
     name: "isic_seg"
     prompt_type: "p6"
@@ -28,6 +30,7 @@ datasets:
     inter_norm: "${datasets.inter_norm}"
     override_prompt:
     image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
   test:
     name: "isic_seg"
     prompt_type: "p6"
@@ -40,6 +43,8 @@ datasets:
     inter_norm: "${datasets.inter_norm}"
     override_prompt:
     image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
+    
 
 model:
   clip:
@@ -51,13 +56,16 @@ model:
     inter_mode: False
     proj_patch: True
   diffusion:
-    version: "v2"
+    version: "v2p"
     image_size: 224
-    in_channels: 1    # 1 for CAM input only and image input only as condition
+    pos_embed_dim: 128
+    in_channels: 4    # 1 for CAM input only and image input only as condition
     num_channels: 128
     out_channels: 1
     channels_clip: 512
     num_res_blocks: 2
+    combine: "series" # 'concat', 'add', 'series', 'multiply'
+    fuse: "concat" # concat, add, multiply
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
@@ -69,13 +77,12 @@ model:
     use_scale_shift_norm: -1
     clip_allignment: # set to None, linear or linear_gelu 
 
-
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: # the name of the loaded checkpoint "checkpoint_iter100000.pth"
+  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
