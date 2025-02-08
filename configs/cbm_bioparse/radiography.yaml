@@ -7,7 +7,7 @@ datasets:
     - "left+lung"
     - "right+lung"
     - "lung"
-  batch_size: 64
+  batch_size: 640
   root_dir: "/data/claude/datasets/medisegs/bioparse/Radiography"
   name: "bioparse_image" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8

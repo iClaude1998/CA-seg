@@ -291,7 +291,7 @@ class CLIPCBM_Trainer(object):
             cams = batch['inter_map'].to(self.device)
             # sdf_maps = batch['sdf_map'].to(self.device)
             onehot_maps = batch['mask'].to(self.device)
-            mask_name = batch['mask_name']
+            mask_names = batch['mask_name']
             B, _, H, W = cams.shape
             C = onehot_maps.shape[1]
             with torch.no_grad():
@@ -299,10 +299,12 @@ class CLIPCBM_Trainer(object):
                 preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
                 preds = postprocess_pred(preds, self.with_sigmoid)
                 loss = self.criterion(preds, onehot_maps, concept_weights)
-                iou_batch = compute_metrics(preds, onehot_maps, mask_name, metric='iou', thresh=17)
-                dice_batch = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)
-                outcomes['iou'].extend(iou_batch)
-                outcomes['dice'].extend(dice_batch)
+                for i in range(C):
+                    mask_name = mask_names[i]
+                    iou_batch = compute_metrics(preds[:, i, None], onehot_maps[:, i, None], mask_name, metric='iou', thresh=17)
+                    dice_batch = compute_metrics(preds[:, i, None], onehot_maps[:, i, None], mask_name, metric='dice', thresh=17)
+                    outcomes['iou'].extend(iou_batch)
+                    outcomes['dice'].extend(dice_batch)
                 outcomes['loss'].append(loss.item())
             
         for key, value in outcomes.items():
@@ -346,7 +348,7 @@ class CLIPCBM_Trainer(object):
                 preds = postprocess_pred(preds, self.with_sigmoid)
                 
                 for i in range(C):
-                    mask_name = [name[i] for name in mask_names]
+                    mask_name = mask_names[i]
                     iou_batch_I = compute_metrics(untrained[:, i, None], onehot_maps[:, i, None], mask_name, metric='iou', thresh=17)
                     dice_batch_I = compute_metrics(untrained[:, i, None], onehot_maps[:, i, None], mask_name, metric='dice', thresh=17)
                     
@@ -386,7 +388,7 @@ class CLIPCBM_Trainer(object):
                     preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
                     
                     for i in range(C):
-                        mask_name = [name[i] for name in mask_names]
+                        mask_name = mask_names[i]
                         result_batch = compute_metrics(preds[:, i, None], onehot_mask[:, i, None], mask_name, metric=metric, thresh=thresh) # stage II
                         results.extend(result_batch)
             
@@ -426,7 +428,7 @@ class CLIPCBM_Trainer(object):
                 sdf_maps = F.interpolate(sdf_maps, size=(h, w), mode='bilinear', align_corners=False)
                 
                 for i in range(C):
-                    mask_name = [name[i] for name in mask_names]
+                    mask_name = mask_names[i]
                     mixed_img_predits_I = mix_images_with_masks(images, untrained[:, i, None])
                     mixed_img_predits_II = mix_images_with_masks(images, preds[:, i, None])
                     mixed_img_gts = mix_images_with_masks(images, sdf_maps[:, i, None]) 
@@ -461,7 +463,7 @@ class CLIPCBM_Trainer(object):
                     for i in range(preds.shape[0]):
                         for j in range(C):
                             cam = preds[i, j]
-                            mask_name = mask_names[i][j]
+                            mask_name = mask_names[j][i]
                             mask_name = os.path.splitext(mask_name)[0]
                             # dataset_name, idx, _ = mask_name.split('_')
                             if interpolate:
