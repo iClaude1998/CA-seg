@@ -7,10 +7,10 @@ from PIL import Image
 from typing import Any, Dict
 from torch.utils.data import Dataset
 
-from .build_mask_transforms import build_mask_transforms, refine_image_transforms, build_usdf_transforms
+from .build_mask_transforms import build_mask_transforms, refine_image_transforms, build_usdf_transforms, build_intermap_transforms
 
 
-class Bioparse_image(Dataset):
+class Bioparse_segmentation(Dataset):
     """
     A PyTorch Dataset class for loading and preprocessing AMOS images and their corresponding masks.
     Attributes:
@@ -49,6 +49,7 @@ class Bioparse_image(Dataset):
         train_rate: float = 0.8,
         image_size=None,
         featuremap_size=None,
+        resize=False,
     ) -> None:
         super().__init__()
 
@@ -63,7 +64,7 @@ class Bioparse_image(Dataset):
         self.train_rate = train_rate
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
-        self.inter_dir = os.path.join(root_dir, modality, f"{split}_gcam", self.organ)
+        self.inter_dir = os.path.join(root_dir, modality, f"{split}_cbm", self.organ)
         self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
         self.preprocess, _, image_resolution = preprocessors
 
@@ -73,30 +74,45 @@ class Bioparse_image(Dataset):
 
         self.mask_transforms = build_mask_transforms(featuremap_size)
         self.usdf_transforms = build_usdf_transforms(featuremap_size)
+        self.intermap_transforms = build_intermap_transforms(image_resolution, None, resize)
         self.produce_sample_list()
 
     
-    def produce_mask_names(self, img_name):
+    def produce_real_names(self, img_name):
+        mask_names = []
+        inter_names = []
+        img_names = []
         prefix, suffix = os.path.splitext(img_name)
-        mask_names = f"{prefix}_{self.organ}{suffix}"
-        return mask_names
+        for cls in self.organ:
+            mask_candidate = f"{prefix}_{cls}{suffix}"
+            intermap_candidate = f"{prefix}_{cls}.npy"
+            if os.path.exists(f"{self.mask_dir}/{mask_candidate}") and os.path.exists(f"{self.inter_dir}/{intermap_candidate}"):
+                mask_names.append(mask_candidate)
+                inter_names.append(intermap_candidate)
+                img_names.append(img_name)
+            
+        return mask_names, inter_names, img_names
     
     def produce_sample_list(self):
         img_name_list = sorted([f for f in os.listdir(self.img_dir)])
-        mask_name_list = list(map(lambda x: self.produce_mask_names(x), img_name_list))
-        
-        pairs = [(img_name, mask_name) for img_name, mask_name in zip(img_name_list, mask_name_list) if mask_name in os.listdir(self.mask_dir)]
-        pairs = pairs
-        self.img_name_list = [pair[0] for pair in pairs]
-        self.mask_name_list = [pair[1] for pair in pairs]
+        self.mask_name_list = []
+        self.intermap_name_list = []
+        self.img_name_list = []
+        for img_name in img_name_list:
+            mask_names, inter_names, img_names = self.produce_real_names(img_name)
+            self.mask_name_list.extend(mask_names)
+            self.intermap_name_list.extend(inter_names)
+            self.img_name_list.extend(img_names)
         
         if self.split == 'train':
             self.img_name_list = self.img_name_list[:int(len(self.img_name_list)*self.train_rate)]
             self.mask_name_list = self.mask_name_list[:int(len(self.mask_name_list)*self.train_rate)]
+            self.intermap_name_list = self.intermap_name_list[:int(len(self.intermap_name_list)*self.train_rate)]
         elif self.split == 'val':
             self.img_name_list = self.img_name_list[int(len(self.img_name_list)*self.train_rate):]
             self.mask_name_list = self.mask_name_list[int(len(self.mask_name_list)*self.train_rate):]
-        self.intermap_name_list = [f"{os.path.splitext(img_name)[0]}_gcam.npy" for img_name in self.img_name_list]
+            self.intermap_name_list = self.intermap_name_list[int(len(self.intermap_name_list)*self.train_rate):]
+
 
    
         
@@ -112,11 +128,13 @@ class Bioparse_image(Dataset):
 
         mask_name = self.mask_name_list[index]
 
+
         mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
         sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
         h, w = mask.height, mask.width
         mask = self.mask_transforms(mask)
         sdf_map = self.usdf_transforms(sdf_map)
+        intermap = self.intermap_transforms(intermap)
            
         
         return dict(
