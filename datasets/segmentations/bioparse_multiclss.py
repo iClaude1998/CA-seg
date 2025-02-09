@@ -48,7 +48,6 @@ class Bioparse_segmentation(Dataset):
         split: str,
         train_rate: float = 0.8,
         image_size=None,
-        featuremap_size=None,
         resize=False,
     ) -> None:
         super().__init__()
@@ -64,16 +63,16 @@ class Bioparse_segmentation(Dataset):
         self.train_rate = train_rate
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
-        self.inter_dir = os.path.join(root_dir, modality, f"{split}_cbm", self.organ)
+        self.inter_dir = os.path.join(root_dir, modality, f"{split}_cbm")
         self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
-        self.preprocess, _, image_resolution = preprocessors
+        self.preprocess, self.tokenizer, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
             image_resolution = image_size
             self.preprocess = refine_image_transforms(self.preprocess, image_resolution)
 
-        self.mask_transforms = build_mask_transforms(featuremap_size)
-        self.usdf_transforms = build_usdf_transforms(featuremap_size)
+        self.mask_transforms = build_mask_transforms(image_resolution)
+        self.usdf_transforms = build_usdf_transforms(image_resolution)
         self.intermap_transforms = build_intermap_transforms(image_resolution, None, resize)
         self.produce_sample_list()
 
@@ -125,6 +124,8 @@ class Bioparse_segmentation(Dataset):
         h, w = image.height, image.width
         image = self.preprocess(image)
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
+        
+        prompt = ''
 
         mask_name = self.mask_name_list[index]
 
@@ -135,9 +136,10 @@ class Bioparse_segmentation(Dataset):
         mask = self.mask_transforms(mask)
         sdf_map = self.usdf_transforms(sdf_map)
         intermap = self.intermap_transforms(intermap)
+        text_enc = self.tokenizer(prompt)
            
         
-        return dict(
+        return_dict= dict(
                     pixel_values=image,
                     img_name=img_name,
                     mask_name=mask_name,
@@ -147,5 +149,11 @@ class Bioparse_segmentation(Dataset):
                     mask=mask,
                     mask_path=f"{self.mask_dir}/{mask_name}",
                     sdf_map=sdf_map,
-                    inter_map=torch.from_numpy(intermap).float(),
+                    inter_map=intermap,
                     )
+        if isinstance(text_enc, dict):
+            return_dict["input_ids"] = text_enc["input_ids"][0]
+            return_dict["attention_mask"] = text_enc["attention_mask"][0]
+        elif isinstance(text_enc, torch.Tensor):
+            return_dict["input_ids"] = text_enc[0]
+        return return_dict

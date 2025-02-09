@@ -1,12 +1,14 @@
 datasets:
   size:
   modality: "Normal"
-  organ: "left+lung"
+  organ: 
+    - "left+lung"
+    - "right+lung"
   batch_size: 16
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
-  name: "bioparse_image" # "bioparse_image" "bioparse_featuremap"
+  root_dir: "/data/claude/datasets/medisegs/bioparse/Radiography"
+  name: "bioparse_seg" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
-  featuremap_size: 7
+  resize: False
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -15,7 +17,7 @@ datasets:
     split: "train"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
+    resize: "${datasets.resize}"
   val:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -24,7 +26,7 @@ datasets:
     split: "val"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
+    resize: "${datasets.resize}"
   test:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -33,7 +35,7 @@ datasets:
     split: "test"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
+    resize: "${datasets.resize}"
 
 
 model:
