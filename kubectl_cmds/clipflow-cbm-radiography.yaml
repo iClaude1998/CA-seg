@@ -34,7 +34,7 @@ spec:
               source /data/claude/.myenvs/clipflow2/bin/activate
               cd /data/claude/myprojects/clipflow2
               wandb login --verify 4782fbfd0787d1e5d6766fde2c586b86a990c357
-              python main.py --exp_name radiography_Xray --task train --config configs/cbm_bioparse/radiography.yaml --learn_obj cbm --device cuda 
+              python main.py --exp_name radiography_Xray --task train --config configs/cbm_bioparse/radiography.yaml --learn_obj cbm --device cuda --num_workers 4
           resources:
             limits:
               nvidia.com/gpu: "1"              # <------- If you don't need any of GPUs, Please comment-out this line.
