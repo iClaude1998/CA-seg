@@ -439,9 +439,9 @@ class CLIPCBM_Trainer(object):
                         mask_name = os.path.splitext(mask_name)[0]
                         # dataset_name, idx, _ = mask_name.split('_')
                         if interpolate:
-                            np.save(os.path.join(outdir, f'{mask_name}_l.npy'), cam)
+                            np.save(os.path.join(outdir, f'{mask_name}_l.npy'), cam[0])
                         else:
-                            np.save(os.path.join(outdir, f'{mask_name}.npy'), cam)
+                            np.save(os.path.join(outdir, f'{mask_name}.npy'), cam[0])
                             
                       
     def load_checkpoint(self, checkpoint_path):
