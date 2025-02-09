@@ -422,7 +422,7 @@ class CLIPCBM_Trainer(object):
             for batch in tqdm(dataloader):
                 images = batch['pixel_values'].to(self.device)
                 cams = batch['inter_map'].to(self.device)
-                mask_name = batch['mask_name']
+                mask_names = batch['mask_name']
                 # gt -> [B, H, W, C]
                 h, w = images.shape[-2:]
                 with torch.no_grad():
@@ -435,13 +435,13 @@ class CLIPCBM_Trainer(object):
                         
                     for i in range(preds.shape[0]):
                         cam = preds[i]
-                        mask_name = mask_name[i]
+                        mask_name = mask_names[i]
                         mask_name = os.path.splitext(mask_name)[0]
                         # dataset_name, idx, _ = mask_name.split('_')
                         if interpolate:
-                            np.save(os.path.join(outdir, f'{mask_name}_layer4.npy'), cam)
+                            np.save(os.path.join(outdir, f'{mask_name}_l.npy'), cam)
                         else:
-                            np.save(os.path.join(outdir, f'{mask_name}_layer4s.npy'), cam)
+                            np.save(os.path.join(outdir, f'{mask_name}.npy'), cam)
                             
                       
     def load_checkpoint(self, checkpoint_path):

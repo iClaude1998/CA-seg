@@ -130,8 +130,11 @@ if __name__ == '__main__':
         elif cfgs.task == 'produce_cam':
             if not hasattr(trainer, 'produce_cam'):
                 raise ValueError(f"Unsupported task: {cfgs.task} due to the trainer doesn't have the attribute ???")
-            train_outdir, val_outdir, test_outdir = produce_out_dir(cfgs)
-            trainer.produce_cam(train_outdir, val_outdir, test_outdir, True)
+            train_outdir, val_outdir, test_outdir = cfgs.cbm_produce.train_dir, cfgs.cbm_produce.val_dir, cfgs.cbm_produce.test_dir
+            os.makedirs(train_outdir, exist_ok=True)
+            os.makedirs(val_outdir, exist_ok=True)
+            os.makedirs(test_outdir, exist_ok=True)
+            trainer.produce_cam(train_outdir, val_outdir, test_outdir, False)
         else:
             raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
         
