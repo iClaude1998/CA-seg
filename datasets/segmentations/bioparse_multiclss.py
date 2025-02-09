@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from .build_mask_transforms import build_mask_transforms, refine_image_transforms, build_usdf_transforms
 
 
-class Bioparse_image(Dataset):
+class Bioparse_segmentation(Dataset):
     """
     A PyTorch Dataset class for loading and preprocessing AMOS images and their corresponding masks.
     Attributes:
@@ -110,6 +110,7 @@ class Bioparse_image(Dataset):
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
 
         mask_name = self.mask_name_list[index]
+
 
         mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
         sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
