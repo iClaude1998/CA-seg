@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument('--task', type=str, default='train', help='the task to performs', 
                         choices=['train', 'inf', 'test', 'vis_process', 'thresh_search', 'lr_search', 'produce_cam'])
     parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
-    parser.add_argument('--num_workers', type=int, default=8, help='number of workers for dataloader')
+    parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
     parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     parser.add_argument('--learn_obj', type=str, default='recflow', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'cbm'], help='the learning objective')

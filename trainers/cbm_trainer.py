@@ -102,16 +102,7 @@ class CLIPCBM_Trainer(object):
                 self.create_output_dirs()
                 self.init_loggers()
 
-    def produce_predictions(self, weights, cams, shapes):
-        B, C, H, W = shapes
-        weighted_cams = self.temperature * weights[..., None, None] * cams # [B, num_n, H, W]
-        if self.sum_for_last:
-            preds = torch.sum(weighted_cams.reshape(B, -1, C-1, H, W), dim=1)
-            preds_sum = torch.sum(preds, dim=1, keepdim=True)
-            preds = torch.cat([preds, preds_sum], dim=1)
-        else:
-            preds = torch.sum(weighted_cams.reshape(B, -1, C, H, W), dim=1)
-        return preds
+
     
     
     def train(self, gradient_accumulation_steps=1):
@@ -135,12 +126,9 @@ class CLIPCBM_Trainer(object):
                 cams = batch['inter_map'].to(self.device)
                 # sdf_maps = batch['sdf_map'].to(self.device)
                 onehot_maps = batch['mask'].to(self.device)
-                B, _, H, W = cams.shape
-                C = onehot_maps.shape[1]
-                
                 concept_weights = self.model(images)
-                
-                preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
+                preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+
                 # preds = postprocess_pred(preds)
                 # loss = self.criterion(preds, onehot_maps) + self.regularizer(concept_weights)
                 loss = self.criterion(preds, onehot_maps, concept_weights)
@@ -223,7 +211,7 @@ class CLIPCBM_Trainer(object):
                 with self.accelerator.accumulate(self.model):
                 
                     concept_weights = self.model(images)
-                    preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
+                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                     # loss = self.criterion(preds, onehot_maps) + self.regularizer(concept_weights)
                     loss = self.criterion(preds, onehot_maps, concept_weights)
                     self.accelerator.backward(loss)
@@ -291,20 +279,18 @@ class CLIPCBM_Trainer(object):
             cams = batch['inter_map'].to(self.device)
             # sdf_maps = batch['sdf_map'].to(self.device)
             onehot_maps = batch['mask'].to(self.device)
-            mask_names = batch['mask_name']
-            B, _, H, W = cams.shape
-            C = onehot_maps.shape[1]
+            mask_name = batch['mask_name']
+
             with torch.no_grad():
                 concept_weights = self.model(images)
-                preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
+                preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                 preds = postprocess_pred(preds, self.with_sigmoid)
                 loss = self.criterion(preds, onehot_maps, concept_weights)
-                for i in range(C):
-                    mask_name = mask_names[i]
-                    iou_batch = compute_metrics(preds[:, i, None], onehot_maps[:, i, None], mask_name, metric='iou', thresh=17)
-                    dice_batch = compute_metrics(preds[:, i, None], onehot_maps[:, i, None], mask_name, metric='dice', thresh=17)
-                    outcomes['iou'].extend(iou_batch)
-                    outcomes['dice'].extend(dice_batch)
+
+                iou_batch = compute_metrics(preds, onehot_maps, mask_name, metric='iou', thresh=17)
+                dice_batch = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)
+                outcomes['iou'].extend(iou_batch)
+                outcomes['dice'].extend(dice_batch)
                 outcomes['loss'].append(loss.item())
             
         for key, value in outcomes.items():
@@ -334,32 +320,28 @@ class CLIPCBM_Trainer(object):
             cams = batch['inter_map'].to(self.device)
             # sdf_maps = batch['sdf_map'].to(self.device)
             onehot_maps = batch['mask'].to(self.device)
-            mask_names = batch['mask_name']
-            B, _, H, W = cams.shape
-            C = onehot_maps.shape[1]
-            
+            mask_name = batch['mask_name']
+           
             with torch.no_grad():
                 concept_weights = self.model(images)
-                untrained = torch.mean(cams.reshape(B, -1, C, H, W), dim=1, keepdim=True)
+                untrained = torch.mean(cams, dim=1, keepdim=True)
                 
-                preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
+                preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                 
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
                 preds = postprocess_pred(preds, self.with_sigmoid)
                 
-                for i in range(C):
-                    mask_name = mask_names[i]
-                    iou_batch_I = compute_metrics(untrained[:, i, None], onehot_maps[:, i, None], mask_name, metric='iou', thresh=17)
-                    dice_batch_I = compute_metrics(untrained[:, i, None], onehot_maps[:, i, None], mask_name, metric='dice', thresh=17)
+                iou_batch_I = compute_metrics(untrained, onehot_maps, mask_name, metric='iou', thresh=17)
+                dice_batch_I = compute_metrics(untrained, onehot_maps, mask_name, metric='dice', thresh=17)
+                
+                iou_batch_II = compute_metrics(preds, onehot_maps, mask_name, metric='iou', thresh=17)
+                dice_batch_II = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)
                     
-                    iou_batch_II = compute_metrics(preds[:, i, None], onehot_maps[:, i, None], mask_name, metric='iou', thresh=17)
-                    dice_batch_II = compute_metrics(preds[:, i, None], onehot_maps[:, i, None], mask_name, metric='dice', thresh=17)
-                    
-                    outcomes['iou_I'].extend(iou_batch_I)
-                    outcomes['dice_I'].extend(dice_batch_I)
-                    
-                    outcomes['iou_II'].extend(iou_batch_II)
-                    outcomes['dice_II'].extend(dice_batch_II)
+                outcomes['iou_I'].extend(iou_batch_I)
+                outcomes['dice_I'].extend(dice_batch_I)
+                
+                outcomes['iou_II'].extend(iou_batch_II)
+                outcomes['dice_II'].extend(dice_batch_II)
             
         outcomes = pd.DataFrame(outcomes)
         outcomes.to_csv(os.path.join(self.log_path, f'outcomes_test_{self.checkpoint_name}.csv'), index=False)
@@ -377,20 +359,15 @@ class CLIPCBM_Trainer(object):
             results = []
             for batch in tqdm(self.val_dataloader):
                 images = batch['pixel_values'].to(self.device)
-                mask_names = batch['mask_name']
+                mask_name = batch['mask_name']
                 cams = batch['inter_map'].to(self.device)
                 onehot_mask = batch['mask'].to(self.device)
-                B, _, H, W = cams.shape
-                C = onehot_mask.shape[1]
-                
+
                 with torch.no_grad():
                     concept_weights = self.model(images)
-                    preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
-                    
-                    for i in range(C):
-                        mask_name = mask_names[i]
-                        result_batch = compute_metrics(preds[:, i, None], onehot_mask[:, i, None], mask_name, metric=metric, thresh=thresh) # stage II
-                        results.extend(result_batch)
+                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                    result_batch = compute_metrics(preds, onehot_mask, mask_name, metric=metric, thresh=thresh) # stage II
+                    results.extend(result_batch)
             
             results = statistics.mean(results)
             if results > best_outcome:
@@ -409,16 +386,15 @@ class CLIPCBM_Trainer(object):
             images = batch['pixel_values'].to(self.device)
             cams = batch['inter_map'].to(self.device)
             sdf_maps = batch['sdf_map'].to(self.device)
-            mask_names = batch['mask_name']
-            B, _, H, W = cams.shape
-            C = sdf_maps.shape[1]
+            mask_name = batch['mask_name']
+
             # gt -> [B, H, W, C]
             h, w = images.shape[-2:]
             with torch.no_grad():
                 concept_weights = self.model(images)
-                untrained = torch.mean(cams.reshape(B, -1, C, H, W), dim=1, keepdim=True)
+                untrained = torch.mean(cams.reshape, dim=1, keepdim=True)
                 
-                preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
+                preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
 
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
                 preds = postprocess_pred(preds, self.with_sigmoid)
@@ -427,13 +403,11 @@ class CLIPCBM_Trainer(object):
                 preds = F.interpolate(preds, size=(h, w), mode='bilinear', align_corners=False)
                 sdf_maps = F.interpolate(sdf_maps, size=(h, w), mode='bilinear', align_corners=False)
                 
-                for i in range(C):
-                    mask_name = mask_names[i]
-                    mixed_img_predits_I = mix_images_with_masks(images, untrained[:, i, None])
-                    mixed_img_predits_II = mix_images_with_masks(images, preds[:, i, None])
-                    mixed_img_gts = mix_images_with_masks(images, sdf_maps[:, i, None]) 
+                mixed_img_predits_I = mix_images_with_masks(images, untrained)
+                mixed_img_predits_II = mix_images_with_masks(images, preds)
+                mixed_img_gts = mix_images_with_masks(images, sdf_maps) 
                     
-                    save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_name, self.vis_path)
+                save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_name, self.vis_path)
     
     
     def produce_cam(self, train_outdir, val_outdir, test_outdir, interpolate=True):
@@ -448,34 +422,28 @@ class CLIPCBM_Trainer(object):
             for batch in tqdm(dataloader):
                 images = batch['pixel_values'].to(self.device)
                 cams = batch['inter_map'].to(self.device)
-                mask_names = batch['mask_name']
-                B, _, H, W = cams.shape
-                C = len(mask_names[0])
+                mask_name = batch['mask_name']
                 # gt -> [B, H, W, C]
                 h, w = images.shape[-2:]
                 with torch.no_grad():
                     concept_weights = self.model(images)
-                    preds = self.produce_predictions(concept_weights, cams, (B, C, H, W))
+                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                     if interpolate:
                         preds = F.interpolate(preds, size=(h, w), mode='bilinear', align_corners=False).detach().cpu().numpy()
                     else:
                         preds = preds.detach().cpu().numpy()
+                        
                     for i in range(preds.shape[0]):
-                        for j in range(C):
-                            cam = preds[i, j]
-                            mask_name = mask_names[j][i]
-                            mask_name = os.path.splitext(mask_name)[0]
-                            # dataset_name, idx, _ = mask_name.split('_')
-                            if interpolate:
-                                np.save(os.path.join(outdir, f'{mask_name}_layer4.npy'), cam)
-                            else:
-                                np.save(os.path.join(outdir, f'{mask_name}_layer4s.npy'), cam)
+                        cam = preds[i]
+                        mask_name = mask_name[i]
+                        mask_name = os.path.splitext(mask_name)[0]
+                        # dataset_name, idx, _ = mask_name.split('_')
+                        if interpolate:
+                            np.save(os.path.join(outdir, f'{mask_name}_layer4.npy'), cam)
+                        else:
+                            np.save(os.path.join(outdir, f'{mask_name}_layer4s.npy'), cam)
                             
-                    
-                
-                
-            
-                           
+                      
     def load_checkpoint(self, checkpoint_path):
         # check whether the path exist, if not, find the ckpt according to the exp_name
         if os.path.exists(checkpoint_path):
