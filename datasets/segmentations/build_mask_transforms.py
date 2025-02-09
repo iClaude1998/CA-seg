@@ -1,4 +1,6 @@
+import cv2
 import torch 
+import numpy as np
 import torchvision.transforms as T
 
 from torchvision.transforms import InterpolationMode
@@ -21,7 +23,7 @@ def refine_image_transforms(preprocess, image_resolution):
 def build_usdf_transforms(image_resolution):
     return T.Compose([
                 T.ToTensor(),
-                T.Resize(image_resolution, interpolation=InterpolationMode.BICUBIC, antialias=True),
+                T.Resize(image_resolution, interpolation=InterpolationMode.NEAREST, antialias=True),
                 T.CenterCrop(image_resolution),
                 minmx_normalization_usdf])
     
@@ -73,6 +75,14 @@ def sigmoid_normalization_usdf(usdf):
     usdf = torch.sigmoid(usdf)
     usdf = 2 * (usdf - 0.5)
     return torch.clamp(usdf, min=0)
+
+def usdf_function(mask):
+    usdf_map = cv2.distanceTransform(mask, cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
+    if usdf_map.max() > 0:
+        usdf_map = (usdf_map - usdf_map.min()) / (usdf_map.max() - usdf_map.min()) 
+    else:
+        usdf_map = np.zeros_like(usdf_map).astype(np.float32)
+    return usdf_map
 
 
 

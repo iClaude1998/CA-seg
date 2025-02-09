@@ -81,7 +81,7 @@ if __name__ == '__main__':
     test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
     
     train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
-    val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
+    val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=False)
     test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
     
     dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}
@@ -130,8 +130,11 @@ if __name__ == '__main__':
         elif cfgs.task == 'produce_cam':
             if not hasattr(trainer, 'produce_cam'):
                 raise ValueError(f"Unsupported task: {cfgs.task} due to the trainer doesn't have the attribute ???")
-            train_outdir, val_outdir, test_outdir = produce_out_dir(cfgs)
-            trainer.produce_cam(train_outdir, val_outdir, test_outdir, True)
+            train_outdir, val_outdir, test_outdir = cfgs.cbm_produce.train_dir, cfgs.cbm_produce.val_dir, cfgs.cbm_produce.test_dir
+            os.makedirs(train_outdir, exist_ok=True)
+            os.makedirs(val_outdir, exist_ok=True)
+            os.makedirs(test_outdir, exist_ok=True)
+            trainer.produce_cam(train_outdir, val_outdir, test_outdir, False)
         else:
             raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
         

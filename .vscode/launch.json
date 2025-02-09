@@ -45,7 +45,7 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/flowmatch/isic_learnattributes/imgeps_rmv3.yaml",
+                     "--config", "configs/flowmatch/bioparse/radiography.yaml",
                      "--exp_name", "debug", 
                      "--device", "cuda",
                      "--learn_obj", "recflow"]
@@ -240,6 +240,35 @@
 //                      "--exp_name", "debug", 
 //                      "--device", "cuda",
 //                      "--learn_obj", "cbm"]
+//         }
+//     ]
+// }
+
+
+// // produce cam
+// {
+//     // Use IntelliSense to learn about possible attributes.
+//     // Hover to view descriptions of existing attributes.
+//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "Python Debugger: Current File",
+//             "type": "debugpy",
+//             "request": "launch",
+//             "program": "${file}",
+//             "console": "integratedTerminal",
+//             "justMyCode": false,
+//             "env": {"CUDA_VISIBLE_DEVICES": "0",
+//                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
+//                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
+//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
+//             "args": ["--task", "produce_cam",
+//                      "--config", "configs/cbm_bioparse/radiography_left+lung.yaml",
+//                      "--exp_name", "left_lung", 
+//                      "--device", "cuda",
+//                      "--learn_obj", "cbm",
+//                      "--load_checkpoint"]
 //         }
 //     ]
 // }

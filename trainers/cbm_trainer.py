@@ -42,6 +42,7 @@ class CLIPCBM_Trainer(object):
         num_epoch=100,
         save_interval=20,
         validation_interval=1,
+        sum_for_last=False,
         gamma=0.99,
         alpha=0.33,
         beta=0.33,
@@ -68,6 +69,7 @@ class CLIPCBM_Trainer(object):
         self.num_epoch = num_epoch
         self.save_interval = save_interval
         self.gamma = gamma
+        self.sum_for_last = sum_for_last
   
         self.create_exp_name()
         self.log_path = os.path.join(output_dir, 'output_logs')
@@ -99,6 +101,8 @@ class CLIPCBM_Trainer(object):
             if self.accelerator.is_local_main_process:
                 self.create_output_dirs()
                 self.init_loggers()
+
+
     
     
     def train(self, gradient_accumulation_steps=1):
@@ -122,9 +126,9 @@ class CLIPCBM_Trainer(object):
                 cams = batch['inter_map'].to(self.device)
                 # sdf_maps = batch['sdf_map'].to(self.device)
                 onehot_maps = batch['mask'].to(self.device)
-                
                 concept_weights = self.model(images)
                 preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+
                 # preds = postprocess_pred(preds)
                 # loss = self.criterion(preds, onehot_maps) + self.regularizer(concept_weights)
                 loss = self.criterion(preds, onehot_maps, concept_weights)
@@ -201,6 +205,8 @@ class CLIPCBM_Trainer(object):
                 cams = batch['inter_map'].to(self.device)
                 # sdf_maps = batch['sdf_map'].to(self.device)
                 onehot_maps = batch['mask'].to(self.device)
+                B, _, H, W = cams.shape
+                C = onehot_maps.shape[1]
                 
                 with self.accelerator.accumulate(self.model):
                 
@@ -222,7 +228,6 @@ class CLIPCBM_Trainer(object):
                 if self.accelerator.is_local_main_process:
                     self.logger.info(f'Step [{iter_id}/{num_batches}], Loss: {loss.item():.4f}')
                 training_loss_temp.append(loss.item())
-            
             
             if self.accelerator.is_local_main_process:
                 if self.log_method == 'wandb':
@@ -275,12 +280,13 @@ class CLIPCBM_Trainer(object):
             # sdf_maps = batch['sdf_map'].to(self.device)
             onehot_maps = batch['mask'].to(self.device)
             mask_name = batch['mask_name']
-            
+
             with torch.no_grad():
                 concept_weights = self.model(images)
                 preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                 preds = postprocess_pred(preds, self.with_sigmoid)
                 loss = self.criterion(preds, onehot_maps, concept_weights)
+
                 iou_batch = compute_metrics(preds, onehot_maps, mask_name, metric='iou', thresh=17)
                 dice_batch = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)
                 outcomes['iou'].extend(iou_batch)
@@ -315,10 +321,11 @@ class CLIPCBM_Trainer(object):
             # sdf_maps = batch['sdf_map'].to(self.device)
             onehot_maps = batch['mask'].to(self.device)
             mask_name = batch['mask_name']
-            
+           
             with torch.no_grad():
                 concept_weights = self.model(images)
                 untrained = torch.mean(cams, dim=1, keepdim=True)
+                
                 preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                 
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
@@ -329,7 +336,7 @@ class CLIPCBM_Trainer(object):
                 
                 iou_batch_II = compute_metrics(preds, onehot_maps, mask_name, metric='iou', thresh=17)
                 dice_batch_II = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)
-                
+                    
                 outcomes['iou_I'].extend(iou_batch_I)
                 outcomes['dice_I'].extend(dice_batch_I)
                 
@@ -352,10 +359,10 @@ class CLIPCBM_Trainer(object):
             results = []
             for batch in tqdm(self.val_dataloader):
                 images = batch['pixel_values'].to(self.device)
-                mask_name = batch['mask_name'].to(self.device)
+                mask_name = batch['mask_name']
                 cams = batch['inter_map'].to(self.device)
                 onehot_mask = batch['mask'].to(self.device)
-                
+
                 with torch.no_grad():
                     concept_weights = self.model(images)
                     preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
@@ -379,12 +386,14 @@ class CLIPCBM_Trainer(object):
             images = batch['pixel_values'].to(self.device)
             cams = batch['inter_map'].to(self.device)
             sdf_maps = batch['sdf_map'].to(self.device)
-            mask_names = batch['mask_name']
+            mask_name = batch['mask_name']
+
             # gt -> [B, H, W, C]
             h, w = images.shape[-2:]
             with torch.no_grad():
                 concept_weights = self.model(images)
-                untrained = torch.mean(cams, dim=1, keepdim=True)
+                untrained = torch.mean(cams.reshape, dim=1, keepdim=True)
+                
                 preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
 
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
@@ -397,8 +406,8 @@ class CLIPCBM_Trainer(object):
                 mixed_img_predits_I = mix_images_with_masks(images, untrained)
                 mixed_img_predits_II = mix_images_with_masks(images, preds)
                 mixed_img_gts = mix_images_with_masks(images, sdf_maps) 
-                
-                save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
+                    
+                save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_name, self.vis_path)
     
     
     def produce_cam(self, train_outdir, val_outdir, test_outdir, interpolate=True):
@@ -423,21 +432,18 @@ class CLIPCBM_Trainer(object):
                         preds = F.interpolate(preds, size=(h, w), mode='bilinear', align_corners=False).detach().cpu().numpy()
                     else:
                         preds = preds.detach().cpu().numpy()
+                        
                     for i in range(preds.shape[0]):
-                        cam = preds[i, 0]
+                        cam = preds[i]
                         mask_name = mask_names[i]
                         mask_name = os.path.splitext(mask_name)[0]
-                        dataset_name, idx, _ = mask_name.split('_')
+                        # dataset_name, idx, _ = mask_name.split('_')
                         if interpolate:
-                            np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer3.npy'), cam)
+                            np.save(os.path.join(outdir, f'{mask_name}_l.npy'), cam)
                         else:
-                            np.save(os.path.join(outdir, f'{dataset_name}_{idx}_layer3s.npy'), cam)
-                        
-                    
-                
-                
-            
-                           
+                            np.save(os.path.join(outdir, f'{mask_name}.npy'), cam)
+                            
+                      
     def load_checkpoint(self, checkpoint_path):
         # check whether the path exist, if not, find the ckpt according to the exp_name
         if os.path.exists(checkpoint_path):
