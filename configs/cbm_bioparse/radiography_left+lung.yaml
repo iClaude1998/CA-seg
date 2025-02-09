@@ -3,10 +3,7 @@ datasets:
     - 224
     - 224
   modality: "Normal"
-  organ:
-    - "left+lung"
-    - "right+lung"
-    - "lung"
+  organ: "left+lung"
   batch_size: 640
   root_dir: "/data/claude/datasets/medisegs/bioparse/Radiography"
   name: "bioparse_image" # "bioparse_image" "bioparse_featuremap"
@@ -43,7 +40,7 @@ datasets:
 model:
   clip:
     pretrain: "BiomedCLIP"
-    num_concepts: 440
+    num_concepts: 110
     inter_mode: False 
 
 

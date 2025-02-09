@@ -1,4 +1,5 @@
 import os 
+import zarr
 import torch 
 import numpy as np
 
@@ -62,7 +63,8 @@ class Bioparse_image(Dataset):
         self.train_rate = train_rate
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
-        self.inter_dir = os.path.join(root_dir, modality, f"{split}_gcam", "all")
+        self.inter_dir = os.path.join(root_dir, modality, f"{split}_gcam", self.organ)
+        self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
         self.preprocess, _, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
@@ -76,19 +78,17 @@ class Bioparse_image(Dataset):
     
     def produce_mask_names(self, img_name):
         prefix, suffix = os.path.splitext(img_name)
-        mask_names = [f"{prefix}_{organ}{suffix}" for organ in self.organ]
+        mask_names = f"{prefix}_{self.organ}{suffix}"
         return mask_names
     
     def produce_sample_list(self):
         img_name_list = [f for f in os.listdir(self.img_dir)]
-        self.img_name_list = []
-        self.mask_name_list = []
-        for img_name in img_name_list:
-            mask_names = self.produce_mask_names(img_name)
-            mask_paths = [os.path.join(self.mask_dir, mask_name) for mask_name in mask_names]
-            if all([os.path.exists(mask_path) for mask_path in mask_paths]):
-                self.mask_name_list.append(mask_names)
-                self.img_name_list.append(img_name)
+        mask_name_list = list(map(lambda x: self.produce_mask_names(x), img_name_list))
+        
+        pairs = [(img_name, mask_name) for img_name, mask_name in zip(img_name_list, mask_name_list) if mask_name in os.listdir(self.mask_dir)]
+        self.img_name_list = [pair[0] for pair in pairs]
+        self.mask_name_list = [pair[1] for pair in pairs]
+        
         if self.split == 'train':
             self.img_name_list = self.img_name_list[:int(len(self.img_name_list)*self.train_rate)]
             self.mask_name_list = self.mask_name_list[:int(len(self.mask_name_list)*self.train_rate)]
@@ -109,30 +109,25 @@ class Bioparse_image(Dataset):
         image = self.preprocess(image)
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
 
-        mask_names = self.mask_name_list[index]
-        masks = []
-        sdf_maps = []
-        for mask_name in mask_names:
-            mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
-            sdf_map = usdf_function(np.array(mask))
-            h, w = mask.height, mask.width
-            mask = self.mask_transforms(mask)
-            sdf_map = self.usdf_transforms(sdf_map)
-            masks.append(mask)
-            sdf_maps.append(sdf_map)
-        
-        masks = torch.cat(masks)
-        sdf_maps = torch.cat(sdf_maps)    
+        mask_name = self.mask_name_list[index]
+
+
+        mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
+        sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
+        h, w = mask.height, mask.width
+        mask = self.mask_transforms(mask)
+        sdf_map = self.usdf_transforms(sdf_map)
+           
         
         return dict(
                     pixel_values=image,
                     img_name=img_name,
-                    mask_name=[mask_name for mask_name in mask_names],
+                    mask_name=mask_name,
                     height=h,
                     width=w,
                     img_path=f"{self.img_dir}/{img_name}",
-                    mask=masks,
-                    mask_path=[f"{self.mask_dir}/{mask_name}" for mask_name in mask_names],
-                    sdf_map=sdf_maps,
+                    mask=mask,
+                    mask_path=f"{self.mask_dir}/{mask_name}",
+                    sdf_map=sdf_map,
                     inter_map=torch.from_numpy(intermap).float(),
                     )
