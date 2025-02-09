@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1          # number of tasks (multi-thread job starts 4 tasks)
 #SBATCH --mem=32G              # memory required by the job (if above 64G, use --mem=128G)
 #SBATCH -c 8                # number of cores (sequential job calls a multi-thread program that uses 8 cores)
-#SBATCH --time=12:00:00         # time allocation, which has the format (D-HH:MM), here set to 1 hour
+#SBATCH --time=13:00:00         # time allocation, which has the format (D-HH:MM), here set to 1 hour
 #SBATCH --gres=gpu:1            # generic resource required (here requires 4 GPUs)
 #SBATCH --chdir=/gpfs/users/a1233646/myprojects/clipflow2 # set the working directory
 
@@ -30,7 +30,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 
 python main.py --task train \
-       --exp_name imgeps_rmv3instance \
-       --config configs/flowmatch/isic_learnattributes/imgeps_imgrmv3instance.yaml \
+       --exp_name imgeps_rmv3nbatch \
+       --config configs/flowmatch/isic_learnattributes/imgeps_rmv3nbatch.yaml \
        --num_workers 8 \
        --learn_obj recflow \

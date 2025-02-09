@@ -73,7 +73,7 @@ model:
     use_scale_shift_norm: -1
     resblock_updown: False
     use_new_attention_order: False
-    norm_type: "batchnorm"
+    norm_type: 
 
 trainer:
   gt_type: "sdf_map" # sdf_map, mask

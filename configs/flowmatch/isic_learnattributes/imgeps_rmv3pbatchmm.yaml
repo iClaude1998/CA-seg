@@ -2,8 +2,8 @@ datasets:
   batch_size: 8
   size:
   inter_layer: "layer4s"
-  inter_norm: "sigmoid"
-  basedir: "/data/claude/datasets/medisegs/ISIC"
+  inter_norm: "minmax"
+  basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
   resize: False
   train:
     name: "isic_seg"
@@ -76,7 +76,7 @@ model:
     use_scale_shift_norm: -1
     resblock_updown: False
     use_new_attention_order: False
-    norm_type: 
+    norm_type: "batchnorm"
 
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
