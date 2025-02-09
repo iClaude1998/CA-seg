@@ -3,7 +3,7 @@ datasets:
     - 224
     - 224
   modality: "Normal"
-  organ: "left+lung"
+  organ: "right+lung"
   batch_size: 640
   root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
   name: "bioparse_image" # "bioparse_image" "bioparse_featuremap"
@@ -61,10 +61,9 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
-
-log_method: "wandb" # wandb, tensorboard
-
 cbm_produce:
   train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm"
   val_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm"
   test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm"
+
+log_method: "wandb" # wandb, tensorboard
