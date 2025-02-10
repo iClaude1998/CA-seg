@@ -11,9 +11,6 @@ from torch.utils.data import Dataset
 from .build_mask_transforms import build_mask_transforms, refine_image_transforms, build_usdf_transforms, build_intermap_transforms
 
 
-train_zarr = zarr.open("/data/claude/datasets/medisegs/bioparse/Radiography/Normal/train_usdf", mode='r')
-test_zarr = zarr.open("/data/claude/datasets/medisegs/bioparse/Radiography/Normal/test_usdf", mode='r')
-
 
 class Bioparse_segmentation(Dataset):
     """
@@ -68,15 +65,8 @@ class Bioparse_segmentation(Dataset):
         self.train_rate = train_rate
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
-<<<<<<< HEAD
-        self.inter_dir = os.path.join(root_dir, modality, f"{split}_cbm", self.organ)
-        # self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
-        self.preprocess, _, image_resolution = preprocessors
-=======
         self.inter_dir = os.path.join(root_dir, modality, f"{split}_cbm")
-        self.sdf_dir = test_zarr if split == "test" else train_zarr
         self.preprocess, self.tokenizer, image_resolution = preprocessors
->>>>>>> 96e7e85ee70298390c312f5553adbe46812e76d8
 
         if image_size is not None and image_size != image_resolution:
             image_resolution = image_size
