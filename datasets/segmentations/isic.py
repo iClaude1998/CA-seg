@@ -1,4 +1,5 @@
 import os 
+import cv2
 import json
 import torch 
 import random
@@ -39,7 +40,6 @@ class ISIC_seg(Dataset):
         prompt_type: str,
         images_dir: str,
         masks_dir: str,
-        sdf_dir: str,
         inter_dir: Optional[str] = None,
         inter_layer: Optional[str] = None, # layer11, layer7, layer3
         caps_file: Optional[str] = None,
@@ -53,7 +53,6 @@ class ISIC_seg(Dataset):
         self.prompt_type = prompt_type
         self.images_dir = images_dir
         self.masks_dir = masks_dir
-        self.sdf_dir = sdf_dir
         self.inter_dir = inter_dir
         self.inter_layer = inter_layer
 
@@ -83,7 +82,7 @@ class ISIC_seg(Dataset):
         # Ensure the image is read with RGB channels
         image = Image.open(f"{self.images_dir}/{cap['img_name']}").convert("RGB")
         mask = Image.open(f"{self.masks_dir}/{mask_name}")
-        sdf_map = np.load(f"{self.sdf_dir}/{name}.npy")
+        sdf_map = cv2.distanceTransform(np.array(mask), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
         if self.inter_dir is not None:
             assert self.inter_layer is not None, "Please provide the layer for the interpretability map"
             inter_map = np.load(f"{self.inter_dir}/{name}_{self.inter_layer}.npy")

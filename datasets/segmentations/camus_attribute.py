@@ -39,7 +39,6 @@ class camusattributes_seg(Dataset):
         prompt_type: str,
         images_dir: str,
         masks_dir: str,
-        sdf_dir: str,
         inter_dir: Optional[str] = None,
         inter_layer: Optional[str] = None,
         caps_file: Optional[str] = None,
@@ -49,7 +48,6 @@ class camusattributes_seg(Dataset):
 
         self.images_dir = images_dir
         self.masks_dir = masks_dir
-        self.sdf_dir = sdf_dir
         self.prompt_type = prompt_type
         self.inter_dir = inter_dir
         self.inter_layer = inter_layer
@@ -75,7 +73,6 @@ class camusattributes_seg(Dataset):
         cap = self.imgs_captions[index]
         mask_name = cap["mask_name"] 
         name = os.path.splitext(cap['img_name'])[0]
-        tumor_type = name.split("_")[0]
 
         # Ensure the image is read with RGB channels
         image = Image.open(f"{self.images_dir}/{cap['img_name']}").convert("RGB")
@@ -83,7 +80,7 @@ class camusattributes_seg(Dataset):
         mask = cv2.imread(f"{self.masks_dir}/{mask_name}", cv2.IMREAD_GRAYSCALE)
         mask = 255 * (mask > 0).astype(np.uint8)
         mask = Image.fromarray(mask)
-        sdf_map = np.load(f"{self.sdf_dir}/{name}_gt.npy")
+        sdf_map = cv2.distanceTransform(np.array(mask), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
         if self.inter_dir is not None:
             assert self.inter_layer is not None, "Please provide the layer for the interpretability map"
             inter_map = np.load(f"{self.inter_dir}/{name}_gt_{self.inter_layer}.npy")
