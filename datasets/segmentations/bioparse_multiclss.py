@@ -10,6 +10,10 @@ from torch.utils.data import Dataset
 from .build_mask_transforms import build_mask_transforms, refine_image_transforms, build_usdf_transforms, build_intermap_transforms
 
 
+train_zarr = zarr.open("/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/Radiography/Normal/train_usdf", mode='r')
+test_zarr = zarr.open("/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/Radiography/Normal/test_usdf", mode='r')
+
+
 class Bioparse_segmentation(Dataset):
     """
     A PyTorch Dataset class for loading and preprocessing AMOS images and their corresponding masks.
@@ -64,7 +68,7 @@ class Bioparse_segmentation(Dataset):
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
         self.inter_dir = os.path.join(root_dir, modality, f"{split}_cbm")
-        self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
+        self.sdf_dir = train_zarr if (split == 'train' or split == 'val') else test_zarr
         self.preprocess, self.tokenizer, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
