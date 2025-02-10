@@ -19,7 +19,7 @@ def build_dataset(config, preprocessors, inter_mode=True):
     elif config.name == "bioparse_image":
         return build_bioparse_image_dataset(config, preprocessors)
     elif config.name == "bioparse_seg":
-        return build_bioparse_seg_dataset(config, preprocessors, inter_mode)
+        return build_bioparse_seg_dataset(config, preprocessors)
 
 
 
@@ -150,7 +150,6 @@ def build_bioparse_seg_dataset(config, preprocessors):
                                  config.split, 
                                  config.train_rate,
                                  image_size=tuple(config.image_size) if config.image_size is not None else None,
-                                 featuremap_size=config.featuremap_size,
                                  resize=config.resize)
     
 
