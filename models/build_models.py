@@ -32,6 +32,13 @@ def load_clip_and_tokenizer(cfgs, device):
         tokenizer = clip.tokenize
         default_imgsize = 224
         model = PUBMEDCLIPLRP(PUBMEDCLIPWrapper(model, default_imgsize, cfgs.outlayers, cfgs.inter_mode, cfgs.proj_patch), device)
+    elif cfgs.pretrain == "BiomedCLIP":
+        model, preprocess = create_model_from_pretrained('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224', 
+                                                cache_dir="pretrained/huggingface_hub/biomedclip")
+        tokenizer = get_tokenizer('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
+        resolution = 224
+        default_imgsize = 224
+        model = CLIPLRP(CLIPWrapper(model, default_imgsize, cfgs.outlayers, cfgs.inter_mode, cfgs.proj_patch), device)
     return model, tokenizer, preprocess, resolution
 
 
