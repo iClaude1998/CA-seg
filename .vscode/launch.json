@@ -45,10 +45,10 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/flowmatch/bioparse/radiography.yaml",
+                     "--config", "configs/cbm_bioparse/radiography_left+lung.yaml",
                      "--exp_name", "debug", 
                      "--device", "cuda",
-                     "--learn_obj", "recflow"]
+                     "--learn_obj", "cbm"]
         }
     ]
 }

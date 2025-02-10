@@ -1,4 +1,5 @@
 import os 
+import cv2
 import zarr
 import torch 
 import numpy as np
@@ -65,7 +66,7 @@ class Bioparse_segmentation(Dataset):
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
         self.inter_dir = os.path.join(root_dir, modality, f"{split}_cbm", self.organ)
-        self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
+        # self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
         self.preprocess, _, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
@@ -130,7 +131,8 @@ class Bioparse_segmentation(Dataset):
 
 
         mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
-        sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
+        sdf_map = cv2.distanceTransform(np.array(mask), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
+        # sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
         h, w = mask.height, mask.width
         mask = self.mask_transforms(mask)
         sdf_map = self.usdf_transforms(sdf_map)
