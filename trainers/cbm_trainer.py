@@ -274,7 +274,8 @@ class CLIPCBM_Trainer(object):
         
         self.model.concept_head.eval()
         outcomes = dedict(list)
-        for batch in tqdm(self.val_dataloader, desc='Validation'):
+        dataloader = self.val_dataloader if self.val_dataloader is not None else self.train_dataloader
+        for batch in tqdm(dataloader, desc='Validation'):
             images = batch['pixel_values'].to(self.device)
             cams = batch['inter_map'].to(self.device)
             # sdf_maps = batch['sdf_map'].to(self.device)
@@ -312,7 +313,7 @@ class CLIPCBM_Trainer(object):
         elif testset == 'val':
             dl = self.val_dataloader
         else:
-            raise ValueError(f"Unsupported testset: {testset}")
+            dl = self.train_dataloader
         
         outcomes = dedict(list)
         for batch in tqdm(dl, desc='Test'):
@@ -355,9 +356,10 @@ class CLIPCBM_Trainer(object):
         self.model.concept_head.eval()
         
         best_thresh, best_outcome = 0, 0
+        dataloader = self.val_dataloader if self.val_dataloader is not None else self.train_dataloader
         for thresh in range(1, 256):
             results = []
-            for batch in tqdm(self.val_dataloader):
+            for batch in tqdm(dataloader):
                 images = batch['pixel_values'].to(self.device)
                 mask_name = batch['mask_name']
                 cams = batch['inter_map'].to(self.device)
@@ -382,7 +384,8 @@ class CLIPCBM_Trainer(object):
         if not self.load_succeed:
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
         self.model.concept_head.eval()
-        for batch in tqdm(self.test_dataloader):
+        dataloader = self.test_dataloader if self.test_dataloader is not None else self.train_dataloader
+        for batch in tqdm(dataloader):
             images = batch['pixel_values'].to(self.device)
             cams = batch['inter_map'].to(self.device)
             sdf_maps = batch['sdf_map'].to(self.device)
@@ -417,8 +420,11 @@ class CLIPCBM_Trainer(object):
         if not self.load_succeed:
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
         self.model.concept_head.eval()
-        for dataloader, outdir in zip([self.train_dataloader, self.val_dataloader, self.test_dataloader], 
-                                      [train_outdir, val_outdir, test_outdir]):
+        
+        dataloaders = [loader for loader in [self.train_dataloader, self.val_dataloader, self.test_dataloader] if loader is not None]
+        outdirs = [outdir for outdir in [train_outdir, val_outdir, test_outdir] if outdir is not None]
+        
+        for dataloader, outdir in zip(dataloaders, outdirs):
             for batch in tqdm(dataloader):
                 images = batch['pixel_values'].to(self.device)
                 cams = batch['inter_map'].to(self.device)
@@ -439,9 +445,9 @@ class CLIPCBM_Trainer(object):
                         mask_name = os.path.splitext(mask_name)[0]
                         # dataset_name, idx, _ = mask_name.split('_')
                         if interpolate:
-                            np.save(os.path.join(outdir, f'{mask_name}_l.npy'), cam)
+                            np.save(os.path.join(outdir, f'{mask_name}_l.npy'), cam[0])
                         else:
-                            np.save(os.path.join(outdir, f'{mask_name}.npy'), cam)
+                            np.save(os.path.join(outdir, f'{mask_name}.npy'), cam[0])
                             
                       
     def load_checkpoint(self, checkpoint_path):

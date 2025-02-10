@@ -1,4 +1,5 @@
 import os 
+import cv2
 import zarr
 import torch 
 import numpy as np
@@ -64,7 +65,7 @@ class Bioparse_image(Dataset):
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
         self.inter_dir = os.path.join(root_dir, modality, f"{split}_gcam", self.organ)
-        self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
+        # self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
         self.preprocess, _, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
@@ -82,11 +83,11 @@ class Bioparse_image(Dataset):
         return mask_names
     
     def produce_sample_list(self):
-        img_name_list = [f for f in os.listdir(self.img_dir)]
+        img_name_list = sorted([f for f in os.listdir(self.img_dir)])
         mask_name_list = list(map(lambda x: self.produce_mask_names(x), img_name_list))
         
         pairs = [(img_name, mask_name) for img_name, mask_name in zip(img_name_list, mask_name_list) if mask_name in os.listdir(self.mask_dir)]
-        pairs = sorted(pairs)
+        pairs = pairs
         self.img_name_list = [pair[0] for pair in pairs]
         self.mask_name_list = [pair[1] for pair in pairs]
         
@@ -113,7 +114,8 @@ class Bioparse_image(Dataset):
         mask_name = self.mask_name_list[index]
 
         mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
-        sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
+        # sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
+        sdf_map = cv2.distanceTransform(np.array(mask), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
         h, w = mask.height, mask.width
         mask = self.mask_transforms(mask)
         sdf_map = self.usdf_transforms(sdf_map)
