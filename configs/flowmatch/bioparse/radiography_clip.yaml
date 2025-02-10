@@ -5,10 +5,10 @@ datasets:
     - "left+lung"
     - "right+lung"
   batch_size: 16
-  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/Radiography"
+  root_dir: "/data/claude/datasets/medisegs/bioparse/Radiography"
   name: "bioparse_seg" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
-  resize: False
+  resize: True
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -36,11 +36,10 @@ datasets:
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-
-
+  
 model:
   clip:
-    pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32, Biomedclip
+    pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
       - 11
       - 11
@@ -48,25 +47,26 @@ model:
     inter_mode: False
     proj_patch: True
   diffusion:
-    version: "v3"
+    version: "v2p"
     image_size: 224
-    in_channels: 4 # 4 for ISIC
+    pos_embed_dim: 128
+    in_channels: 4    # 1 for CAM input only and image input only as condition
     num_channels: 128
     out_channels: 1
+    channels_clip: 512
     num_res_blocks: 2
+    combine: "series" # 'concat', 'add', 'series', 'multiply'
+    fuse: "concat" # concat, add, multiply
     attention_resolutions: "16"
     dropout: 0.0
     channel_mult: ""
-    num_classes: # set None for avoid label embeddings (why we have it, strange ???)
     use_checkpoint: True
     use_fp16: False
     num_heads: 1
     num_head_channels: -1
     num_heads_upsample: -1
     use_scale_shift_norm: -1
-    resblock_updown: False
-    use_new_attention_order: False
-    norm_type: "batchnorm"
+    clip_allignment: # set to None, linear or linear_gelu 
 
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
@@ -77,7 +77,7 @@ trainer:
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
-  start_point: "guassian"
+  start_point: "LRP"
   gradient_accumulation_steps: 1
   clip_grads:
 

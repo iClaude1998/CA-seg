@@ -15,7 +15,7 @@ from accelerate import Accelerator, DistributedDataParallelKwargs
 
 from datasets import build_dataset
 from trainers import build_trainer
-from utils import LearningRateFinder, produce_out_dir
+from utils import LearningRateFinder, build_dataloaders
 from models.build_models import load_clip_and_tokenizer, create_diffusion, load_clipcbn_preprocessor
 
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
             cfgs[key] = value
     
     
-    output_dir = os.path.join('experiments', cfgs.learn_obj, cfgs.datasets.test.name ,cfgs.exp_name)        
+    output_dir = os.path.join('experiments', cfgs.learn_obj, cfgs.datasets.train.name ,cfgs.exp_name)        
     if cfgs.distribution_training:
         cudnn.benchmark = True
         ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=False)
@@ -76,13 +76,14 @@ if __name__ == '__main__':
         cliprlp, tokenizer, preprocess, resolution = load_clipcbn_preprocessor(cfgs.model.clip)
         diffusion_model = None
     
-    train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
-    val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
-    test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
+    # train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
+    # val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
+    # test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
     
-    train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
-    val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=False)
-    test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
+    # train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
+    # val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=False)
+    # test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
+    train_dl, val_dl, test_dl, num_training_samples, num_val_samples, num_test_samples = build_dataloaders(cfgs, preprocess, tokenizer, resolution)
     
     dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}
     
@@ -92,8 +93,7 @@ if __name__ == '__main__':
         params = list(cliprlp.concept_head.parameters())
         lr = cfgs.trainer.learning_rate
         optimizer = Adam(params, lr=lr)
-        num_training_samples = len(train_dataset)
-        num_val_samples = len(val_dataset)
+
         criterion = DiceLosswithRegularizer(0.33, 0.33, reduction='mean', with_sigmoid=cfgs.trainer.with_sigmoid)
         
         lr_searcher = LearningRateFinder(cliprlp, optimizer, criterion, device=cfgs.device)
@@ -131,9 +131,12 @@ if __name__ == '__main__':
             if not hasattr(trainer, 'produce_cam'):
                 raise ValueError(f"Unsupported task: {cfgs.task} due to the trainer doesn't have the attribute ???")
             train_outdir, val_outdir, test_outdir = cfgs.cbm_produce.train_dir, cfgs.cbm_produce.val_dir, cfgs.cbm_produce.test_dir
-            os.makedirs(train_outdir, exist_ok=True)
-            os.makedirs(val_outdir, exist_ok=True)
-            os.makedirs(test_outdir, exist_ok=True)
+            if train_outdir is not None:
+                os.makedirs(train_outdir, exist_ok=True)
+            if val_outdir is not None:
+                os.makedirs(val_outdir, exist_ok=True)
+            if test_outdir is not None:
+                os.makedirs(test_outdir, exist_ok=True)
             trainer.produce_cam(train_outdir, val_outdir, test_outdir, False)
         else:
             raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")

@@ -1,4 +1,7 @@
-import os 
+import os
+import sys
+sys.path.append('..')
+ 
 import torch 
 import matplotlib
 import numpy as np
@@ -6,9 +9,12 @@ import importlib.util
 import blobfile as bf
 
 from torch import nn
+from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
 from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors
 from . import logger
+
+from datasets import build_dataset
 
 
 INITIAL_LOG_LOSS_SCALE = 20.0
@@ -456,6 +462,37 @@ def produce_out_dir(cfgs):
     for adir in [train_outdir, val_dir, test_outdir]:
         os.makedirs(adir, exist_ok=True)
     return train_outdir, val_dir, test_outdir
+
+
+def build_dataloaders(cfgs, preprocess, tokenizer, resolution):
+    if hasattr(cfgs.datasets, 'train'):
+        train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
+        train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
+        num_training_samples = len(train_dataset)
+    else:
+        train_dl = None
+        num_training_samples = 0
+        
+    if hasattr(cfgs.datasets, 'val'):
+        val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
+        val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=False)
+        num_val_samples = len(val_dataset)
+    else:
+        val_dl = None
+        num_val_samples = 0
+        
+    if hasattr(cfgs.datasets, 'test'):
+        test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
+        num_test_samples = len(test_dataset)
+        test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
+    else:
+        test_dl = None
+        num_test_samples = 0
+    
+    return train_dl, val_dl, test_dl, num_training_samples, num_val_samples, num_test_samples
+
+
+
     
     
 
