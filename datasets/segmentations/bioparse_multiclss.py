@@ -113,9 +113,6 @@ class Bioparse_segmentation(Dataset):
             self.mask_name_list = self.mask_name_list[int(len(self.mask_name_list)*self.train_rate):]
             self.intermap_name_list = self.intermap_name_list[int(len(self.intermap_name_list)*self.train_rate):]
 
-
-   
-        
     def __len__(self):
         return len(self.img_name_list)
 
