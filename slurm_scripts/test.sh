@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=imgeps_rmv3instance # job name
+#SBATCH --job-name=radiography # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=1          # number of tasks (multi-thread job starts 4 tasks)
@@ -25,9 +25,9 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=imgeps_rmv3nbatch
-config_file=configs/flowmatch/isic_learnattributes/imgeps_rmv3nbatch.yaml
-test_type=test
+exp_name=COVID19_singleCT
+config_file=configs/flowmatch/bioparse/covidct.yaml
+test_type=train
 learn_obj=recflow
 
 

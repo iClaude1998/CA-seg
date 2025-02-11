@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=radiography # job name
+#SBATCH --job-name=baseliner # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=1          # number of tasks (multi-thread job starts 4 tasks)
@@ -30,7 +30,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 
 python main.py --task train \
-       --exp_name radiography \
-       --config configs/flowmatch/bioparse/radiography.yaml \
+       --exp_name radiography_baseline \
+       --config configs/flowmatch/bioparse/radiography_baseline.yaml \
        --num_workers 8 \
        --learn_obj recflow \

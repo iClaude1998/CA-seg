@@ -294,7 +294,7 @@ class Reflow_Trainer(object):
         elif testset == 'val':
             dl = self.val_dataloader
         else:
-            raise ValueError(f"Unsupported testset: {testset}")
+            dl = self.train_dataloader
         for batch in tqdm(dl):
             vts, Rs = self.test_step(batch)
             
