@@ -143,7 +143,7 @@
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
 //             "args": ["--task", "test",
-//                      "--config", "configs/flowmatch/isic_attributes/imgrm_clip.yaml", 
+//                      "--config", "configs/flowmatch/bioparse/radiography_.yaml", 
 //                      "--exp_name", "imgrm_clip",
 //                      "--device", "cuda",
 //                      "--test_type", "test",

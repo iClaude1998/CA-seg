@@ -555,19 +555,28 @@ class CLIPCBM_Trainer(object):
                         cams = batch['inter_map'].to(self.device)
                         # sdf_maps = batch['sdf_map'].to(self.device)
                         onehot_maps = batch['mask'].to(self.device)
-                        mask_name = batch['mask_name'][0]
+                        mask_name = batch['mask_path'][0]
+                        img_name = batch['img_path'][0]
+                        
+                        mask_name = mask_name.split('/')[-2:]
+                        mask_name = '/'.join(mask_name)
+                        
+                        img_name = img_name.split('/')[-2:]
+                        img_name = '/'.join(img_name)
+                        
                         concept_weights = self.model(images)                
                         preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                         
                         preds = postprocess_pred(preds, self.with_sigmoid)
                         
-                        dice_batch_II = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)[0]
-                        infos['img_path'].extend(batch['img_path'])
-                        infos['mask_path'].extend(batch['mask_path'])
+                        dice_batch_II = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)[0]   
+                        
+                        infos['img_path'].append(img_name)
+                        infos['mask_path'].append(mask_name)
                         infos['dice'].append(dice_batch_II)
                         if dice_batch_II > thresh:
-                            filtered_infos['img_path'].extend(batch['img_path'])
-                            filtered_infos['mask_path'].extend(batch['mask_path'])
+                            filtered_infos['img_path'].append(img_name)
+                            filtered_infos['mask_path'].append(mask_name)
                             filtered_infos['dice'].append(dice_batch_II)
                         
         infos = pd.DataFrame(infos)
