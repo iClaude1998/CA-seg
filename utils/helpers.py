@@ -9,6 +9,7 @@ import importlib.util
 import blobfile as bf
 
 from torch import nn
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
 from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors
