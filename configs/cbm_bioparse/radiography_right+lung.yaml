@@ -6,7 +6,7 @@ datasets:
   organ: "right+lung"
   batch_size: 640
   root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
-  name: "bioparse_image" # "bioparse_image" "bioparse_featuremap"
+  name: "bioparse_image" # "bioparse_image" 
   train_rate: 0.8
   featuremap_size: 7
   train:
@@ -54,8 +54,8 @@ trainer:
   valiation_interval: 1
   sum_for_last: True
   gamma: 0.98 # the gamma of the Exp learning rate scheduler, normally 0.9~0.99
-  alpha: 0.33
-  beta: 0.33
+  alpha: 0.
+  beta: 0.
   temperature: 100
   with_sigmoid: True
   gradient_accumulation_steps: 1

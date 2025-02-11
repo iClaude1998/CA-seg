@@ -464,7 +464,9 @@ def produce_out_dir(cfgs):
     return train_outdir, val_dir, test_outdir
 
 
-def build_dataloaders(cfgs, preprocess, tokenizer, resolution):
+def build_dataloaders(cfgs, preprocess, tokenizer, resolution, bz=None):
+    if bz is not None:
+        cfgs.datasets.batch_size = bz
     if hasattr(cfgs.datasets, 'train'):
         train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
         train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
