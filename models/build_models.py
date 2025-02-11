@@ -5,7 +5,7 @@ import open_clip
 from transformers import AutoTokenizer
 from open_clip import create_model_from_pretrained, get_tokenizer
 
-from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN
+from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN, BiomedCLIPWrapper, Biomedclip
 from .diffusion import (UNetModel_v1preview, UNetModel_v2preview, UNetModel_v3preview, 
                         UNetModel_v1position, UNetModel_v2position, UNetModel_v3position)
 
@@ -33,12 +33,11 @@ def load_clip_and_tokenizer(cfgs, device):
         default_imgsize = 224
         model = PUBMEDCLIPLRP(PUBMEDCLIPWrapper(model, default_imgsize, cfgs.outlayers, cfgs.inter_mode, cfgs.proj_patch), device)
     elif cfgs.pretrain == "BiomedCLIP":
-        model, preprocess = create_model_from_pretrained('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224', 
-                                                cache_dir="pretrained/huggingface_hub/biomedclip")
+        model, preprocess = create_model_from_pretrained('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
         tokenizer = get_tokenizer('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
         resolution = 224
         default_imgsize = 224
-        model = CLIPLRP(CLIPWrapper(model, default_imgsize, cfgs.outlayers, cfgs.inter_mode, cfgs.proj_patch), device)
+        model = BiomedCLIPWrapper(Biomedclip(model), device)
     return model, tokenizer, preprocess, resolution
 
 

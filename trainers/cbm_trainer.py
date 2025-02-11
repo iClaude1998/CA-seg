@@ -543,7 +543,37 @@ class CLIPCBM_Trainer(object):
         if self.task == 'train':
             if self.log_method == "tensorboard":
                 self.writer = SummaryWriter(self.log_path)
-    
+                
+    def filter_data(self, thresh):
+        infos = dedict(list)
+        filtered_infos = dedict(list)
+        for dataloader in [self.train_dataloader, self.val_dataloader, self.test_dataloader]:
+            if dataloader is not None:
+                with torch.no_grad():
+                    for batch in tqdm(dataloader):
+                        images = batch['pixel_values'].to(self.device)
+                        cams = batch['inter_map'].to(self.device)
+                        # sdf_maps = batch['sdf_map'].to(self.device)
+                        onehot_maps = batch['mask'].to(self.device)
+                        mask_name = batch['mask_name'][0]
+                        concept_weights = self.model(images)                
+                        preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                        
+                        preds = postprocess_pred(preds, self.with_sigmoid)
+                        
+                        dice_batch_II = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)[0]
+                        infos['img_path'].extend(batch['img_path'])
+                        infos['mask_path'].extend(batch['mask_path'])
+                        infos['dice'].append(dice_batch_II)
+                        if dice_batch_II > thresh:
+                            filtered_infos['img_path'].extend(batch['img_path'])
+                            filtered_infos['mask_path'].extend(batch['mask_path'])
+                            filtered_infos['dice'].append(dice_batch_II)
+                        
+        infos = pd.DataFrame(infos)
+        filtered_infos = pd.DataFrame(filtered_infos)
+        infos.to_csv(os.path.join(self.log_path, 'infos.csv'), index=False)
+        filtered_infos.to_csv(os.path.join(self.log_path, 'filtered_infos.csv'), index=False)
     
     
     def create_output_dirs(self):
