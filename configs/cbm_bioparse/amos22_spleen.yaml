@@ -2,12 +2,12 @@ datasets:
   size:
     - 224
     - 224
-  modality: "."
-  organ: "left+lung"
+  modality: "MRI"
+  organ: "spleen"
   batch_size: 128
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/COVID19_singleCT"
+  root_dir: "/home/yliu/datasets/mediseg/bioparse/amos22"
   name: "bioparse_image" # "bioparse_image" 
-  train_rate: 1.
+  train_rate: 0.8
   featuremap_size: 7
   train:
     name: "${datasets.name}"
@@ -18,12 +18,30 @@ datasets:
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
+  val:
+    name: "${datasets.name}"
+    modality: "${datasets.modality}"
+    organ: "${datasets.organ}"
+    root_dir: "${datasets.root_dir}"
+    split: "val"
+    train_rate: "${datasets.train_rate}"
+    image_size: "${datasets.size}"
+    featuremap_size: "${datasets.featuremap_size}"
+  test:
+    name: "${datasets.name}"
+    modality: "${datasets.modality}"
+    organ: "${datasets.organ}"
+    root_dir: "${datasets.root_dir}"
+    split: "test"
+    train_rate: "${datasets.train_rate}"
+    image_size: "${datasets.size}"
+    featuremap_size: "${datasets.featuremap_size}"
  
 
 model:
   clip:
     pretrain: "BiomedCLIP"
-    num_concepts: 110
+    num_concepts: 128
     inter_mode: False 
 
 
@@ -49,5 +67,5 @@ log_method: "wandb" # wandb, tensorboard
 
 cbm_produce:
   train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm"
-  val_dir:
-  test_dir:
+  val_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm"
+  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm"

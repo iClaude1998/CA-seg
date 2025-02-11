@@ -1,0 +1,80 @@
+datasets:
+  size:
+  modality: "Normal"
+  organ: 
+    - "left+lung"
+    - "right+lung"
+  batch_size: 4
+  root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
+  name: "bioparse_seg" # "bioparse_image" "bioparse_featuremap"
+  train_rate: 0.8
+  resize: True
+  train:
+    name: "${datasets.name}"
+    modality: "${datasets.modality}"
+    organ: "${datasets.organ}"
+    root_dir: "${datasets.root_dir}"
+    split: "train"
+    train_rate: "${datasets.train_rate}"
+    image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
+  val:
+    name: "${datasets.name}"
+    modality: "${datasets.modality}"
+    organ: "${datasets.organ}"
+    root_dir: "${datasets.root_dir}"
+    split: "val"
+    train_rate: "${datasets.train_rate}"
+    image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
+  test:
+    name: "${datasets.name}"
+    modality: "${datasets.modality}"
+    organ: "${datasets.organ}"
+    root_dir: "${datasets.root_dir}"
+    split: "test"
+    train_rate: "${datasets.train_rate}"
+    image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
+  
+model:
+  clip:
+    pretrain: "BiomedCLIP" # Pubmedclip, MedICaT, ViT-B-32
+    outlayers: 
+      - 11
+      - 11
+      - 11
+    inter_mode: False
+  diffusion:
+    version: "v2"
+    image_size: 224
+    in_channels: 4    # 1 for CAM input only and image input only as condition
+    num_channels: 128
+    out_channels: 1
+    channels_clip: 768
+    num_res_blocks: 2
+    attention_resolutions: "16"
+    dropout: 0.0
+    channel_mult: ""
+    use_checkpoint: True
+    use_fp16: False
+    num_heads: 1
+    num_head_channels: -1
+    num_heads_upsample: -1
+    use_scale_shift_norm: -1
+    clip_allignment: "linear_gelu" # set to None, linear or linear_gelu 
+
+trainer:
+  gt_type: "sdf_map" # sdf_map, mask
+  learning_rate: 1.0e-4
+  output: "output_logs" # experiments/exp_name/logs 
+  use_ema: False
+  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
+  num_timesteps: 1000
+  num_iterations: 100000
+  save_interval: 100
+  start_point: "LRP"
+  gradient_accumulation_steps: 1
+  clip_grads:
+
+log_method: "tensorboard" # wandb, tensorboard

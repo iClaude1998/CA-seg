@@ -9,7 +9,6 @@ from omegaconf import OmegaConf
 from torch.backends import cudnn
 from argparse import ArgumentParser
 from easydict import EasyDict as edict
-from torch.utils.data import DataLoader
 from trainers.cbm_trainer import DiceLosswithRegularizer
 from accelerate import Accelerator, DistributedDataParallelKwargs
 
