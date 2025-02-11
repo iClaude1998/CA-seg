@@ -27,31 +27,31 @@
 
 
 // train
-{
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "env": {"CUDA_VISIBLE_DEVICES": "0",
-                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-            "args": ["--task", "train",
-                     "--config", "configs/flowmatch/bioparse/radiography_biomedclip.yaml",
-                     "--exp_name", "debug", 
-                     "--device", "cuda",
-                     "--learn_obj", "recflow"]
-        }
-    ]
-}
+// {
+//     // Use IntelliSense to learn about possible attributes.
+//     // Hover to view descriptions of existing attributes.
+//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "Python Debugger: Current File",
+//             "type": "debugpy",
+//             "request": "launch",
+//             "program": "${file}",
+//             "console": "integratedTerminal",
+//             "justMyCode": false,
+//             "env": {"CUDA_VISIBLE_DEVICES": "0",
+//                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
+//                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
+//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
+//             "args": ["--task", "train",
+//                      "--config", "configs/flowmatch/bioparse/radiography_biomedclip.yaml",
+//                      "--exp_name", "debug", 
+//                      "--device", "cuda",
+//                      "--learn_obj", "recflow"]
+//         }
+//     ]
+// }
 
 
 // distribute train
@@ -125,34 +125,34 @@
 // }
 
 // test
-// {
-//     // Use IntelliSense to learn about possible attributes.
-//     // Hover to view descriptions of existing attributes.
-//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-//     "version": "0.2.0",
-//     "configurations": [
-//         {
-//             "name": "Python Debugger: Current File",
-//             "type": "debugpy",
-//             "request": "launch",
-//             "program": "${file}",
-//             "console": "integratedTerminal",
-//             "justMyCode": false,
-//             "env": {"CUDA_VISIBLE_DEVICES": "1",
-//                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-//                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-//             "args": ["--task", "test",
-//                      "--config", "configs/flowmatch/isic_attributes/imgrm_clip.yaml", 
-//                      "--exp_name", "imgrm_clip",
-//                      "--device", "cuda",
-//                      "--test_type", "test",
-//                      "--learn_obj", "recflow",
-//                      "--load_checkpoint",
-//                     ]
-//         }
-//     ]
-// }
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {"CUDA_VISIBLE_DEVICES": "1",
+                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
+                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
+                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
+            "args": ["--task", "test",
+                     "--config", "configs/flowmatch/bioparse/radiography_.yaml", 
+                     "--exp_name", "imgrm_clip",
+                     "--device", "cuda",
+                     "--test_type", "test",
+                     "--learn_obj", "recflow",
+                     "--load_checkpoint",
+                    ]
+        }
+    ]
+}
 
 
 

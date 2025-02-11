@@ -1,5 +1,5 @@
 from .segmentations import (ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, 
-                            camusattributes_seg, ISIC_image, Bioparse_image, Bioparse_segmentation
+                            camusattributes_seg, ISIC_image, Bioparse_image, Bioparse_segmentation, Bioparse_segmentation2
 )
 
 def build_dataset(config, preprocessors, inter_mode=True):
@@ -20,6 +20,8 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_bioparse_image_dataset(config, preprocessors)
     elif config.name == "bioparse_seg":
         return build_bioparse_seg_dataset(config, preprocessors)
+    elif config.name == "bioparse_seg2":
+        return build_bioparse_seg2_dataset(config, preprocessors)
 
 
 
@@ -144,5 +146,16 @@ def build_bioparse_seg_dataset(config, preprocessors):
                                  config.train_rate,
                                  image_size=tuple(config.image_size) if config.image_size is not None else None,
                                  resize=config.resize)
+
+
+def build_bioparse_seg2_dataset(config, preprocessors):
+    return Bioparse_segmentation2(preprocessors, 
+                                  config.modality, 
+                                  config.organ, 
+                                  config.root_dir, 
+                                  config.split, 
+                                  config.train_rate,
+                                  image_size=tuple(config.image_size) if config.image_size is not None else None,
+                                  resize=config.resize)
     
 
