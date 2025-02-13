@@ -27,7 +27,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 exp_name=amos22_liver
 config_file=configs/flowmatch/bioparse/amos22_liver.yaml
-test_type=train
+test_type=test
 learn_obj=recflow
 
 
