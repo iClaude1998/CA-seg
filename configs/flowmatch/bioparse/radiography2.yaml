@@ -40,18 +40,17 @@ datasets:
 
 model:
   clip:
-    pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
+    pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32, Biomedclip
     outlayers: 
-      - 3
-      - 7
+      - 11
+      - 11
       - 11
     inter_mode: False
     proj_patch: True
   diffusion:
-    version: "v1"
+    version: "v3"
     image_size: 224
     in_channels: 4 # 4 for ISIC
-    condition_channels: 3
     num_channels: 128
     out_channels: 1
     num_res_blocks: 2
@@ -67,13 +66,14 @@ model:
     use_scale_shift_norm: -1
     resblock_updown: False
     use_new_attention_order: False
+    norm_type: "batchnorm"
 
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: checkpoint_iter100000.pth # the name of the loaded checkpoint
+  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100

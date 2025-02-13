@@ -1,12 +1,11 @@
 datasets:
   size:
-  modality: "Normal"
+  modality: "Task03_Liver"
   organ: 
-    - "left+lung"
-    - "right+lung"
+    - "liver"
   batch_size: 8
-  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/Radiography"
-  name: "bioparse_seg" # "bioparse_image" "bioparse_featuremap"
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/MSD"
+  name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
   train:

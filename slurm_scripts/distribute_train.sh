@@ -1,12 +1,12 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=zhezhongren # job name
+#SBATCH --job-name=liver # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=2          # number of tasks (multi-thread job starts 2 tasks)
 #SBATCH --mem=32G              # memory required by the job (if above 64G, use --mem=128G)
 #SBATCH -c 8                # number of cores (sequential job calls a multi-thread program that uses 8 cores)
-#SBATCH --time=18:00:00         # time allocation, which has the format (D-HH:MM), here set to 1 hour
+#SBATCH --time=14:00:00         # time allocation, which has the format (D-HH:MM), here set to 1 hour
 #SBATCH --gres=gpu:2            # generic resource required (here requires 2 GPUs)
 #SBATCH --chdir=/gpfs/users/a1233646/myprojects/clipflow2 # set the working directory
 
@@ -43,8 +43,8 @@ accelerate launch --multi-gpu \
                   --mixed-precision=no \
                   --dynamo_backend=no \
                    main.py --task train \
-                   --exp_name radiography_baseline \
-                   --config configs/flowmatch/bioparse/radiography_baseline.yaml \
+                   --exp_name msd_liver_baseline \
+                   --config configs/flowmatch/bioparse/msd_liver_baseline.yaml \
                    --num_workers 8 \
                    --learn_obj recflow \
                    --distribution_training
