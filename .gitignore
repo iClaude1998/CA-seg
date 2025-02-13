@@ -6,3 +6,4 @@ slurm_cmds/
 **/__pycache__/
 pod_cmds/
 pheonix_cmds/
+slurm-*.out

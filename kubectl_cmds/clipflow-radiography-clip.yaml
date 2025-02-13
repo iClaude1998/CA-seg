@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: yunxiang-radiography-clip # Your training job name
+spec:
+  backoffLimit: 0   # add this line so --> If your pod failed, the training job will stop.
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: gitlab-docker-secret
+      volumes:
+        - name: shared-memory # This is to resolve the dataloader OOM issue.
+          emptyDir:
+            medium: Memory
+        - name: dataset-volume
+          persistentVolumeClaim:
+            claimName: zhibin-liao       # <------- your PVC name    kubectl get pvc
+      containers:
+        - name: yunxiang-job-checkcuda # It is recommended to name your container according to the project
+          image: docker.aiml.team/yunxiang.liu/docker_img:latest # You can reuse this image for different projects if their python dependencies are the same.
+          imagePullPolicy: Always
+          stdin: true
+          tty: true
+          command: ["/bin/zsh", "-c"]
+          args:
+            - |      
+              conda init
+              source ~/.zshrc
+              conda config --prepend pkgs_dirs /data/myconda/pkgs
+              conda config --prepend envs_dirs /data/myconda/envs
+              nvcc -V
+              conda activate yliu 
+              source /data/claude/.myenvs/clipflow2/bin/activate
+              cd /data/claude/myprojects/clipflow2
+              wandb login --verify 4782fbfd0787d1e5d6766fde2c586b86a990c357
+              accelerate launch --multi-gpu --num_processes=2 --num_machines=1 --mixed-precision=no --dynamo_backend=no main.py --exp_name radiography_biomedclip --task train --config configs/flowmatch/bioparse/radiography_biomedclip.yaml --learn_obj recflow --device cuda --num_workers 8 --distribution_training
+          resources:
+            limits:
+              nvidia.com/gpu: "2"              # <------- If you don't need any of GPUs, Please comment-out this line.
+          volumeMounts:
+            - name: dataset-volume
+              mountPath: /data
+            - name: shared-memory
+              mountPath: /dev/shm
+          env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                    name: gitlab-token  # kubectl get secrets
+                    key:  access-token
