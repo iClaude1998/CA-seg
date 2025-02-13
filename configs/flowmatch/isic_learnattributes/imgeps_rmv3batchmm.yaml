@@ -1,10 +1,10 @@
 datasets:
   batch_size: 8
   size:
-  inter_layer: "layer4"
-  inter_norm: "sigmoid"
+  inter_layer: "layer4s"
+  inter_norm: "minmax"
   basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
-  resize: True
+  resize: False
   train:
     name: "isic_seg"
     prompt_type: "p6"
@@ -55,10 +55,9 @@ model:
     inter_mode: False
     proj_patch: True
   diffusion:
-    version: "v1"
+    version: "v3"
     image_size: 224
     in_channels: 4 # 4 for ISIC
-    condition_channels: 3
     num_channels: 128
     out_channels: 1
     num_res_blocks: 2
@@ -74,6 +73,7 @@ model:
     use_scale_shift_norm: -1
     resblock_updown: False
     use_new_attention_order: False
+    norm_type: "batchnorm"
 
 trainer:
   gt_type: "sdf_map" # sdf_map, mask

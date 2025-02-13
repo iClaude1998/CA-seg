@@ -1,11 +1,11 @@
 datasets:
   size:
-  modality: "Normal"
+  modality: "."
   organ: 
     - "left+lung"
     - "right+lung"
-  batch_size: 4
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
+  batch_size: 8
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/COVID19_singleCT"
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
@@ -18,24 +18,7 @@ datasets:
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-  val:
-    name: "${datasets.name}"
-    modality: "${datasets.modality}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "val"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    resize: "${datasets.resize}"
-  test:
-    name: "${datasets.name}"
-    modality: "${datasets.modality}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "test"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    resize: "${datasets.resize}"
+
 
 
 model:
@@ -81,4 +64,4 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "wandb" # wandb, tensorboard
+log_method: "tensorboard" # wandb, tensorboard

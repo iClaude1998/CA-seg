@@ -1,0 +1,98 @@
+# conda environments:
+#
+base                     /home/a1233646/miniconda3
+MA_detection             /hpcfs/users/a1233646/myconda/envs/MA_detection
+clipflow              *  /hpcfs/users/a1233646/myconda/envs/clipflow
+fvlm                     /hpcfs/users/a1233646/myconda/envs/fvlm
+
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2022 NVIDIA Corporation
+Built on Wed_Sep_21_10:33:58_PDT_2022
+Cuda compilation tools, release 11.8, V11.8.89
+Build cuda_11.8.r11.8/compiler.31833905_0
+/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/requests/__init__.py:86: RequestsDependencyWarning: Unable to find acceptable character detection dependency (chardet or charset_normalizer).
+  warnings.warn(
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/util/connection.py", line 85, in create_connection
+    raise err
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/util/connection.py", line 73, in create_connection
+    sock.connect(sa)
+OSError: [Errno 101] Network is unreachable
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/connectionpool.py", line 488, in _make_request
+    raise new_e
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/connectionpool.py", line 464, in _make_request
+    self._validate_conn(conn)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/connectionpool.py", line 1093, in _validate_conn
+    conn.connect()
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/connection.py", line 704, in connect
+    self.sock = sock = self._new_conn()
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/connection.py", line 213, in _new_conn
+    raise NewConnectionError(
+urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPSConnection object at 0x7f8abffc6d10>: Failed to establish a new connection: [Errno 101] Network is unreachable
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='huggingface.co', port=443): Max retries exceeded with url: /microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224/resolve/main/open_clip_pytorch_model.bin (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f8abffc6d10>: Failed to establish a new connection: [Errno 101] Network is unreachable'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 1746, in _get_metadata_or_catch_error
+    metadata = get_hf_file_metadata(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 1666, in get_hf_file_metadata
+    r = _request_wrapper(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 364, in _request_wrapper
+    response = _request_wrapper(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 387, in _request_wrapper
+    response = get_session().request(method=method, url=url, **params)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/utils/_http.py", line 93, in send
+    return super().send(request, *args, **kwargs)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: (MaxRetryError("HTTPSConnectionPool(host='huggingface.co', port=443): Max retries exceeded with url: /microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224/resolve/main/open_clip_pytorch_model.bin (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f8abffc6d10>: Failed to establish a new connection: [Errno 101] Network is unreachable'))"), '(Request ID: 49a84a26-aa79-4f4f-a74b-7283deaa114f)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/scratchdata2/users/a1233646/myprojects/clipflow2/main.py", line 72, in <module>
+    cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(cfgs.model.clip, 'cpu')
+  File "/scratchdata2/users/a1233646/myprojects/clipflow2/models/build_models.py", line 36, in load_clip_and_tokenizer
+    model, preprocess = create_model_from_pretrained('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224', 
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/open_clip/factory.py", line 437, in create_model_from_pretrained
+    model = create_model(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/open_clip/factory.py", line 188, in create_model
+    checkpoint_path = download_pretrained_from_hf(model_id, cache_dir=cache_dir)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/open_clip/pretrained.py", line 552, in download_pretrained_from_hf
+    cached_file = hf_hub_download(model_id, filename, revision=revision, cache_dir=cache_dir)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/utils/_deprecation.py", line 101, in inner_f
+    return f(*args, **kwargs)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 1232, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 1339, in _hf_hub_download_to_cache_dir
+    _raise_on_head_call_error(head_call_error, force_download, local_files_only)
+  File "/hpcfs/users/a1233646/myconda/envs/clipflow/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 1857, in _raise_on_head_call_error
+    raise LocalEntryNotFoundError(
+huggingface_hub.errors.LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
