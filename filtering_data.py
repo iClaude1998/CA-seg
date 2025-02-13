@@ -24,9 +24,9 @@ torch.manual_seed(SEED)
 
 def parse_args():
     parser = ArgumentParser(description='Reflow')
-    parser.add_argument('--config', type=str, default='configs/flowmatch/bioparse/radiography_.yaml', help='path to config file')
+    parser.add_argument('--config', type=str, default='configs/cbm_bioparse/camus-left+heart+atrium.yaml', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
-    parser.add_argument('--exp_name', type=str, default='left+lung', help='the name of the experiment')
+    parser.add_argument('--exp_name', type=str, default='camus_left+heart+atrium', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     return parser.parse_args()
 
@@ -56,8 +56,8 @@ if __name__ == '__main__':
         
         dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}
         
-        trainer = build_trainer(cfgs, output_dir, None, None, dataloader_pakages, None, cfgs.device)
-        outcomes = trainer.test('test')
+        trainer = build_trainer(cfgs, output_dir, cliprlp, None, dataloader_pakages, None, cfgs.device)
+        outcomes = trainer.test('train')
         thresh = outcomes['dice_II'].mean()
         
         print(f'Threshold: {thresh}')
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         trainer.filter_data(thresh)
     elif task == 1:
         
-        exps = ["left+lung", "right+lung"]
+        exps = ["ct_left+lung", "ct_right+lung"]
         csv_files = [f'experiments/cbm/bioparse_image/{exp}/output_logs/filtered_infos.csv' for exp in exps]
         df = pd.concat([pd.read_csv(file) for file in csv_files], ignore_index=True)
         df = df.sample(frac=1).reset_index(drop=True)

@@ -2,11 +2,11 @@ datasets:
   size:
     - 224
     - 224
-  modality: "MRI"
-  organ: "left+adrenal+gland"
-  batch_size: 128
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/amos22"
-  name: "bioparse_image" # "bioparse_image" 
+  modality: "."
+  organ: "left+heart+ventricle"
+  batch_size: 640
+  root_dir: "/home/yliu/datasets/mediseg/bioparse/CAMUS"
+  name: "bioparse_image" # "bioparse_image"
   train_rate: 0.8
   featuremap_size: 7
   train:

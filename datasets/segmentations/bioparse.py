@@ -98,6 +98,13 @@ class Bioparse_image(Dataset):
             self.img_name_list = self.img_name_list[int(len(self.img_name_list)*self.train_rate):]
             self.mask_name_list = self.mask_name_list[int(len(self.mask_name_list)*self.train_rate):]
         self.intermap_name_list = [f"{os.path.splitext(img_name)[0]}_gcam.npy" for img_name in self.img_name_list]
+        idx_cache = []
+        for i, intermap in enumerate(self.intermap_name_list):
+            if os.path.exists(f"{self.inter_dir}/{intermap}"):
+                idx_cache.append(i)
+        self.intermap_name_list = [self.intermap_name_list[i] for i in idx_cache]
+        self.img_name_list = [self.img_name_list[i] for i in idx_cache]
+        self.mask_name_list = [self.mask_name_list[i] for i in idx_cache]
 
    
         
