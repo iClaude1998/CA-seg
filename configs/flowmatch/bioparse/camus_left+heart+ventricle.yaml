@@ -1,10 +1,10 @@
 datasets:
   size:
-  modality: "MRI"
+  modality: "."
   organ: 
-    - "liver"
+    - "left+heart+ventricle"
   batch_size: 8
-  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/amos22"
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/CAMUS"
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
@@ -35,7 +35,7 @@ datasets:
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
- 
+
 
 model:
   clip:
