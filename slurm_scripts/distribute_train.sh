@@ -43,8 +43,8 @@ accelerate launch --multi-gpu \
                   --mixed-precision=no \
                   --dynamo_backend=no \
                    main.py --task train \
-                   --exp_name msd_liver_baseline \
-                   --config configs/flowmatch/bioparse/msd_liver_baseline.yaml \
+                   --exp_name camus_left+heart+atrium_baseline \
+                   --config configs/flowmatch/bioparse/camus_left+heart+atrium_baseline.yaml \
                    --num_workers 8 \
                    --learn_obj recflow \
                    --distribution_training
