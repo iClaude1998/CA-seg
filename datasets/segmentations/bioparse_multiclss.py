@@ -233,7 +233,7 @@ class Bioparse_segmentation2(Dataset):
         anns = pd.read_csv(self.annotation_path)
         
         pattern = '|'.join(self.organ)
-        anns = anns[anns['mask_path'].str.contains(pattern, na=False)]
+        anns = anns[anns['mask_path'].str.contains(pattern, na=False, regex=True)]
         train_split = int(len(anns) * 0.6)
         val_split = int(len(anns) * 0.8)
         
