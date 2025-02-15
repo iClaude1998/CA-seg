@@ -30,7 +30,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 
 python main.py --task train \
-       --exp_name radiography_baseline \
-       --config configs/flowmatch/bioparse/radiography_baseline.yaml \
+       --exp_name msd_liver_l1 \
+       --config configs/flowmatch/bioparse/msd_liver_l1.yaml \
        --num_workers 8 \
        --learn_obj recflow \

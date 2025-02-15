@@ -43,8 +43,8 @@ accelerate launch --multi-gpu \
                   --mixed-precision=no \
                   --dynamo_backend=no \
                    main.py --task train \
-                   --exp_name radiography1 \
-                   --config configs/flowmatch/bioparse/radiography1.yaml \
+                   --exp_name msd_liver_l1 \
+                   --config configs/flowmatch/bioparse/msd_liver_l1.yaml \
                    --num_workers 8 \
                    --learn_obj recflow \
                    --distribution_training
