@@ -202,12 +202,20 @@ def load_clipcbn_preprocessor(cfgs):
         tokenizer = open_clip.get_tokenizer('ViT-B-32')
         backbone = model.visual
         in_features = 512
+        if cfgs.no_proj:
+            backbone.proj = None
+            in_features = 768
+        
     elif cfgs.pretrain == "MedICaT":
         model, _ , preprocess = open_clip.create_model_and_transforms('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
         resolution = model.visual.preprocess_cfg['size']
         tokenizer = open_clip.get_tokenizer('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
         backbone = model.visual
         in_features = 768
+        if cfgs.no_proj:
+            backbone.proj = None
+            in_features = 1024
+        
     elif cfgs.pretrain == "Pubmedclip":
         clip_model = torch.load("pretrained/PubMedCLIP_ViT32.pth")
         model, preprocess = clip.load("ViT-B/32", jit=False, download_root="pretrained/clips")
@@ -216,6 +224,10 @@ def load_clipcbn_preprocessor(cfgs):
         tokenizer = clip.tokenize
         backbone = model.visual
         in_features = 512
+        if cfgs.no_proj:
+            backbone.proj = None
+            in_features = 768
+        
     elif cfgs.pretrain == "BiomedCLIP":
         model, preprocess = create_model_from_pretrained('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224', 
                                                 cache_dir="pretrained/huggingface_hub/biomedclip")
@@ -223,6 +235,10 @@ def load_clipcbn_preprocessor(cfgs):
         backbone = model.visual
         resolution = 224
         in_features = 512
+        if cfgs.no_proj:
+            backbone = model.visual.trunk
+            in_features = 768
+        
     elif cfgs.pretrain == "PMC_CLIP":
         model = ModifiedResNet(layers=[3, 4, 6, 3], output_dim=768, heads=8, image_size=224, width=64)
         model.load_state_dict(torch.load('pretrained/pmc_clip/image_encoder(resnet50).pth'))
@@ -232,6 +248,6 @@ def load_clipcbn_preprocessor(cfgs):
         resolution = 224
         in_features = 768
         
-    model = ClipCBN(backbone, in_features, cfgs.num_concepts)
+    model = ClipCBN(backbone, in_features, cfgs.num_concepts, cfgs.one_layer)
     
     return model, tokenizer, preprocess, resolution

@@ -45,10 +45,10 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/flowmatch/bioparse/camus_left+heart+atrium.yaml",
+                     "--config", "configs/cbm_bioparse/amos22_liver_1l.yaml",
                      "--exp_name", "debug", 
                      "--device", "cuda",
-                     "--learn_obj", "recflow"]
+                     "--learn_obj", "cbm"]
         }
     ]
 }
@@ -124,7 +124,9 @@
 //     ]
 // }
 
-// test
+
+
+// // test
 // {
 //     // Use IntelliSense to learn about possible attributes.
 //     // Hover to view descriptions of existing attributes.
@@ -142,12 +144,12 @@
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-//             "args": ["--task", "test",
-//                      "--config", "configs/flowmatch/bioparse/radiography2.yaml", 
-//                      "--exp_name", "imgrm_clip",
+//             "args": ["--task", "train",
+//                      "--config", "configs/flowmatch/bioparse/radiography_baseline.yaml",
+//                      "--exp_name", "radiography_baseline",
 //                      "--device", "cuda",
 //                      "--test_type", "test",
-//                      "--learn_obj", "recflow",
+//                      "--learn_obj", "cbm",
 //                      "--load_checkpoint",
 //                     ]
 //         }

@@ -37,6 +37,8 @@ model:
     pretrain: "ViT-B-32"
     num_concepts: 760
     inter_mode: False 
+    no_proj: False
+    one_layer: False
 
 
 trainer:
