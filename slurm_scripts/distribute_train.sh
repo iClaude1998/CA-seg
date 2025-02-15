@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=liver # job name
+#SBATCH --job-name=radiography1 # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=2          # number of tasks (multi-thread job starts 2 tasks)
@@ -43,8 +43,8 @@ accelerate launch --multi-gpu \
                   --mixed-precision=no \
                   --dynamo_backend=no \
                    main.py --task train \
-                   --exp_name camus_left+heart+atrium_baseline \
-                   --config configs/flowmatch/bioparse/camus_left+heart+atrium_baseline.yaml \
+                   --exp_name msd_liver_l1 \
+                   --config configs/flowmatch/bioparse/msd_liver_l1.yaml \
                    --num_workers 8 \
                    --learn_obj recflow \
                    --distribution_training

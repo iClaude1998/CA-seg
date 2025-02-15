@@ -203,6 +203,8 @@ class Bioparse_segmentation2(Dataset):
         train_rate: float = 0.8,
         image_size=None,
         resize=False,
+        annotation_name='annotation.csv',
+        cbm_dir='cbm',    
     ) -> None:
         super().__init__()
 
@@ -214,8 +216,9 @@ class Bioparse_segmentation2(Dataset):
             split = 'train'
         else:
             split = 'test'
+        self.cbm_dir = cbm_dir
         self.train_rate = train_rate
-        self.annotation_path = os.path.join(root_dir, modality, f"annotation.csv")
+        self.annotation_path = os.path.join(root_dir, modality, annotation_name)
         self.preprocess, self.tokenizer, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
@@ -253,7 +256,7 @@ class Bioparse_segmentation2(Dataset):
             adir, mask_name = os.path.split(prefix)
             
             split = adir.split('_')[0]
-            new_name = f"{split}_cbm/{mask_name}.npy"
+            new_name = f"{split}_{self.cbm_dir}/{mask_name}.npy"
             self.intermap_name_list.append(new_name)
     
 

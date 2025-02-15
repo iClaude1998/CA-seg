@@ -315,7 +315,7 @@ class Reflow_Trainer(object):
                 outcomes['dice_I'].extend(dice_batch_I)
                 outcomes['dice_II'].extend(dice_batch_II)
         outcomes = pd.DataFrame(outcomes)
-        outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_{self.checkpoint_name}.csv'), index=False)
+        outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_out.csv'), index=False)
         return outcomes
     
     

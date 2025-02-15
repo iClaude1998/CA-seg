@@ -25,8 +25,8 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=amos22_liver_baseline
-config_file=configs/flowmatch/bioparse/amos22_liver_baseline.yaml
+exp_name=covid21l_baseline
+config_file=configs/flowmatch/bioparse/covid21l_baseline.yaml
 test_type=train
 learn_obj=recflow
 
