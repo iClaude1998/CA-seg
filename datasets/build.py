@@ -156,6 +156,8 @@ def build_bioparse_seg2_dataset(config, preprocessors):
                                   config.split, 
                                   config.train_rate,
                                   image_size=tuple(config.image_size) if config.image_size is not None else None,
-                                  resize=config.resize)
+                                  resize=config.resize,
+                                  annotation_name=config.annotation_name,
+                                  cbm_dir=config.cbm_dir)
     
 

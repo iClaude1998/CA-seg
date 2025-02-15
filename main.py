@@ -75,13 +75,6 @@ if __name__ == '__main__':
         cliprlp, tokenizer, preprocess, resolution = load_clipcbn_preprocessor(cfgs.model.clip)
         diffusion_model = None
     
-    # train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
-    # val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
-    # test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
-    
-    # train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
-    # val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=False)
-    # test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
     train_dl, val_dl, test_dl, num_training_samples, num_val_samples, num_test_samples = build_dataloaders(cfgs, preprocess, tokenizer, resolution)
     
     dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}
