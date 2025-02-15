@@ -87,7 +87,7 @@ class Bioparse_image(Dataset):
         mask_name_list = list(map(lambda x: self.produce_mask_names(x), img_name_list))
         
         pairs = [(img_name, mask_name) for img_name, mask_name in zip(img_name_list, mask_name_list) if mask_name in os.listdir(self.mask_dir)]
-        pairs = pairs
+
         self.img_name_list = [pair[0] for pair in pairs]
         self.mask_name_list = [pair[1] for pair in pairs]
         

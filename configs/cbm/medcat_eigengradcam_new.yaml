@@ -37,6 +37,7 @@ model:
     pretrain: "MedICaT"
     num_concepts: 45
     inter_mode: False 
+    
 
 
 trainer:

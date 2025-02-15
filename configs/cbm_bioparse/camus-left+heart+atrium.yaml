@@ -43,6 +43,8 @@ model:
     pretrain: "BiomedCLIP"
     num_concepts: 128
     inter_mode: False 
+    no_proj: False
+    one_layer: False
 
 
 trainer:

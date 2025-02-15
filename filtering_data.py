@@ -24,16 +24,16 @@ torch.manual_seed(SEED)
 
 def parse_args():
     parser = ArgumentParser(description='Reflow')
-    parser.add_argument('--config', type=str, default='configs/cbm_bioparse/camus-left+heart+ventricle.yaml', help='path to config file')
+    parser.add_argument('--config', type=str, default='configs/cbm_bioparse/radiography_left+lung_1l.yaml', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
-    parser.add_argument('--exp_name', type=str, default='camus_left+heart+ventricle', help='the name of the experiment')
+    parser.add_argument('--exp_name', type=str, default='radiography_left+lung_1l', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     
-    task = 1
+    task = 0
     if task == 0:
     
         args = parse_args()
@@ -63,9 +63,10 @@ if __name__ == '__main__':
         print(f'Threshold: {thresh}')
         
         trainer.filter_data(thresh)
+        
     elif task == 1:
         
-        exps = ["camus_left+heart+atrium", "camus_left+heart+ventricle"]
+        exps = ["radiography_left+lung_1l", "radiography_right+lung_1l"]
         csv_files = [f'experiments/cbm/bioparse_image/{exp}/output_logs/filtered_infos.csv' for exp in exps]
         df = pd.concat([pd.read_csv(file) for file in csv_files], ignore_index=True)
         df = df.sample(frac=1).reset_index(drop=True)

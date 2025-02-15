@@ -2,12 +2,17 @@ from torch import nn
 
 
 class ClipCBN(nn.Module):
-    def __init__(self, backbone, in_features, num_cocncepts):
+    def __init__(self, backbone, in_features, num_cocncepts, one_layer=False):
         super(ClipCBN, self).__init__()
         self.backbone = backbone.float()
-        self.concept_head = nn.Sequential(*[nn.Linear(in_features, in_features),
-                                            nn.LeakyReLU(),
-                                            nn.Linear(in_features, num_cocncepts)])
+
+        if one_layer == 1:
+            self.concept_head = nn.Sequential(*[nn.Linear(in_features, num_cocncepts)])
+        else:
+            self.concept_head = nn.Sequential(*[nn.Linear(in_features, in_features),
+                                                nn.LeakyReLU(),
+                                                nn.Linear(in_features, num_cocncepts)])
+
         self.freeze_backbone()
         
         
@@ -21,3 +26,6 @@ class ClipCBN(nn.Module):
         self.backbone.eval()
         for param in self.backbone.parameters():
             param.requires_grad = False
+            
+
+
