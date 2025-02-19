@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=jiduanzisi # job name
+#SBATCH --job-name=baoxuemei # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=1          # number of tasks (multi-thread job starts 4 tasks)
@@ -25,9 +25,9 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=covid21l_baseline
-config_file=configs/flowmatch/bioparse/covid21l_baseline.yaml
-test_type=train
+exp_name=radiography_v1
+config_file=configs/flowmatch/bioparse/radiography_v1.yaml
+test_type=test
 learn_obj=recflow
 
 
