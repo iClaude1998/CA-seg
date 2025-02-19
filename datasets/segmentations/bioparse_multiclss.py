@@ -158,10 +158,6 @@ class Bioparse_segmentation(Dataset):
             return_dict["input_ids"] = text_enc[0]
         return return_dict
     
-    
-
-
-
 
 
 class Bioparse_segmentation2(Dataset):

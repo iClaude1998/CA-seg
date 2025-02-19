@@ -45,10 +45,10 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/cbm_bioparse/amos22_liver_1l.yaml",
+                     "--config", "configs/flowmatch/bioparse/amos22_multiple.yaml",
                      "--exp_name", "debug", 
                      "--device", "cuda",
-                     "--learn_obj", "cbm"]
+                     "--learn_obj", "recflow"]
         }
     ]
 }
@@ -145,8 +145,8 @@
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
 //             "args": ["--task", "train",
-//                      "--config", "configs/flowmatch/bioparse/radiography_baseline.yaml",
-//                      "--exp_name", "radiography_baseline",
+//                      "--config", "configs/cbm_bioparse/covidct_right+lung_s.yaml",
+//                      "--exp_name", "covid_right_lung_s",
 //                      "--device", "cuda",
 //                      "--test_type", "test",
 //                      "--learn_obj", "cbm",

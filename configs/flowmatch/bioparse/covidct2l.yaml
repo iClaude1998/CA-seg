@@ -9,6 +9,8 @@ datasets:
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
+  annotation_name: "annotation1l.csv"
+  cbm_dir: 'cbm_1l'
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -18,6 +20,8 @@ datasets:
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
+    annotation_name: "annotation1l.csv"
+    cbm_dir: 'cbm_1l'
 
 
 model:
@@ -55,7 +59,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
+  checkpoint_name: "/home/yliu/myProjects/clipflow2/experiments/cbm/bioparse_image/radiography_left+lung_1l/checkpoints/checkpoint_epoch99.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
