@@ -43,8 +43,8 @@ accelerate launch --multi-gpu \
                   --mixed-precision=no \
                   --dynamo_backend=no \
                    main.py --task train \
-                   --exp_name msd_liver_l1_v1 \
-                   --config configs/flowmatch/bioparse/msd_liver_l1_v1.yaml \
+                   --exp_name amos22_multiple \
+                   --config configs/flowmatch/bioparse/amos22_multiple.yaml \
                    --num_workers 8 \
                    --learn_obj recflow \
                    --distribution_training

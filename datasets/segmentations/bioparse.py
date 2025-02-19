@@ -50,6 +50,7 @@ class Bioparse_image(Dataset):
         train_rate: float = 0.8,
         image_size=None,
         featuremap_size=None,
+        gcam_dir='gcam',
     ) -> None:
         super().__init__()
 
@@ -64,7 +65,7 @@ class Bioparse_image(Dataset):
         self.train_rate = train_rate
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
-        self.inter_dir = os.path.join(root_dir, modality, f"{split}_gcam", self.organ)
+        self.inter_dir = os.path.join(root_dir, modality, f"{split}_{gcam_dir}", self.organ)
         # self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
         self.preprocess, _, image_resolution = preprocessors
 

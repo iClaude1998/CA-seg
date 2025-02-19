@@ -472,6 +472,9 @@ def build_dataloaders(cfgs, preprocess, tokenizer, resolution, bz=None):
         train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
         train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
         num_training_samples = len(train_dataset)
+        
+        for i in tqdm(range(num_training_samples)):
+            _ = train_dataset[i]
     else:
         train_dl = None
         num_training_samples = 0
@@ -480,6 +483,9 @@ def build_dataloaders(cfgs, preprocess, tokenizer, resolution, bz=None):
         val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
         val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=False)
         num_val_samples = len(val_dataset)
+        
+        for i in tqdm(range(num_val_samples)):
+            _ = val_dataset[i]
     else:
         val_dl = None
         num_val_samples = 0
@@ -488,6 +494,9 @@ def build_dataloaders(cfgs, preprocess, tokenizer, resolution, bz=None):
         test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
         num_test_samples = len(test_dataset)
         test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
+        
+        for i in tqdm(range(num_test_samples)):
+            _ = test_dataset[i]
     else:
         test_dl = None
         num_test_samples = 0

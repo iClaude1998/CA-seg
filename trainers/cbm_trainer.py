@@ -345,7 +345,7 @@ class CLIPCBM_Trainer(object):
                 outcomes['dice_II'].extend(dice_batch_II)
             
         outcomes = pd.DataFrame(outcomes)
-        outcomes.to_csv(os.path.join(self.log_path, f'outcomes_test_{self.checkpoint_name}.csv'), index=False)
+        outcomes.to_csv(os.path.join(self.log_path, f'outcomes_test_100.csv'), index=False)
         return outcomes
     
     
@@ -578,7 +578,8 @@ class CLIPCBM_Trainer(object):
                             filtered_infos['img_path'].append(img_name)
                             filtered_infos['mask_path'].append(mask_name)
                             filtered_infos['dice'].append(dice_batch_II)
-                        
+        
+        print(f"Total number of filtered images: {len(filtered_infos['img_path'])}")                
         infos = pd.DataFrame(infos)
         filtered_infos = pd.DataFrame(filtered_infos)
         infos.to_csv(os.path.join(self.log_path, 'infos.csv'), index=False)
