@@ -26,36 +26,7 @@
 // }
 
 
-// train
-{
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "env": {"CUDA_VISIBLE_DEVICES": "0",
-                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-            "args": ["--task", "train",
-                     "--config", "configs/flowmatch/bioparse/camus_2ch.yaml",
-                     "--exp_name", "debug", 
-                     "--device", "cuda",
-                     "--learn_obj", "recflow"]
-        }
-    ]
-}
-
-
-// distribute train
-
+// // train
 // {
 //     // Use IntelliSense to learn about possible attributes.
 //     // Hover to view descriptions of existing attributes.
@@ -66,29 +37,58 @@
 //             "name": "Python Debugger: Current File",
 //             "type": "debugpy",
 //             "request": "launch",
+//             "program": "${file}",
 //             "console": "integratedTerminal",
-//             "module": "accelerate.commands.launch",
-//             "env": {
+//             "justMyCode": false,
+//             "env": {"CUDA_VISIBLE_DEVICES": "0",
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips"
-//                 },
-//             "args": ["--multi_gpu",
-//                      "--mixed_precision", "no",
-//                      "--num_machines", "1",
-//                      "--num_processes", "2",
-//                      "--dynamo_backend", "no",
-//                      "main.py",
-//                      "--task", "train",
-//                      "--config", "configs/ddpmpp/isic/image_image.yaml", 
+//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
+//             "args": ["--task", "train",
+//                      "--config", "configs/flowmatch/bioparse/radiography_v0.yaml",
 //                      "--exp_name", "debug", 
 //                      "--device", "cuda",
-//                      "--learn_obj", "ddpmpp",
-//                      "--distribution_training"
-//                     ]
+//                      "--learn_obj", "dice"]
 //         }
 //     ]
 // }
+
+
+// distribute train
+
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "module": "accelerate.commands.launch",
+            "env": {
+                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
+                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
+                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips"
+                },
+            "args": ["--multi_gpu",
+                     "--mixed_precision", "no",
+                     "--num_machines", "1",
+                     "--num_processes", "2",
+                     "--dynamo_backend", "no",
+                     "main.py",
+                     "--task", "train",
+                     "--config", "configs/flowmatch/bioparse/radiography_v0.yaml", 
+                     "--exp_name", "debug", 
+                     "--device", "cuda",
+                     "--learn_obj", "dice",
+                     "--distribution_training"
+                    ]
+        }
+    ]
+}
 
 
 
@@ -124,9 +124,7 @@
 //     ]
 // }
 
-
-
-// // test
+// test
 // {
 //     // Use IntelliSense to learn about possible attributes.
 //     // Hover to view descriptions of existing attributes.
@@ -144,12 +142,12 @@
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-//             "args": ["--task", "train",
-//                      "--config", "configs/cbm_bioparse/covidct_right+lung_s.yaml",
-//                      "--exp_name", "covid_right_lung_s",
+//             "args": ["--task", "test",
+//                      "--config", "configs/flowmatch/bioparse/radiography_.yaml", 
+//                      "--exp_name", "imgrm_clip",
 //                      "--device", "cuda",
 //                      "--test_type", "test",
-//                      "--learn_obj", "cbm",
+//                      "--learn_obj", "recflow",
 //                      "--load_checkpoint",
 //                     ]
 //         }
