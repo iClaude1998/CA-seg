@@ -7,7 +7,7 @@ datasets:
   batch_size: 128
   root_dir: "/home/yliu/datasets/mediseg/bioparse/amos22"
   name: "bioparse_image" # "bioparse_image"
-  train_rate: 0.8
+  train_rate: 1.
   featuremap_size: 7
   train:
     name: "${datasets.name}"
@@ -43,6 +43,8 @@ model:
     pretrain: "BiomedCLIP"
     num_concepts: 128
     inter_mode: False 
+    no_proj: False
+    one_layer: False
 
 
 trainer:
@@ -67,5 +69,5 @@ log_method: "wandb" # wandb, tensorboard
 
 cbm_produce:
   train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm"
-  val_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm"
+  val_dir:
   test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm"

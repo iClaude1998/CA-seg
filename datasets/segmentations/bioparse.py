@@ -50,6 +50,7 @@ class Bioparse_image(Dataset):
         train_rate: float = 0.8,
         image_size=None,
         featuremap_size=None,
+        gcam_dir='gcam',
     ) -> None:
         super().__init__()
 
@@ -64,7 +65,7 @@ class Bioparse_image(Dataset):
         self.train_rate = train_rate
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
-        self.inter_dir = os.path.join(root_dir, modality, f"{split}_gcam", self.organ)
+        self.inter_dir = os.path.join(root_dir, modality, f"{split}_{gcam_dir}", self.organ)
         # self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
         self.preprocess, _, image_resolution = preprocessors
 
@@ -87,7 +88,7 @@ class Bioparse_image(Dataset):
         mask_name_list = list(map(lambda x: self.produce_mask_names(x), img_name_list))
         
         pairs = [(img_name, mask_name) for img_name, mask_name in zip(img_name_list, mask_name_list) if mask_name in os.listdir(self.mask_dir)]
-        pairs = pairs
+
         self.img_name_list = [pair[0] for pair in pairs]
         self.mask_name_list = [pair[1] for pair in pairs]
         
@@ -98,6 +99,13 @@ class Bioparse_image(Dataset):
             self.img_name_list = self.img_name_list[int(len(self.img_name_list)*self.train_rate):]
             self.mask_name_list = self.mask_name_list[int(len(self.mask_name_list)*self.train_rate):]
         self.intermap_name_list = [f"{os.path.splitext(img_name)[0]}_gcam.npy" for img_name in self.img_name_list]
+        idx_cache = []
+        for i, intermap in enumerate(self.intermap_name_list):
+            if os.path.exists(f"{self.inter_dir}/{intermap}"):
+                idx_cache.append(i)
+        self.intermap_name_list = [self.intermap_name_list[i] for i in idx_cache]
+        self.img_name_list = [self.img_name_list[i] for i in idx_cache]
+        self.mask_name_list = [self.mask_name_list[i] for i in idx_cache]
 
    
         

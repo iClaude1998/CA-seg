@@ -2,7 +2,7 @@ datasets:
   batch_size: 8
   size:
   inter_layer: "layer3"
-  inter_norm: "sigmoid"
+  inter_norm: "minmax"
   basedir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/ISIC"
   resize: True
   train:
@@ -83,7 +83,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: # the name of the loaded checkpoint "checkpoint_iter100000.pth"
+  checkpoint_name: "checkpoint_iter100000.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100

@@ -2,6 +2,7 @@ from .ddpm_trainer import DDPM_Trainer
 from .cbm_trainer import CLIPCBM_Trainer
 from .ddpmpp_trainer import DDPMPP_Trainer
 from .recflow_trainer import Reflow_Trainer
+from .dice_trainer import Dice_Trainer
 from .recflowturb_trainer import ReflowTurb_Trainer
 
 
@@ -111,6 +112,24 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                   accelerator,
                                   cfgs.log_method,
                                   clip_grads=cfgs.trainer.clip_grads)
+        
+    elif cfgs.learn_obj == 'dice':
+        trainer = Dice_Trainer(cfgs.task,
+                               output_dir, 
+                               diffusion_model,
+                               dataloader_pakages,
+                               cfgs.trainer.learning_rate,
+                               cfgs.trainer.gt_type,
+                               device,
+                               cfgs.trainer.use_ema,
+                               cfgs.load_checkpoint,
+                               cfgs.trainer.checkpoint_name,
+                               cfgs.trainer.num_epochs,
+                               cfgs.trainer.save_interval,
+                               accelerator,
+                               cfgs.log_method,
+                               clip_grads=cfgs.trainer.clip_grads,
+                               with_codition=cfgs.trainer.with_codition)
     else:
         raise ValueError(f"Unsupported learning objective: {cfgs.learn_obj}, what do you wanna do ???")
     return trainer

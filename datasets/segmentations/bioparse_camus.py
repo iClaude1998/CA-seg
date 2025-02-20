@@ -1,0 +1,152 @@
+import os 
+import cv2
+import torch 
+import numpy as np
+import pandas as pd
+
+from PIL import Image
+from typing import Any, Dict
+from torch.utils.data import Dataset
+
+from .build_mask_transforms import build_mask_transforms, refine_image_transforms, build_usdf_transforms, build_intermap_transforms
+
+
+
+class Bioparse_camus(Dataset):
+    """
+    A PyTorch Dataset class for loading and preprocessing AMOS images and their corresponding masks.
+    Attributes:
+        root_dir (str): Root directory containing the dataset.
+        modality (str): Modality of the images (e.g., CT, MRI).
+        organ (str): Organ of interest.
+        split (str): Dataset split (e.g., train, val, test).
+        img_dir (str): Directory containing the images.
+        mask_dir (str): Directory containing the masks.
+        preprocess (callable): Preprocessing function for images.
+        image_only (bool): Whether to load only images without masks.
+        mask_transforms (callable): Preprocessing function for masks.
+        img_name_list (list): List of image filenames.
+        mask_name_list (list): List of mask filenames.
+    Methods:
+        __init__(preprocessors, modality, organ, root_dir, split, image_only=False, image_size=None):
+            Initializes the dataset with the given parameters.
+        produce_mask_names(img_name):
+            Generates the corresponding mask filename for a given image filename.
+        produce_sample_list():
+            Produces the list of image and mask filenames, ensuring that masks exist for the images.
+        __len__():
+            Returns the number of samples in the dataset.
+        __getitem__(index):
+            Retrieves the sample (image and mask) at the given index.
+    """
+    
+
+    def __init__(
+        self,
+        preprocessors,
+        view: str,
+        organ: str,
+        root_dir: str,
+        split: str,
+        train_rate: float = 0.8,
+        image_size=None,
+        resize=False,
+        annotation_name='annotation.csv',
+        cbm_dir='cbm',    
+    ) -> None:
+        super().__init__()
+
+        self.root_dir = root_dir
+        self.view = view
+        self.organ = organ
+        self.split = split
+        if self.split == 'train' or self.split == 'val':
+            split = 'train'
+        else:
+            split = 'test'
+        self.cbm_dir = cbm_dir
+        self.train_rate = train_rate
+        self.annotation_path = os.path.join(root_dir, annotation_name)
+        self.preprocess, self.tokenizer, image_resolution = preprocessors
+
+        if image_size is not None and image_size != image_resolution:
+            image_resolution = image_size
+            self.preprocess = refine_image_transforms(self.preprocess, image_resolution)
+
+        self.mask_transforms = build_mask_transforms(image_resolution)
+        self.usdf_transforms = build_usdf_transforms(image_resolution)
+        self.intermap_transforms = build_intermap_transforms(image_resolution, None, resize)
+        self.produce_sample_list()
+
+    
+    def produce_sample_list(self):
+        
+        anns = pd.read_csv(self.annotation_path)
+        
+        pattern = '|'.join(self.organ)
+        anns = anns[anns['mask_path'].str.contains(pattern, na=False, regex=True)]
+        pattern = self.view
+        anns = anns[anns['mask_path'].str.contains(pattern, na=False, regex=True)]
+        train_split = int(len(anns) * 0.6)
+        val_split = int(len(anns) * 0.8)
+        
+        if self.split == 'train':
+            anns = anns[:train_split]
+        elif self.split == 'val':
+            anns = anns[train_split:val_split]
+        else:
+            anns = anns[val_split:]
+        
+        self.img_name_list = anns['img_path'].tolist()
+        self.mask_name_list = anns['mask_path'].tolist()
+        
+        self.intermap_name_list = []
+        for mask_name in self.mask_name_list:
+            prefix, _ = os.path.splitext(mask_name)
+            adir, mask_name = os.path.split(prefix)
+            
+            split = adir.split('_')[0]
+            new_name = f"{split}_{self.cbm_dir}/{mask_name}.npy"
+            self.intermap_name_list.append(new_name)
+    
+
+    def __len__(self):
+        return len(self.img_name_list)
+
+    def __getitem__(self, index) -> Dict[str, Any]:
+        img_name = self.img_name_list[index]
+        image = Image.open(f"{self.root_dir}/{img_name}").convert("RGB")
+        h, w = image.height, image.width
+        image = self.preprocess(image)
+        intermap = np.load(f"{self.root_dir}/{self.intermap_name_list[index]}")
+        
+        prompt = ''
+
+        mask_name = self.mask_name_list[index]
+        mask = Image.open(f"{self.root_dir}/{mask_name}").convert("L")
+        sdf_map = cv2.distanceTransform(np.array(mask), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
+
+        h, w = mask.height, mask.width
+        mask = self.mask_transforms(mask)
+        sdf_map = self.usdf_transforms(sdf_map)
+        intermap = self.intermap_transforms(intermap)
+        text_enc = self.tokenizer(prompt)
+           
+        return_dict= dict(
+                    pixel_values=image,
+                    img_name=os.path.split(img_name)[1],
+                    mask_name=os.path.split(mask_name)[1],
+                    height=h,
+                    width=w,
+                    img_path=f"{self.root_dir}/{img_name}",
+                    mask=mask,
+                    mask_path=f"{self.root_dir}/{mask_name}",
+                    sdf_map=sdf_map,
+                    inter_map=intermap,
+                    )
+        if isinstance(text_enc, dict):
+            return_dict["input_ids"] = text_enc["input_ids"][0]
+            return_dict["attention_mask"] = text_enc["attention_mask"][0]
+        elif isinstance(text_enc, torch.Tensor):
+            return_dict["input_ids"] = text_enc[0]
+        return return_dict

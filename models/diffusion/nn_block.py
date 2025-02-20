@@ -841,6 +841,110 @@ class TwoD_position_embedding(nn.Module):
             return x * pos
     
 
-    
+class ResBlock_(nn.Module):
+    """
+    ResBlock_ is a residual block module used in neural networks for diffusion models.
+    Attributes:
+        channels (int): Number of input channels.
+        dropout (float): Dropout rate.
+        out_channels (int, optional): Number of output channels. Defaults to the number of input channels.
+        use_conv (bool, optional): Whether to use convolution in the skip connection. Defaults to False.
+        use_scale_shift_norm (bool, optional): Whether to use scale-shift normalization. Defaults to False.
+        dims (int, optional): Number of dimensions for the convolution. Defaults to 2.
+        use_checkpoint (bool, optional): Whether to use gradient checkpointing. Defaults to False.
+        up (bool, optional): Whether to use upsampling. Defaults to False.
+        down (bool, optional): Whether to use downsampling. Defaults to False.
+    Methods:
+        forward(x):
+            Args:
+                x (Tensor): An [N x C x ...] Tensor of features.
+            Returns:
+                Tensor: An [N x C x ...] Tensor of outputs.
+        _forward(x):
+            Internal method to apply the block to a Tensor.
+            Args:
+                x (Tensor): An [N x C x ...] Tensor of features.
+            Returns:
+                Tensor: An [N x C x ...] Tensor of outputs.
+    """
+
+    def __init__(
+        self,
+        channels,
+        dropout,
+        out_channels=None,
+        use_conv=False,
+        use_scale_shift_norm=False,
+        dims=2,
+        use_checkpoint=False,
+        up=False,
+        down=False,
+    ):
+        super().__init__()
+        self.channels = channels
+        self.dropout = dropout
+        self.out_channels = out_channels or channels
+        self.use_conv = use_conv
+        self.use_checkpoint = use_checkpoint
+        self.use_scale_shift_norm = use_scale_shift_norm
+
+        self.in_layers = nn.Sequential(
+            normalization(channels),
+            nn.SiLU(),
+            conv_nd(dims, channels, self.out_channels, 3, padding=1),
+        )
+
+        self.updown = up or down
+
+        if up:
+            self.h_upd = Upsample(channels, False, dims)
+            self.x_upd = Upsample(channels, False, dims)
+        elif down:
+            self.h_upd = Downsample(channels, False, dims)
+            self.x_upd = Downsample(channels, False, dims)
+        else:
+            self.h_upd = self.x_upd = nn.Identity()
+
+        self.out_layers = nn.Sequential(
+            normalization(self.out_channels),
+            nn.SiLU(),
+            nn.Dropout(p=dropout),
+            zero_module(
+                conv_nd(dims, self.out_channels, self.out_channels, 3, padding=1)
+            ),
+        )
+
+        if self.out_channels == channels:
+            self.skip_connection = nn.Identity()
+        elif use_conv:
+            self.skip_connection = conv_nd(
+                dims, channels, self.out_channels, 3, padding=1
+            )
+        else:
+            self.skip_connection = conv_nd(dims, channels, self.out_channels, 1)
+
+    def forward(self, x):
+        """
+        Apply the block to a Tensor, conditioned on a timestep embedding.
+
+        :param x: an [N x C x ...] Tensor of features.
+        :return: an [N x C x ...] Tensor of outputs.
+        """
+        return checkpoint(
+            self._forward, (x,), self.parameters(), self.use_checkpoint
+        )
+
+    def _forward(self, x):
+        if self.updown:
+            in_rest, in_conv = self.in_layers[:-1], self.in_layers[-1]
+            h = in_rest(x)
+            h = self.h_upd(h)
+            x = self.x_upd(x)
+            h = in_conv(h)
+        else:
+            h = self.in_layers(x)
+
+        h = self.out_layers(h)
+        return self.skip_connection(x) + h   
 
 

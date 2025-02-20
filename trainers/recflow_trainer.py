@@ -219,7 +219,7 @@ class Reflow_Trainer(object):
                 elif self.log_method == 'tensorboard':
                     self.writer.add_scalar('Training Loss', mean_loss.detach().cpu().numpy(), iter_id)
             
-            if iter_id % (self.save_interval * 100) == 0:
+            if iter_id % (self.save_interval * 500) == 0:
                 vts, random_batch = self.random_inference()
                 if self.accelerator.is_local_main_process:
                     self.visualize(vts, random_batch, iter_id)
@@ -294,7 +294,7 @@ class Reflow_Trainer(object):
         elif testset == 'val':
             dl = self.val_dataloader
         else:
-            raise ValueError(f"Unsupported testset: {testset}")
+            dl = self.train_dataloader
         for batch in tqdm(dl):
             vts, Rs = self.test_step(batch)
             
@@ -315,7 +315,7 @@ class Reflow_Trainer(object):
                 outcomes['dice_I'].extend(dice_batch_I)
                 outcomes['dice_II'].extend(dice_batch_II)
         outcomes = pd.DataFrame(outcomes)
-        outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_{self.checkpoint_name}.csv'), index=False)
+        outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_out.csv'), index=False)
         return outcomes
     
     

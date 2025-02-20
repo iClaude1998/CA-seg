@@ -5,8 +5,8 @@ datasets:
     - "left+lung"
     - "right+lung"
   batch_size: 8
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
-  name: "bioparse_seg" # "bioparse_image" "bioparse_featuremap"
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/Radiography"
+  name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
   train:
@@ -81,4 +81,4 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "wandb" # wandb, tensorboard
+log_method: "tensorboard" # wandb, tensorboard

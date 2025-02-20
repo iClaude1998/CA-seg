@@ -29,11 +29,11 @@ def parse_args():
     parser = ArgumentParser(description='Reflow')
     parser.add_argument('--task', type=str, default='train', help='the task to performs', 
                         choices=['train', 'inf', 'test', 'vis_process', 'thresh_search', 'lr_search', 'produce_cam'])
-    parser.add_argument('--config', type=str, default='configs/isic_clip.yaml', help='path to config file')
+    parser.add_argument('--config', type=str, default='configs/flowmatch/bioparse/amos22_multiple.yaml', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
-    parser.add_argument('--exp_name', type=str, default='debug', help='the name of the experiment')
+    parser.add_argument('--exp_name', type=str, default='covidct2l', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
-    parser.add_argument('--learn_obj', type=str, default='recflow', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'cbm'], help='the learning objective')
+    parser.add_argument('--learn_obj', type=str, default='cbm', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'cbm', 'dice'], help='the learning objective')
     parser.add_argument('--distribution_training', action="store_true", help='whether enable distribution training')
     parser.add_argument('--load_checkpoint', action="store_true", help='whether to load checkpoint')
     parser.add_argument('--test_type', type=str, default='test', help='The test dataset')
@@ -75,13 +75,6 @@ if __name__ == '__main__':
         cliprlp, tokenizer, preprocess, resolution = load_clipcbn_preprocessor(cfgs.model.clip)
         diffusion_model = None
     
-    # train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
-    # val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
-    # test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
-    
-    # train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
-    # val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=False)
-    # test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
     train_dl, val_dl, test_dl, num_training_samples, num_val_samples, num_test_samples = build_dataloaders(cfgs, preprocess, tokenizer, resolution)
     
     dataloader_pakages = {'train': train_dl, 'val': val_dl, 'test': test_dl}

@@ -366,9 +366,11 @@ def mix_images_with_masks(images, masks, alpha_heatmap=0.5, colormap='jet'):
 def compute_metrics(preds, gts, mask_name, metric, thresh=126):
     preds = preds.squeeze(1).cpu().numpy()
     gts = gts.squeeze(1).cpu().numpy()
-    preds = min_max_normalize(preds)
-
-    preds = (255 * preds >= thresh)
+    if thresh is not None:
+        preds = min_max_normalize(preds)
+        preds = (255 * preds >= thresh)
+    else:
+        preds = (preds.sigmoid() > 0.5)
     gts = (255 * gts > 0)
     # visualization_for_debug(preds, gts, mask_name)
     if metric == 'iou':
@@ -472,6 +474,9 @@ def build_dataloaders(cfgs, preprocess, tokenizer, resolution, bz=None):
         train_dataset = build_dataset(cfgs.datasets.train, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
         train_dl = DataLoader(train_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=True)
         num_training_samples = len(train_dataset)
+        
+        # for i in tqdm(range(num_training_samples)):
+        #     _ = train_dataset[i]
     else:
         train_dl = None
         num_training_samples = 0
@@ -480,6 +485,9 @@ def build_dataloaders(cfgs, preprocess, tokenizer, resolution, bz=None):
         val_dataset = build_dataset(cfgs.datasets.val, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
         val_dl = DataLoader(val_dataset, batch_size=cfgs.datasets.batch_size, num_workers=cfgs.num_workers, shuffle=False)
         num_val_samples = len(val_dataset)
+        
+        # for i in tqdm(range(num_val_samples)):
+        #     _ = val_dataset[i]
     else:
         val_dl = None
         num_val_samples = 0
@@ -488,6 +496,9 @@ def build_dataloaders(cfgs, preprocess, tokenizer, resolution, bz=None):
         test_dataset = build_dataset(cfgs.datasets.test, [preprocess, tokenizer, resolution], cfgs.model.clip.inter_mode)
         num_test_samples = len(test_dataset)
         test_dl = DataLoader(test_dataset, batch_size=cfgs.datasets.batch_size, shuffle=False)
+        
+        # for i in tqdm(range(num_test_samples)):
+        #     _ = test_dataset[i]
     else:
         test_dl = None
         num_test_samples = 0

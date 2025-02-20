@@ -1,12 +1,12 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=imgeps_imgmm # job name
+#SBATCH --job-name=baseliner # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=1          # number of tasks (multi-thread job starts 4 tasks)
 #SBATCH --mem=32G              # memory required by the job (if above 64G, use --mem=128G)
 #SBATCH -c 8                # number of cores (sequential job calls a multi-thread program that uses 8 cores)
-#SBATCH --time=12:00:00         # time allocation, which has the format (D-HH:MM), here set to 1 hour
+#SBATCH --time=18:00:00         # time allocation, which has the format (D-HH:MM), here set to 1 hour
 #SBATCH --gres=gpu:1            # generic resource required (here requires 4 GPUs)
 #SBATCH --chdir=/gpfs/users/a1233646/myprojects/clipflow2 # set the working directory
 
@@ -30,7 +30,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 
 python main.py --task train \
-       --exp_name imgeps_imgmm \
-       --config configs/flowmatch/isic_learnattributes/imgeps_imgmm.yaml \
+       --exp_name amos22_aorta \
+       --config configs/cbm_amos22/amos22_aorta.yaml \
        --num_workers 8 \
        --learn_obj recflow \

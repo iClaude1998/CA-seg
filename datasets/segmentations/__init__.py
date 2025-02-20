@@ -6,7 +6,11 @@ from .isic_attribute import ISICattribute_seg
 from .bkai_attributes import Bkaiattributes_seg
 from .busi_attribute import busiattributes_seg
 from .camus_attribute import camusattributes_seg
+from .bioparse_amos22 import Bioparse_amos22
+from .bioparse_multiclss_amos22 import Bioparse_segmentation_amos22
+from .bioparse_camus import Bioparse_camus
 
 
 __all__ = ["ISIC_seg", "ISICattribute_seg", "Bkaiattributes_seg", "busiattributes_seg", "camusattributes_seg", "ISIC_image", 
-           "Bioparse_image", "Bioparse_segmentation", "Bioparse_segmentation2"]
+           "Bioparse_image", "Bioparse_segmentation", "Bioparse_segmentation2", "Bioparse_amos22", "Bioparse_segmentation_amos22",
+           "Bioparse_camus"]

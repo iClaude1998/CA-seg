@@ -26,7 +26,7 @@
 // }
 
 
-// train
+// // train
 // {
 //     // Use IntelliSense to learn about possible attributes.
 //     // Hover to view descriptions of existing attributes.
@@ -45,10 +45,10 @@
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
 //             "args": ["--task", "train",
-//                      "--config", "configs/flowmatch/bioparse/radiography_biomedclip.yaml",
+//                      "--config", "configs/flowmatch/bioparse/radiography_v0.yaml",
 //                      "--exp_name", "debug", 
 //                      "--device", "cuda",
-//                      "--learn_obj", "recflow"]
+//                      "--learn_obj", "dice"]
 //         }
 //     ]
 // }
@@ -124,7 +124,13 @@
 //     ]
 // }
 
+<<<<<<< HEAD
 // test
+=======
+
+
+// // test
+>>>>>>> 8e144d9c47ee4ce69613716f5b4719496c9bf1e7
 // {
 //     // Use IntelliSense to learn about possible attributes.
 //     // Hover to view descriptions of existing attributes.
@@ -142,12 +148,21 @@
 //                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
 //                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
 //                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
+<<<<<<< HEAD
 //             "args": ["--task", "test",
 //                      "--config", "configs/flowmatch/bioparse/radiography_.yaml", 
 //                      "--exp_name", "imgrm_clip",
 //                      "--device", "cuda",
 //                      "--test_type", "test",
 //                      "--learn_obj", "recflow",
+=======
+//             "args": ["--task", "train",
+//                      "--config", "configs/cbm_bioparse/covidct_right+lung_s.yaml",
+//                      "--exp_name", "covid_right_lung_s",
+//                      "--device", "cuda",
+//                      "--test_type", "test",
+//                      "--learn_obj", "cbm",
+>>>>>>> 8e144d9c47ee4ce69613716f5b4719496c9bf1e7
 //                      "--load_checkpoint",
 //                     ]
 //         }
