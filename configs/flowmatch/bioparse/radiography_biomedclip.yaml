@@ -4,9 +4,9 @@ datasets:
   organ: 
     - "left+lung"
     - "right+lung"
-  batch_size: 4
+  batch_size: 8
   root_dir: "/data/claude/datasets/medisegs/bioparse/Radiography"
-  name: "bioparse_seg" # "bioparse_image" "bioparse_featuremap"
+  name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: True
   train:
@@ -77,4 +77,4 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
-log_method: "tensorboard" # wandb, tensorboard
+log_method: "wandb" # wandb, tensorboard
