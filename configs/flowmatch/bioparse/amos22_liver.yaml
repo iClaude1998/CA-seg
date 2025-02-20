@@ -2,18 +2,10 @@ datasets:
   size:
   modality: "MRI"
   organ: 
-<<<<<<< HEAD:configs/flowmatch/bioparse/radiography_clip.yaml
-    - "left+lung"
-    - "right+lung"
-  batch_size: 8
-  root_dir: "/data/claude/datasets/medisegs/bioparse/Radiography"
-  name: "bioparse_seg" # "bioparse_image" "bioparse_featuremap"
-=======
     - "liver"
   batch_size: 8
   root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/amos22"
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
->>>>>>> 8e144d9c47ee4ce69613716f5b4719496c9bf1e7:configs/flowmatch/bioparse/amos22_liver.yaml
   train_rate: 0.8
   resize: False
   train:

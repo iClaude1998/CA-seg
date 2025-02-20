@@ -176,6 +176,8 @@ class Dice_Trainer(object):
         
         for epoch in range(self.start_epoch, self.num_epochs):
             losses = []
+            if self.accelerator.is_local_main_process:
+                pbar = tqdm(total=len(self.train_dataloader), desc=f"Epoch {epoch}/{self.num_epochs}")
             for batch in self.train_dataloader:
                 with self.accelerator.accumulate(self.model):
                     loss = self.training_step(batch)
@@ -191,9 +193,11 @@ class Dice_Trainer(object):
                 losses.append(mean_loss.detach().cpu().item())
                 if self.use_ema:
                     self.model_ema(self.model)
+                if self.accelerator.is_local_main_process:
+                    pbar.update(1)
                 
             if epoch % self.save_interval == 0 and self.accelerator.is_local_main_process:
-                self.logger.info(f'Epoch [{epoch}/{self.self.num_epochs}], Loss: {statistics.mean(losses):.4f}')
+                self.logger.info(f'Epoch [{epoch}/{self.num_epochs}], Loss: {statistics.mean(losses):.4f}')
                 if self.log_method == 'wandb':
                     wandb.log({'Training Loss': statistics.mean(losses), 'epoch': epoch})
                 elif self.log_method == 'tensorboard':
@@ -205,6 +209,7 @@ class Dice_Trainer(object):
                     self.visualize(preds, random_batch, epoch)
                 self.save_checkpoints(epoch)
             if self.accelerator.is_local_main_process:
+                pbar.close()
                 print(f"\rEpoch: {epoch}", end='', flush=True)
                 
         # perfect ending
