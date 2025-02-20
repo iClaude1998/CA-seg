@@ -5,7 +5,7 @@ datasets:
     - "left\\+heart\\+atrium"
     - "left\\+heart\\+ventricle"
   batch_size: 8
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/CAMUS"
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/CAMUS"
   name: "bioparse_seg_camus" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
