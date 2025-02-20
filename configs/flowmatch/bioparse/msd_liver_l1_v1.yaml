@@ -7,7 +7,7 @@ datasets:
   root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/MSD"
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
-  resize: False
+  resize: True
   annotation_name: "annotation1l.csv"
   cbm_dir: 'cbm_1l'
   train:
