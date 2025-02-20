@@ -1,7 +1,7 @@
 from .segmentations import (ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, 
                             camusattributes_seg, ISIC_image, Bioparse_image, Bioparse_segmentation, 
-                            Bioparse_segmentation2, Bioparse_amos22, Bioparse_segmentation_amos22
-)
+                            Bioparse_segmentation2, Bioparse_amos22, Bioparse_segmentation_amos22, Bioparse_camus)
+
 
 def build_dataset(config, preprocessors, inter_mode=True):
     
@@ -27,6 +27,9 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_bioparse_amos22_dataset(config, preprocessors)
     elif config.name == "bioparse_seg_amos22":
         return build_bioparse_seg_amos22_dataset(config, preprocessors)
+    elif config.name == "bioparse_seg_camus":
+        return build_bioparse_seg_camus_dataset(config, preprocessors)
+    
 
 
 
@@ -195,4 +198,17 @@ def build_bioparse_seg_amos22_dataset(config, preprocessors):
                                         resize=config.resize,
                                         annotation_name=config.annotation_name,
                                         cbm_dir=config.cbm_dir)
+
+
+def build_bioparse_seg_camus_dataset(config, preprocessors):
+    return Bioparse_camus(preprocessors, 
+                          config.view, 
+                          config.organ, 
+                          config.root_dir, 
+                          config.split, 
+                          config.train_rate,
+                          image_size=tuple(config.image_size) if config.image_size is not None else None,
+                          resize=config.resize,
+                          annotation_name=config.annotation_name,
+                          cbm_dir=config.cbm_dir)
 
