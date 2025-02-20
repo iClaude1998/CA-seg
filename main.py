@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
     parser.add_argument('--exp_name', type=str, default='covidct2l', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
-    parser.add_argument('--learn_obj', type=str, default='cbm', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'cbm'], help='the learning objective')
+    parser.add_argument('--learn_obj', type=str, default='cbm', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'cbm', 'dice'], help='the learning objective')
     parser.add_argument('--distribution_training', action="store_true", help='whether enable distribution training')
     parser.add_argument('--load_checkpoint', action="store_true", help='whether to load checkpoint')
     parser.add_argument('--test_type', type=str, default='test', help='The test dataset')
