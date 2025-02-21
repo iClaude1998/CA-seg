@@ -12,8 +12,8 @@ datasets:
   cbm_dir: "cbm"
   annotation_name: "annotation.csv"
   train:
-    view: "${datasets.view}"
     name: "${datasets.name}"
+    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
@@ -24,8 +24,8 @@ datasets:
     cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
   val:
-    view: "${datasets.view}"
     name: "${datasets.name}"
+    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
@@ -36,8 +36,8 @@ datasets:
     cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
   test:
-    view: "${datasets.view}"
     name: "${datasets.name}"
+    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
@@ -47,7 +47,7 @@ datasets:
     resize: "${datasets.resize}"
     cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
- 
+
 
 model:
   clip:
@@ -79,13 +79,12 @@ model:
     use_new_attention_order: False
     norm_type: "batchnorm"
 
-
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: checkpoint_iter100000.pth # the name of the loaded checkpoint
+  checkpoint_name: "experiments/recflow/bioparse_seg_camus/camus_2ch/checkpoints/checkpoint_iter100000.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100

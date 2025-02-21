@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=chaitai # job name
+#SBATCH --job-name=aisen # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=2          # number of tasks (multi-thread job starts 2 tasks)
@@ -37,14 +37,17 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
+
+
+
 accelerate launch --multi-gpu \
                   --num_processes=2 \
                   --num_machines=1 \
                   --mixed-precision=no \
                   --dynamo_backend=no \
                    main.py --task train \
-                   --exp_name amos22_multiple \
-                   --config configs/flowmatch/bioparse/amos22_multiple.yaml \
+                   --exp_name amos22_liver_baseline_zshot \
+                   --config configs/flowmatch/bioparse/amos22_liver_baseline_zshot.yaml \
                    --num_workers 8 \
                    --learn_obj recflow \
                    --distribution_training

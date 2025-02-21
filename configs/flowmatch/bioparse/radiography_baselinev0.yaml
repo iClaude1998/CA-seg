@@ -1,18 +1,17 @@
 datasets:
   size:
-  view: "4CH"
+  modality: "Normal"
   organ: 
-    - "left\\+heart\\+atrium"
-    - "left\\+heart\\+ventricle"
+    - "left\\+lung"
+    - "right\\+lung"
   batch_size: 8
-  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/CAMUS"
-  name: "bioparse_seg_camus" # "bioparse_image" "bioparse_featuremap"
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/Radiography"
+  name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
-  cbm_dir: "cbm"
-  annotation_name: "annotation.csv"
+  annotation_name: "annotation1l.csv"
+  cbm_dir: 'cbm_1l'
   train:
-    view: "${datasets.view}"
     name: "${datasets.name}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
@@ -21,10 +20,9 @@ datasets:
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-    cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
+    cbm_dir: "${datasets.cbm_dir}"
   val:
-    view: "${datasets.view}"
     name: "${datasets.name}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
@@ -33,10 +31,9 @@ datasets:
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-    cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
+    cbm_dir: "${datasets.cbm_dir}"
   test:
-    view: "${datasets.view}"
     name: "${datasets.name}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
@@ -45,23 +42,23 @@ datasets:
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-    cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
- 
+    cbm_dir: "${datasets.cbm_dir}"
+
 
 model:
   clip:
-    pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32, Biomedclip
+    pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32
     outlayers: 
-      - 11
-      - 11
+      - 3
+      - 7
       - 11
     inter_mode: False
     proj_patch: True
   diffusion:
-    version: "v3"
+    version: "v0"
     image_size: 224
-    in_channels: 4 # 4 for ISIC
+    in_channels: 3 # 4 for ISIC
     num_channels: 128
     out_channels: 1
     num_res_blocks: 2
@@ -77,19 +74,16 @@ model:
     use_scale_shift_norm: -1
     resblock_updown: False
     use_new_attention_order: False
-    norm_type: "batchnorm"
-
 
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: checkpoint_iter100000.pth # the name of the loaded checkpoint
-  num_timesteps: 1000
-  num_iterations: 100000
-  save_interval: 100
-  start_point: "guassian"
+  checkpoint_name: checkpoint_ep100.pth # the name of the loaded checkpoint
+  num_epochs: 100
+  save_interval: 1
+  with_codition: False
   gradient_accumulation_steps: 1
   clip_grads:
 
