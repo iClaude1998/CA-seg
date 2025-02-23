@@ -5,7 +5,8 @@ import open_clip
 from transformers import AutoTokenizer
 from open_clip import create_model_from_pretrained, get_tokenizer
 
-from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN, BiomedCLIPWrapper, Biomedclip, ClipCBN_CLSS
+from .clips import (CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN, 
+                    BiomedCLIPWrapper, Biomedclip, BioMedCLIP_Weakly_Segmentor, PMCCLIP_Weakly_Segmentor)
 from .diffusion import (UNetModel_v1preview, UNetModel_v2preview, UNetModel_v3preview,
                         UNetModel_v1position, UNetModel_v2position, UNetModel_v3position, UNetModel_v0preview)
 
@@ -268,9 +269,11 @@ def load_clipcbn_preprocessor(cfgs):
         tokenizer = AutoTokenizer.from_pretrained('microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract')
         resolution = 224
         in_features = 768
-    
-    if cfgs.task == 'clss':
-        model = ClipCBN_CLSS(backbone, in_features, cfgs.num_concepts, cfgs.num_pixels)
+        
+    if cfgs.task == 'biomed_weakly':
+        model = BioMedCLIP_Weakly_Segmentor(cfgs.num_concepts, cfgs.modality, cfgs.organ)
+    elif cfgs.task == 'pmc_weakly':
+        model = PMCCLIP_Weakly_Segmentor(cfgs.num_concepts, cfgs.modality, cfgs.organ)
     else:
         model = ClipCBN(backbone, in_features, cfgs.num_concepts, cfgs.one_layer)
     

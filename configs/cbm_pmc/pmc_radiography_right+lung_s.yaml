@@ -3,13 +3,13 @@ datasets:
     - 224
     - 224
   modality: "Normal"
-  organ: "left+lung"
+  organ: "right+lung"
   batch_size: 640
   root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
   name: "bioparse_image" # "bioparse_image" 
-  train_rate: 1.
+  train_rate: 0.8
   featuremap_size: 7
-  gcam_dir: "gcam" 
+  gcam_dir: "gcams"
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -43,11 +43,12 @@ datasets:
 
 model:
   clip:
-    pretrain: "BiomedCLIP"
-    num_concepts: 110
+    pretrain: "PMC_CLIP"
+    num_concepts: 128
     inter_mode: False 
     no_proj: True
     one_layer: True
+    task: "cbm"
 
 
 trainer:
@@ -67,10 +68,9 @@ trainer:
   gradient_accumulation_steps: 1
   clip_grads:
 
+cbm_produce:
+  train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm_pmc"
+  val_dir: 
+  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm_pmc"
 
 log_method: "wandb" # wandb, tensorboard
-
-cbm_produce:
-  train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm_1l"
-  val_dir: 
-  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm_1l"

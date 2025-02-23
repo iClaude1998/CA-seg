@@ -109,6 +109,16 @@ class Bioparse_amos22(Dataset):
             prefix, _ = os.path.splitext(name)
             intermap_list.append(f"{prefix}_gcam.npy")
         self.intermap_name_list = intermap_list
+        if self.split == 'crop_train':
+            num_train = int(len(self.img_name_list) * self.train_rate)
+            self.img_name_list = self.img_name_list[:num_train]
+            self.mask_name_list = self.mask_name_list[:num_train]
+            self.intermap_name_list = self.intermap_name_list[:num_train]
+        elif self.split == 'crop_val':
+            num_train = int(len(self.img_name_list) * self.train_rate)
+            self.img_name_list = self.img_name_list[num_train:]
+            self.mask_name_list = self.mask_name_list[num_train:]
+            self.intermap_name_list = self.intermap_name_list[num_train:]
             
         
     def __len__(self):

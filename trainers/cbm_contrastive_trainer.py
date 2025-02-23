@@ -26,7 +26,7 @@ from utils import process_checkpoints, compute_metrics, mix_images_with_masks, s
 
 
 
-class CLIPCBM_Weakly_Trainer(object):
+class CLIPCBM_Contrastive_Trainer(object):
     
     def __init__(
         self,
@@ -46,6 +46,7 @@ class CLIPCBM_Weakly_Trainer(object):
         accelerator=None,
         log_method='wandb',
         clip_grads=None,
+        criterion='match_loss'
     ):
         # instantiate control module
         self.task = task
@@ -62,6 +63,8 @@ class CLIPCBM_Weakly_Trainer(object):
         self.clip_grads = clip_grads
         self.num_epoch = num_epoch
         self.save_interval = save_interval
+        if criterion == 'match_loss':
+            self.criterion = match_loss()
   
         self.create_exp_name()
         self.log_path = os.path.join(output_dir, 'output_logs')
@@ -99,20 +102,16 @@ class CLIPCBM_Weakly_Trainer(object):
     
     def train(self, gradient_accumulation_steps=1):
         
-        if hasattr(self.model, 'stage'):
-            self.model.stage = 'train'
-        
+
         if self.log_method == 'wandb':
             wandb.init(project='clipflow2', name=self.exp_name,
                        config={"learning_rate": self.learning_rate,
                                "batch_size": self.train_dataloader.batch_size,
                                "num_epoch": self.num_epoch}
                       )
-        if hasattr(self.model, 'concept_head'):
-            self.model.concept_head.train()
-        if hasattr(self.model, 'clss_head'):
-            self.model.clss_head.train()
-        
+
+        self.model.concept_head.train()
+
         num_batches = len(self.train_dataloader)
         best_iou, best_dice = 0, 0
         for epoch in range(self.start_epoch, self.num_epoch):
@@ -124,25 +123,12 @@ class CLIPCBM_Weakly_Trainer(object):
                 cams = batch['inter_map'].to(self.device)
                 # sdf_maps = batch['sdf_map'].to(self.device)
                 _ = batch['mask'].to(self.device)
-                gt = batch['label'].to(self.device)
-                if hasattr(self.model, 'stage'):
-                    scores, preds, scores_aug, preds_aug = self.model(images, cams)
-                else:
-                    concept_score, pred = self.model(images, cams)
                 
-                # preds = postprocess_pred(preds)
-                # loss = self.criterion(preds, onehot_maps) + self.regularizer(concept_weights)
-                
-                
-                if hasattr(self.model, 'stage'):
-                    loss = self.criterion(scores, gt[:, None].to(torch.float32))
-                    loss += self.criterion(scores_aug, gt[:, None].to(torch.float32))
-                    loss += self.spatial_loss(preds, preds_aug)
-                else:
-                    loss = self.criterion(concept_score, gt[:, None].to(torch.float32))
+                pos_clip_features, neg_clip_features, preds = self.model(images, cams)
+                loss = self.criterion(pos_clip_features, neg_clip_features, self.model.anchor)
             
                 loss = loss / gradient_accumulation_steps
-                loss.backward()
+                loss.backward(retain_graph=True)
             
                 if iter_id % gradient_accumulation_steps == 0:
                     if self.clip_grads is not None:
@@ -169,18 +155,15 @@ class CLIPCBM_Weakly_Trainer(object):
                 if self.log_method == 'wandb':
                     wandb.log({'IoU': outcomes['iou'], 'epoch': epoch})
                     wandb.log({'Dice': outcomes['dice'], 'epoch': epoch})
-                    wandb.log({'-IoU': outcomes['neg_iou'], 'epoch': epoch})
-                    wandb.log({'-Dice': outcomes['neg_dice'], 'epoch': epoch})
+
                     wandb.log({'Validation Loss': outcomes['loss'], 'epoch': epoch})
                 elif self.log_method == 'tensorboard':
                     self.writer.add_scalar('Validation Loss', outcomes['loss'], epoch)
                     self.writer.add_scalar('Dice', outcomes['dice'], epoch)
                     self.writer.add_scalar('IoU', outcomes['iou'], epoch)
-                    self.writer.add_scalar('-Dice', outcomes['dice'], epoch)
-                    self.writer.add_scalar('-IoU', outcomes['iou'], epoch)
-                
-                iou = max(outcomes['iou'], outcomes['neg_iou'])
-                dice = max(outcomes['dice'], outcomes['neg_dice'])
+
+                iou = outcomes['iou']
+                dice = outcomes['dice']
                 
                 if iou > best_iou and dice > best_dice:
                     checkpoint = {'model': self.model.state_dict()}
@@ -204,18 +187,13 @@ class CLIPCBM_Weakly_Trainer(object):
     
     def distribution_train(self):
         
-        if hasattr(self.model, 'stage'):
-            self.model.stage = 'train'
         
         if self.accelerator.is_local_main_process:
             if self.log_method == 'wandb':
                 wandb.init(project='clipflow2', name=self.exp_name)
                 
-        if hasattr(self.model, 'concept_head'):
-            self.model.concept_head.train()
-        if hasattr(self.model, 'clss_head'):
-            self.model.clss_head.train()
-        
+        self.model.concept_head.train()
+
         num_batches = len(self.train_dataloader)
         for epoch in range(self.start_epoch, self.num_epoch):
             training_loss_temp = []
@@ -224,27 +202,12 @@ class CLIPCBM_Weakly_Trainer(object):
 
                 images = batch['pixel_values'].to(self.device)
                 cams = batch['inter_map'].to(self.device)
-                # sdf_maps = batch['sdf_map'].to(self.device)
-                onehot_maps = batch['mask'].to(self.device)
-                gt = batch['label'].to(self.device)
-                B, _, H, W = cams.shape
-                C = onehot_maps.shape[1]
                 
                 with self.accelerator.accumulate(self.model):
                     
-                    
-                    
-                    if hasattr(self.model, 'stage'):
-                        scores, preds, scores_aug, preds_aug = self.model(images, cams)
-                    else:
-                        concept_score, pred = self.model(images, cams)
+                    pos_clip_features, neg_clip_features, preds = self.model(images, cams)
+                    loss = self.criterion(pos_clip_features, neg_clip_features, self.model.anchor)
 
-                    if hasattr(self.model, 'stage'):
-                        loss = self.criterion(scores, gt[:, None].to(torch.float32))
-                        loss += self.criterion(scores_aug, gt[:, None].to(torch.float32))
-                        loss += self.spatial_loss(preds, preds_aug)
-                    else:
-                        loss = self.criterion(concept_score, gt[:, None].to(torch.float32))
                     self.accelerator.backward(loss)
                     if self.clip_grads is not None:
                         self.accelerator.clip_grad_norm_(self.model.parameters(), self.clip_grads)
@@ -303,12 +266,8 @@ class CLIPCBM_Weakly_Trainer(object):
     
     def validation(self):
         
-        if hasattr(self.model, 'concept_head'):
-            self.model.concept_head.eval()
-        if hasattr(self.model, 'clss_head'):
-            self.model.clss_head.eval()
-        if hasattr(self.model, 'stage'):
-            self.model.stage = 'test'
+
+        self.model.concept_head.eval()
         outcomes = dedict(list)
         dataloader = self.val_dataloader if self.val_dataloader is not None else self.train_dataloader
         for batch in tqdm(dataloader, desc='Validation'):
@@ -316,41 +275,30 @@ class CLIPCBM_Weakly_Trainer(object):
             cams = batch['inter_map'].to(self.device)
             # sdf_maps = batch['sdf_map'].to(self.device)
             onehot_maps = batch['mask'].to(self.device)
-            gts = batch['label'].to(self.device)
             mask_name = batch['mask_name']
 
             with torch.no_grad():
-                concept_score, preds = self.model(images, cams)
+                pos_clip_features, neg_clip_features, preds = self.model(images, cams)
 
                 preds = postprocess_pred(preds, self.with_sigmoid)
-                neg_preds = postprocess_pred(-preds, self.with_sigmoid)
-                loss = self.criterion(concept_score, gts[:, None].to(torch.float32))
+                loss = self.criterion(pos_clip_features, neg_clip_features, self.model.anchor)
 
                 iou_batch = compute_metrics(preds, onehot_maps, mask_name, metric='iou', thresh=17)
                 dice_batch = compute_metrics(preds, onehot_maps, mask_name, metric='dice', thresh=17)
                 
-                neg_iou_batch = compute_metrics(neg_preds, onehot_maps, mask_name, metric='iou', thresh=17)
-                neg_dice_batch = compute_metrics(neg_preds, onehot_maps, mask_name, metric='dice', thresh=17)
+
                 outcomes['iou'].extend(iou_batch)
                 outcomes['dice'].extend(dice_batch)
-                outcomes['neg_iou'].extend(neg_iou_batch)
-                outcomes['neg_dice'].extend(neg_dice_batch)
+
                 outcomes['loss'].append(loss.item())
-                outcomes['label'].extend(gts.cpu().numpy().tolist())
+
+    
+        for key in outcomes.keys():
+            outcomes[key] = statistics.mean(outcomes[key])
             
-        outcomes['iou'] = (np.array(outcomes['iou']) * np.array(outcomes['label'])).sum() / np.array(outcomes['label']).sum()
-        outcomes['dice'] = (np.array(outcomes['dice']) * np.array(outcomes['label'])).sum() / np.array(outcomes['label']).sum()
-        
-        outcomes['neg_iou'] = (np.array(outcomes['neg_iou']) * np.array(outcomes['label'])).sum() / np.array(outcomes['label']).sum()
-        outcomes['neg_dice'] = (np.array(outcomes['neg_dice']) * np.array(outcomes['label'])).sum() / np.array(outcomes['label']).sum()
-        outcomes['loss'] = statistics.mean(outcomes['loss'])
-            
-        if hasattr(self.model, 'concept_head'):
-            self.model.concept_head.train()
-        if hasattr(self.model, 'clss_head'):
-            self.model.clss_head.train()
-        if hasattr(self.model, 'stage'):
-            self.model.stage = 'train'
+
+        self.model.concept_head.train()
+
         return outcomes
     
     
@@ -359,12 +307,9 @@ class CLIPCBM_Weakly_Trainer(object):
         
         if not self.load_succeed:
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
-        if hasattr(self.model, 'concept_head'):
-            self.model.concept_head.eval()
-        if hasattr(self.model, 'clss_head'):
-            self.model.clss_head.eval()
-        if hasattr(self.model, 'stage'):
-            self.model.stage = 'test'
+
+        self.model.concept_head.eval()
+
         
         if testset == 'test':
             dl = self.test_dataloader
@@ -382,7 +327,7 @@ class CLIPCBM_Weakly_Trainer(object):
             mask_name = batch['mask_name']
            
             with torch.no_grad():
-                concept_score, preds = self.model(images, cams)
+                pos_clip_features, neg_clip_features, preds = self.model(images, cams)
                 untrained = torch.mean(cams, dim=1, keepdim=True)
                 
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
@@ -400,7 +345,6 @@ class CLIPCBM_Weakly_Trainer(object):
                 outcomes['iou_II'].extend(iou_batch_II)
                 outcomes['dice_II'].extend(dice_batch_II)
                 
-                outcomes['label'].extend(batch['label'].cpu().numpy().tolist())
             
         outcomes = pd.DataFrame(outcomes)
         outcomes.to_csv(os.path.join(self.log_path, f'outcomes_test_100.csv'), index=False)
@@ -411,13 +355,9 @@ class CLIPCBM_Weakly_Trainer(object):
     def thresh_search(self, metric='dice'):
         if not self.load_succeed:
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
-        if hasattr(self.model, 'concept_head'):
-            self.model.concept_head.eval()
-        if hasattr(self.model, 'clss_head'):
-            self.model.clss_head.eval()
-        if hasattr(self.model, 'stage'):
-            self.model.stage = 'val'
-        
+
+        self.model.concept_head.eval()
+
         best_thresh, best_outcome = 0, 0
         dataloader = self.val_dataloader if self.val_dataloader is not None else self.train_dataloader
         for thresh in range(1, 256):
@@ -429,7 +369,7 @@ class CLIPCBM_Weakly_Trainer(object):
                 onehot_mask = batch['mask'].to(self.device)
 
                 with torch.no_grad():
-                    concept_score, preds = self.model(images, cams)
+                    pos_clip_features, neg_clip_features, preds = self.model(images, cams)
                     result_batch = compute_metrics(preds, onehot_mask, mask_name, metric=metric, thresh=thresh) # stage II
                     results.extend(result_batch)
             
@@ -445,27 +385,25 @@ class CLIPCBM_Weakly_Trainer(object):
     def inference(self):
         if not self.load_succeed:
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
-        if hasattr(self.model, 'concept_head'):
-            self.model.concept_head.eval()
-        if hasattr(self.model, 'clss_head'):
-            self.model.clss_head.eval()
-        if hasattr(self.model, 'stage'):
-            self.model.stage = 'test'
+
+        self.model.concept_head.eval()
+
         dataloader = self.test_dataloader if self.test_dataloader is not None else self.train_dataloader
         for batch in tqdm(dataloader):
             images = batch['pixel_values'].to(self.device)
             cams = batch['inter_map'].to(self.device)
-            sdf_maps = batch['sdf_map'].to(self.device)
+            sdf_maps = batch['mask'].to(self.device)
             mask_name = batch['mask_name']
 
             # gt -> [B, H, W, C]
             h, w = images.shape[-2:]
             with torch.no_grad():
-                concept_score, preds = self.model(images, cams)
-                untrained = torch.mean(cams, dim=1, keepdim=True)
+                pos_clip_features, neg_clip_features, preds = self.model(images, cams)
+                untrained = torch.mean(cams.reshape, dim=1, keepdim=True)
 
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
                 preds = postprocess_pred(preds, self.with_sigmoid)
+                sdf_maps = postprocess_pred(sdf_maps, self.with_sigmoid)
                 
                 untrained = F.interpolate(untrained, size=(h, w), mode='bilinear', align_corners=False)
                 preds = F.interpolate(preds, size=(h, w), mode='bilinear', align_corners=False)
@@ -484,10 +422,9 @@ class CLIPCBM_Weakly_Trainer(object):
         """
         if not self.load_succeed:
             raise FileNotFoundError("No checkpoint found, please check the path (you don't wanna inference from scratch, right? ^ V ^)")
-        if hasattr(self.model, 'concept_head'):
-            self.model.concept_head.eval()
-        if hasattr(self.model, 'clss_head'):
-            self.model.clss_head.eval()
+
+        self.model.concept_head.eval()
+
         
         dataloaders = [loader for loader in [self.train_dataloader, self.val_dataloader, self.test_dataloader] if loader is not None]
         outdirs = [outdir for outdir in [train_outdir, val_outdir, test_outdir] if outdir is not None]
@@ -500,7 +437,7 @@ class CLIPCBM_Weakly_Trainer(object):
                 # gt -> [B, H, W, C]
                 h, w = images.shape[-2:]
                 with torch.no_grad():
-                    concept_score, preds = self.model(images, cams)
+                    pos_clip_features, neg_clip_features, preds = self.model(images, cams)
                     if interpolate:
                         preds = F.interpolate(preds, size=(h, w), mode='bilinear', align_corners=False).detach().cpu().numpy()
                     else:
@@ -555,7 +492,8 @@ class CLIPCBM_Weakly_Trainer(object):
     
     
     def models_to_device(self): 
-        self.model = self.model.to(self.device)   
+        self.model = self.model.to(self.device)
+        self.model.anchor = self.model.anchor.to(self.device)   
 
     
     
@@ -584,7 +522,11 @@ class CLIPCBM_Weakly_Trainer(object):
 
     def configure_optimizers(self):
         
-        params = [param for name, param in self.model.named_parameters() if param.requires_grad]
+        for k, v in self.model.named_parameters():
+            if v.requires_grad:
+                print(k)
+        
+        params = [p for p in self.model.parameters() if p.requires_grad]
         opt = Adam(params, lr=self.learning_rate)
         # we take the 5% of the total steps as the warmup steps
         # warmup_steps = int(len(self.train_dataloader) * self.num_epoch * 0.05)
@@ -631,7 +573,7 @@ class CLIPCBM_Weakly_Trainer(object):
                         img_name = img_name.split('/')[-2:]
                         img_name = '/'.join(img_name)
                         
-                        concept_score, preds = self.model(images, cams)                
+                        pos_clip_features, neg_clip_features, preds = self.model(images, cams)            
                         
                         preds = postprocess_pred(preds, self.with_sigmoid)
                         
@@ -695,14 +637,17 @@ def postprocess_pred(preds, with_sigmoid=True):
     return torch.clamp(preds, min=0)
 
 
-class RegionConsistencyLoss(nn.Module):
-    def __init__(self, reduction='mean'):
-        super(RegionConsistencyLoss, self).__init__()
-        self.reduction = reduction
+class match_loss(nn.Module):
+    def __init__(self, lambda_b=2.4):
+        super().__init__()
+        self.lambda_b = lambda_b
+        self.metrics = torch.nn.CosineSimilarity(dim=1, eps=1e-08)
+
+    def forward(self, pos_fea, neg_fea, anchors):
+
+        pos_sim = (self.metrics(pos_fea, anchors) + 1) / 2
+        neg_sim = (self.metrics(neg_fea, anchors) + 1) / 2
         
-    def forward(self, pred_mask):
-        smoothness_loss = F.mse_loss(pred_mask[:, :, :-1, :], pred_mask[:, :, 1:, :]) + \
-                          F.mse_loss(pred_mask[:, :, :, :-1], pred_mask[:, :, :, 1:])
-        if self.reduction == 'mean':
-            smoothness_loss = smoothness_loss.mean()
-        return smoothness_loss
+        return torch.mean(-torch.log(pos_sim+ 1e-8)) + torch.mean(-self.lambda_b * torch.log(1 - neg_sim + 1e-8))
+        
+        

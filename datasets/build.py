@@ -1,6 +1,7 @@
 from .segmentations import (ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, 
                             camusattributes_seg, ISIC_image, Bioparse_image, Bioparse_segmentation, 
-                            Bioparse_segmentation2, Bioparse_amos22, Bioparse_segmentation_amos22, Bioparse_camus, Bioparse_amos22_weakly)
+                            Bioparse_segmentation2, Bioparse_amos22, Bioparse_segmentation_amos22, 
+                            Bioparse_camus, Bioparse_amos22_weakly, Bioparse_camus_view)
 
 
 def build_dataset(config, preprocessors, inter_mode=True):
@@ -19,18 +20,20 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_isic_image_dataset(config, preprocessors)
     elif config.name == "bioparse_image":
         return build_bioparse_image_dataset(config, preprocessors)
-    elif config.name == "bioparse_seg":
-        return build_bioparse_seg_dataset(config, preprocessors)
-    elif config.name == "bioparse_seg2":
-        return build_bioparse_seg2_dataset(config, preprocessors)
     elif config.name == "bioparse_amos22":
         return build_bioparse_amos22_dataset(config, preprocessors)
+    elif config.name == "bioparse_camus_view":
+        return build_bioparse_camus_view_dataset(config, preprocessors)
     elif config.name == "bioparse_seg_amos22":
         return build_bioparse_seg_amos22_dataset(config, preprocessors)
     elif config.name == "bioparse_seg_camus":
         return build_bioparse_seg_camus_dataset(config, preprocessors)
     elif config.name == "bioparse_amos22_weakly":
         return build_bioparse_amos22_weakly_dataset(config, preprocessors)
+    elif config.name == "bioparse_seg2":
+        return build_bioparse_seg2_dataset(config, preprocessors)
+    elif config.name == "bioparse_seg":
+        return build_bioparse_seg_dataset(config, preprocessors)
     
 
 
@@ -147,6 +150,30 @@ def build_bioparse_image_dataset(config, preprocessors):
                           featuremap_size=config.featuremap_size,
                           gcam_dir=config.gcam_dir
                           )
+    
+def build_bioparse_amos22_dataset(config, preprocessors):
+    return Bioparse_amos22(preprocessors, 
+                           config.modality, 
+                           config.organ, 
+                           config.root_dir, 
+                           config.split, 
+                           config.train_rate,
+                           image_size=tuple(config.image_size) if config.image_size is not None else None,
+                           featuremap_size=config.featuremap_size,
+                           gcam_dir=config.gcam_dir)
+    
+    
+
+def build_bioparse_camus_view_dataset(config, preprocessors):
+    return Bioparse_camus_view(preprocessors, 
+                               config.view, 
+                               config.organ, 
+                               config.root_dir, 
+                               config.split, 
+                               config.train_rate,
+                               image_size=tuple(config.image_size) if config.image_size is not None else None,
+                               featuremap_size=config.featuremap_size,
+                               gcam_dir=config.gcam_dir)
                           
 
 
@@ -174,18 +201,6 @@ def build_bioparse_seg2_dataset(config, preprocessors):
                                   cbm_dir=config.cbm_dir)
 
     
-
-def build_bioparse_amos22_dataset(config, preprocessors):
-    return Bioparse_amos22(preprocessors, 
-                           config.modality, 
-                           config.organ, 
-                           config.root_dir, 
-                           config.split, 
-                           config.train_rate,
-                           image_size=tuple(config.image_size) if config.image_size is not None else None,
-                           featuremap_size=config.featuremap_size,
-                           gcam_dir=config.gcam_dir)
-
 
 
 
@@ -226,4 +241,6 @@ def build_bioparse_amos22_weakly_dataset(config, preprocessors):
                                   image_size=tuple(config.image_size) if config.image_size is not None else None,
                                   featuremap_size=config.featuremap_size,
                                   gcam_dir=config.gcam_dir) 
+
+
 

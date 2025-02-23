@@ -45,10 +45,10 @@
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
             "args": ["--task", "train",
-                     "--config", "configs/cbm_weakly/amos22_liver.yaml",
+                     "--config", "configs/cbm_weakly/amos22_liver_contrastive2.yaml",
                      "--exp_name", "debug", 
                      "--device", "cuda",
-                     "--learn_obj", "cbm_weakly"]
+                     "--learn_obj", "cbm_contrastive"]
         }
     ]
 }

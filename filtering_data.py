@@ -24,16 +24,16 @@ torch.manual_seed(SEED)
 
 def parse_args():
     parser = ArgumentParser(description='Reflow')
-    parser.add_argument('--config', type=str, default='configs/cbm_amos22/amos22_stomach.yaml', help='path to config file')
+    parser.add_argument('--config', type=str, default='configs/cbm_weakly/amos22_liver_biomedcontrastive.yaml', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
-    parser.add_argument('--exp_name', type=str, default='amos22_stomach', help='the name of the experiment')
+    parser.add_argument('--exp_name', type=str, default='amos22_liver_biomedcontrastive', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     
-    task = 1
+    task = 0
     if task == 0:
     
         args = parse_args()
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         for key, value in args_dict.items():
             if value is not None:  # Update only if argument is provided
                 cfgs[key] = value
-        cfgs.learn_obj = 'cbm'
+        cfgs.learn_obj = 'cbm_contrastive'
         cfgs.load_checkpoint = True
         cfgs.task = 'test'
         output_dir = os.path.join('experiments', cfgs.learn_obj, cfgs.datasets.train.name ,cfgs.exp_name)   
