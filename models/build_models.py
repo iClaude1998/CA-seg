@@ -5,8 +5,8 @@ import open_clip
 from transformers import AutoTokenizer
 from open_clip import create_model_from_pretrained, get_tokenizer
 
-from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN, BiomedCLIPWrapper, Biomedclip
-from .diffusion import (UNetModel_v1preview, UNetModel_v2preview, UNetModel_v3preview, 
+from .clips import CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN, BiomedCLIPWrapper, Biomedclip, ClipCBN_CLSS
+from .diffusion import (UNetModel_v1preview, UNetModel_v2preview, UNetModel_v3preview,
                         UNetModel_v1position, UNetModel_v2position, UNetModel_v3position, UNetModel_v0preview)
 
 
@@ -268,7 +268,10 @@ def load_clipcbn_preprocessor(cfgs):
         tokenizer = AutoTokenizer.from_pretrained('microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract')
         resolution = 224
         in_features = 768
-        
-    model = ClipCBN(backbone, in_features, cfgs.num_concepts, cfgs.one_layer)
+    
+    if cfgs.task == 'clss':
+        model = ClipCBN_CLSS(backbone, in_features, cfgs.num_concepts, cfgs.num_pixels)
+    else:
+        model = ClipCBN(backbone, in_features, cfgs.num_concepts, cfgs.one_layer)
     
     return model, tokenizer, preprocess, resolution

@@ -8,7 +8,7 @@ datasets:
   name: "bioparse_seg_amos22" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
-  annotation_name: "annotation_all.csv"
+  annotation_name: "annotation_liver.csv"
   cbm_dir: "cbm"
   train:
     name: "${datasets.name}"

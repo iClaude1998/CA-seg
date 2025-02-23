@@ -46,8 +46,8 @@ accelerate launch --multi-gpu \
                   --mixed-precision=no \
                   --dynamo_backend=no \
                    main.py --task train \
-                   --exp_name amos22_liver_baseline_zshot \
-                   --config configs/flowmatch/bioparse/amos22_liver_baseline_zshot.yaml \
+                   --exp_name amos22_liver_zshot \
+                   --config configs/flowmatch/bioparse/amos22_liver_zshot.yaml \
                    --num_workers 8 \
                    --learn_obj recflow \
                    --distribution_training
