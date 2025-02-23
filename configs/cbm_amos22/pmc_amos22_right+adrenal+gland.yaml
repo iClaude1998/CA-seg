@@ -1,50 +1,55 @@
 datasets:
-  size:
-    - 224
-    - 224
-  modality: "."
-  organ: "left+heart+ventricle"
-  batch_size: 640
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/CAMUS"
-  name: "bioparse_image" # "bioparse_image"
+  name: "bioparse_amos22"
+  modality: "MRI"
+  organ: "right+adrenal+gland"
+  root_dir: "/home/yliu/datasets/mediseg/bioparse/amos22"
   train_rate: 0.8
+  batch_size: 640
+  image_size: 
+    - 224
+    - 224
   featuremap_size: 7
+  gcam_dir: "gcams"
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
-    split: "train"
+    split: "crop_train"
     train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
+    image_size: "${datasets.image_size}"
     featuremap_size: "${datasets.featuremap_size}"
+    gcam_dir: "${datasets.gcam_dir}"
   val:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
-    split: "val"
+    split: "crop_val"
     train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
+    image_size: "${datasets.image_size}"
     featuremap_size: "${datasets.featuremap_size}"
+    gcam_dir: "${datasets.gcam_dir}"
   test:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
-    split: "test"
+    split: "crop_test"
     train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
+    image_size: "${datasets.image_size}"
     featuremap_size: "${datasets.featuremap_size}"
+    gcam_dir: "${datasets.gcam_dir}"
  
 
 model:
   clip:
-    pretrain: "BiomedCLIP"
+    pretrain: "PMC_CLIP"
     num_concepts: 128
     inter_mode: False 
-    no_proj: False
-    one_layer: False
+    no_proj: True
+    one_layer: True
+    task: 'cbm'
 
 
 trainer:
@@ -53,7 +58,7 @@ trainer:
   use_ema: False
   checkpoint_name: "best.pth" # the name of the loaded checkpoint "best.pth"
   num_epoch: 100
-  save_interval: 20
+  save_interval: 100
   valiation_interval: 1
   sum_for_last: True
   gamma: 0.98 # the gamma of the Exp learning rate scheduler, normally 0.9~0.99
