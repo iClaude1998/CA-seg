@@ -10,9 +10,10 @@ from .bioparse_amos22 import Bioparse_amos22
 from .bioparse_amos22_weakly import Bioparse_amos22_weakly
 from .bioparse_multiclss_amos22 import Bioparse_segmentation_amos22
 from .bioparse_camus import Bioparse_camus
+from .bioparse_navive import Bioparse_navive
 
 
 
 __all__ = ["ISIC_seg", "ISICattribute_seg", "Bkaiattributes_seg", "busiattributes_seg", "camusattributes_seg", "ISIC_image", 
            "Bioparse_image", "Bioparse_segmentation", "Bioparse_segmentation2", "Bioparse_amos22", "Bioparse_segmentation_amos22",
-           "Bioparse_camus", "Bioparse_amos22_weakly", "Bioparse_camus_view"]
+           "Bioparse_camus", "Bioparse_amos22_weakly", "Bioparse_camus_view", "Bioparse_navive"]

@@ -359,8 +359,13 @@ def mix_images_with_masks(images, masks, alpha_heatmap=0.5, colormap='jet'):
     masks = min_max_normalize(masks)
     
     rgb_heatmaps_np = cmap(masks)[..., :3]
-    overlayed_images = (1 - alpha_heatmap) * images + alpha_heatmap * rgb_heatmaps_np
-    return np.clip(overlayed_images, a_min=0., a_max=1.)
+    if len(rgb_heatmaps_np.shape) == 5:
+        for i in range(rgb_heatmaps_np.shape[1]):
+            rgb_heatmaps_np_i = rgb_heatmaps_np[:, i]
+            images = (1 - alpha_heatmap) * images + alpha_heatmap * rgb_heatmaps_np_i
+    else:
+        images = (1 - alpha_heatmap) * images + alpha_heatmap * rgb_heatmaps_np
+    return np.clip(images, a_min=0., a_max=1.)
 
 
 def compute_metrics(preds, gts, mask_name, metric, thresh=126):
