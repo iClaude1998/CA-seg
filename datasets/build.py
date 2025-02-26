@@ -1,7 +1,7 @@
 from .segmentations import (ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, 
                             camusattributes_seg, ISIC_image, Bioparse_image, Bioparse_segmentation, 
                             Bioparse_segmentation2, Bioparse_amos22, Bioparse_segmentation_amos22, 
-                            Bioparse_camus, Bioparse_amos22_weakly, Bioparse_camus_view)
+                            Bioparse_camus, Bioparse_amos22_weakly, Bioparse_camus_view, Bioparse_navive)
 
 
 def build_dataset(config, preprocessors, inter_mode=True):
@@ -34,6 +34,8 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_bioparse_seg2_dataset(config, preprocessors)
     elif config.name == "bioparse_seg":
         return build_bioparse_seg_dataset(config, preprocessors)
+    elif config.name == "bioparse_navive":
+        return build_bioparse_navive_dataset(config, preprocessors)
     
 
 
@@ -241,6 +243,17 @@ def build_bioparse_amos22_weakly_dataset(config, preprocessors):
                                   image_size=tuple(config.image_size) if config.image_size is not None else None,
                                   featuremap_size=config.featuremap_size,
                                   gcam_dir=config.gcam_dir) 
+
+
+def build_bioparse_navive_dataset(config, preprocessors):
+    return Bioparse_navive(preprocessors, 
+                           config.modality, 
+                           config.organ, 
+                           config.root_dir, 
+                           config.split, 
+                           config.view,
+                           config.train_rate,
+                           image_size=tuple(config.image_size) if config.image_size is not None else None)
 
 
 

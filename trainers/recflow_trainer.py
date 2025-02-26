@@ -242,10 +242,11 @@ class Reflow_Trainer(object):
     def training_step(self, batch):
        
         images, text_ids, gt, Rs = self.get_input(batch)
-        B = gt.shape[0]
+
+        B, C, H, W = gt.shape
         # zT = torch.randn_like(sdf_map, device=self.device)
         
-        z0, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
+        z0, conditions, Rs, intermediate = self.get_conditions(images, text_ids, gt, Rs=Rs)
         
         t = torch.randint(1, self.num_timesteps, (B,), device=self.device).long()
         t_norm = t.float() / (self.num_timesteps - 1)
@@ -348,7 +349,7 @@ class Reflow_Trainer(object):
 
         images, text_ids, gt, Rs = self.get_input(batch)            
         B = gt.shape[0]
-        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
+        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, gt, Rs=Rs)
         eular_steps = [999, 749, 499, 249]            
         # eular_steps = [999,899,799,699,599,499,399,299,199,99]
         # eular_steps = list(range(1000))[::-1]
@@ -368,7 +369,7 @@ class Reflow_Trainer(object):
     def test_step_process(self, batch):
         images, text_ids, gt, Rs = self.get_input(batch)            
         B = gt.shape[0]
-        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, Rs=Rs)
+        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, gt, Rs=Rs)
         eular_steps = list(range(1000))[::-1]
         with torch.no_grad():           
             for i, step in enumerate(eular_steps):
@@ -383,7 +384,7 @@ class Reflow_Trainer(object):
         
     
     
-    def get_conditions(self, images, text_ids, Rs=None):
+    def get_conditions(self, images, text_ids, gt, Rs=None):
         if Rs is None and self.inter_mode:
             Rs, intermediate = self.clip_model(images, text_ids)
             B = Rs.shape[0]
@@ -399,10 +400,10 @@ class Reflow_Trainer(object):
             z0 = Rs
             conditions = images
         elif self.start_point == "guassian":
-            z0 = torch.randn_like(images[:, 0:1], device=images.device)
+            z0 = torch.randn_like(gt, device=images.device)
             conditions = images
         elif self.start_point == "all":
-            z0 = torch.randn_like(images[:, 0:1], device=images.device)
+            z0 = torch.randn_like(gt, device=images.device)
             conditions = torch.cat([images, Rs], dim=1)
         else:
             raise ValueError(f"Unsupported start_point: {self.start_point}")
