@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=aisen # job name
+#SBATCH --job-name=heart # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=2          # number of tasks (multi-thread job starts 2 tasks)
@@ -22,7 +22,7 @@ module load cuDNN/8.6.0.163-CUDA-11.8.0
 conda info --envs
 nvcc -V
 
-# export MASTER_PORT=12340
+export ACCELERATE_PORT=29503
 # echo "NODELIST="${SLURM_NODELIST}
 # master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 # export MASTER_ADDR=$master_addr-ib
@@ -33,24 +33,25 @@ nvcc -V
 # export NCCL_LL_THRESHOLD=0
 # export NCCL_DEBUG=info
 
-export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
-export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
-export XDG_CACHE_HOME=$(pwd)/pretrained/clips
+# export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
+# export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
+# export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-
-
+exp_name=camus_2ch_left+ventricle_v0_baseline
+config=configs/flowmatch/bioparse/camus_2ch_left+ventricle_v0_baseline.yaml
 
 accelerate launch --multi-gpu \
+                  --main_process_port=$ACCELERATE_PORT \
                   --num_processes=2 \
                   --num_machines=1 \
                   --mixed-precision=no \
                   --dynamo_backend=no \
-                   main.py --task train \
-                   --exp_name amos22_liver_zshot \
-                   --config configs/flowmatch/bioparse/amos22_liver_zshot.yaml \
-                   --num_workers 8 \
-                   --learn_obj recflow \
-                   --distribution_training
+                  main.py --task train \
+                  --exp_name ${exp_name} \
+                  --config ${config} \
+                  --num_workers 8 \
+                  --learn_obj dice \
+                  --distribution_training
 
 
 # accelerate launch --multi-gpu \

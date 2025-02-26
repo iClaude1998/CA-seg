@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=0279 # job name
+#SBATCH --job-name=kanrenzhun # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=1          # number of tasks (multi-thread job starts 4 tasks)
@@ -25,8 +25,8 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=amos22_liver_baseline_zshot
-config_file=configs/flowmatch/bioparse/amos22_liver_baseline_zshot.yaml
+exp_name=camus4t2ch_baseline_left+heart+ventricle
+config_file=configs/flowmatch/bioparse/camus4t2ch_baseline_left+heart+ventricle.yaml
 test_type=test
 learn_obj=recflow
 
