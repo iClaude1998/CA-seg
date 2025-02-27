@@ -20,7 +20,6 @@ datasets:
     image_size: "${datasets.size}"
 
 
-
 model:
   clip:
     pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32

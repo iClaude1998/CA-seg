@@ -369,36 +369,42 @@ def mix_images_with_masks(images, masks, alpha_heatmap=0.5, colormap='jet'):
 
 
 def compute_metrics(preds, gts, mask_name, metric, thresh=126):
-    preds = preds.squeeze(1).cpu().numpy()
-    gts = gts.squeeze(1).cpu().numpy()
-    if thresh is not None:
-        preds = min_max_normalize(preds)
-        preds = (255 * preds >= thresh)
-    else:
-        preds = (preds.sigmoid() > 0.5)
-    gts = (255 * gts > 0)
-    # visualization_for_debug(preds, gts, mask_name)
-    if metric == 'iou':
-        intersection = np.logical_and(preds, gts)
-        union = np.logical_or(preds, gts)
-        intersection_batch = np.sum(intersection.astype('float32'), axis=(1, 2))
-        union_batch = np.sum(union.astype('float32'), axis=(1, 2))
-        
-        mask = np.where(union_batch > 0, 1., 0.)
-        union_batch = np.where(union_batch > 0, union_batch, 1e-3)
-        outcome = intersection_batch * mask / union_batch
-    elif metric == 'dice':
-        intersection = np.logical_and(preds, gts)
-        intersection_batch = np.sum(intersection.astype('float32'), axis=(1, 2))
-        pred_batch = np.sum(preds.astype('float32'), axis=(1, 2))
-        gt_batch = np.sum(gts.astype('float32'), axis=(1, 2))
-        denorminztor = pred_batch + gt_batch
-        
-        mask = np.where(denorminztor > 0., 1., 0.)
-        denorminztor = np.where(denorminztor > 0., denorminztor, 1e-3)
-        outcome = (2 * intersection_batch * mask) / denorminztor
-        
-    return outcome
+    # preds = preds.squeeze(1).cpu().numpy()
+    # gts = gts.squeeze(1).cpu().numpy()
+    outcomes = []
+    for i in range(gts.shape[1]):
+        pred = preds[:, i].cpu().numpy()
+        gt = gts[:, i].cpu().numpy()
+        if thresh is not None:
+            pred = min_max_normalize(pred)
+            pred = (255 * pred >= thresh)
+        else:
+            pred = (pred.sigmoid() > 0.5)
+        gt = (255 * gt > 0)
+        # visualization_for_debug(preds, gts, mask_name)
+        if metric == 'iou':
+            intersection = np.logical_and(pred, gt)
+            union = np.logical_or(pred, gt)
+            intersection_batch = np.sum(intersection.astype('float32'), axis=(1, 2))
+            union_batch = np.sum(union.astype('float32'), axis=(1, 2))
+            
+            mask = np.where(union_batch > 0, 1., 0.)
+            union_batch = np.where(union_batch > 0, union_batch, 1e-3)
+            outcome = intersection_batch * mask / union_batch
+        elif metric == 'dice':
+            intersection = np.logical_and(pred, gt)
+            intersection_batch = np.sum(intersection.astype('float32'), axis=(1, 2))
+            pred_batch = np.sum(pred.astype('float32'), axis=(1, 2))
+            gt_batch = np.sum(gt.astype('float32'), axis=(1, 2))
+            denorminztor = pred_batch + gt_batch
+            
+            mask = np.where(denorminztor > 0., 1., 0.)
+            denorminztor = np.where(denorminztor > 0., denorminztor, 1e-3)
+            outcome = (2 * intersection_batch * mask) / denorminztor
+        outcomes.append(outcome)
+    outcomes = np.stack(outcomes, axis=0)
+   
+    return np.mean(outcomes, axis=0)
     
     
     
