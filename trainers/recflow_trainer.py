@@ -5,6 +5,7 @@ import torch
 import random
 import logging
 import statistics
+import numpy as np
 import torchvision
 import pandas as pd
 
@@ -302,18 +303,27 @@ class Reflow_Trainer(object):
             mask_name = batch['mask_name']
             gts = batch['mask']
             if Rs.shape[2:] != gts.shape[2:]:
-                Rs = F.interpolate(Rs, gts.shape[-2:], mode='bilinear', align_corners=False)
+                if len(Rs.shape) < 4:
+                    Rs = Rs.unsqueeze(1)
+                    Rs = F.interpolate(Rs, gts.shape[2:], mode='bilinear', align_corners=False)
+                Rs = F.interpolate(Rs, gts.shape[2:], mode='bilinear', align_corners=False)
             with torch.no_grad():
-                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
+                if Rs.shape == gts.shape:
+                    iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
+                else:
+                    iou_batch_I = np.array([0] * len(mask_name))
+                    
                 iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
-                
-                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=17) # stage I
+                if Rs.shape == gts.shape:
+                    dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=17) # stage I
+                else:
+                    dice_batch_I = np.array([0] * len(mask_name))
                 dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
                 
                 outcomes['mask_name'].extend(mask_name)
-                outcomes['iou_I'].extend(iou_batch_I)
+                # outcomes['iou_I'].extend(iou_batch_I)
                 outcomes['iou_II'].extend(iou_batch_II)
-                outcomes['dice_I'].extend(dice_batch_I)
+                # outcomes['dice_I'].extend(dice_batch_I)
                 outcomes['dice_II'].extend(dice_batch_II)
         outcomes = pd.DataFrame(outcomes)
         outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_out.csv'), index=False)

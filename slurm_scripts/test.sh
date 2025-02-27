@@ -25,8 +25,8 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=camus4t2ch_baseline_left+heart+ventricle
-config_file=configs/flowmatch/bioparse/camus4t2ch_baseline_left+heart+ventricle.yaml
+exp_name=camus_4ch_baseline
+config_file=configs/flowmatch/bioparse_multiple/camus_4ch_baseline.yaml
 test_type=test
 learn_obj=recflow
 
