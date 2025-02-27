@@ -270,8 +270,11 @@ class Dice_Trainer(object):
             mask_name = batch['mask_name']
             gts = batch['mask']
             if Rs.shape[2:] != gts.shape[2:]:
+                if len(Rs.shape) == 3:
+                    Rs = Rs.unsqueeze(1)
                 Rs = F.interpolate(Rs, gts.shape[-2:], mode='bilinear', align_corners=False)
-
+            if Rs.shape[1] != gts.shape[1]:
+                Rs = torch.repeat_interleave(Rs, gts.shape[1], dim=1)
             iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou') # stage I
             iou_batch_II = compute_metrics(preds, gts, mask_name, metric='iou') # stage II
             

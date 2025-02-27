@@ -3,6 +3,7 @@ import sys
 sys.path.append('..')
 import torch
 import random
+import numpy as np
 import logging
 import statistics
 import torchvision
@@ -302,7 +303,11 @@ class Reflow_Trainer(object):
             mask_name = batch['mask_name']
             gts = batch['mask']
             if Rs.shape[2:] != gts.shape[2:]:
+                if len(Rs.shape) == 3:
+                    Rs = Rs.unsqueeze(1)
                 Rs = F.interpolate(Rs, gts.shape[-2:], mode='bilinear', align_corners=False)
+            if Rs.shape[1] != gts.shape[1]:
+                Rs = torch.repeat_interleave(Rs, gts.shape[1], dim=1)
             with torch.no_grad():
                 iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
                 iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II

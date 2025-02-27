@@ -150,7 +150,8 @@ def build_bioparse_image_dataset(config, preprocessors):
                           config.train_rate,
                           image_size=tuple(config.image_size) if config.image_size is not None else None,
                           featuremap_size=config.featuremap_size,
-                          gcam_dir=config.gcam_dir
+                          gcam_dir=config.gcam_dir,
+                          num_concepts=config.num_concepts,
                           )
     
 def build_bioparse_amos22_dataset(config, preprocessors):

@@ -51,6 +51,7 @@ class Bioparse_image(Dataset):
         image_size=None,
         featuremap_size=None,
         gcam_dir='gcam',
+        num_concepts=128,
     ) -> None:
         super().__init__()
 
@@ -63,6 +64,7 @@ class Bioparse_image(Dataset):
         else:
             split = 'test'
         self.train_rate = train_rate
+        self.num_concepts = num_concepts
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
         self.inter_dir = os.path.join(root_dir, modality, f"{split}_{gcam_dir}", self.organ)
@@ -118,6 +120,7 @@ class Bioparse_image(Dataset):
         h, w = image.height, image.width
         image = self.preprocess(image)
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
+        intermap = intermap[:self.num_concepts]
 
         mask_name = self.mask_name_list[index]
 
@@ -158,6 +161,7 @@ class Bioparse_camus_view(Dataset):
         image_size=None,
         featuremap_size=None,
         gcam_dir='gcam',
+        num_concepts=128,
     ) -> None:
         super().__init__()
 
@@ -165,6 +169,7 @@ class Bioparse_camus_view(Dataset):
         self.view = view
         self.organ = organ
         self.split = split
+        self.num_concepts = num_concepts
         if self.split == 'train' or self.split == 'val':
             split = 'train'
         else:
@@ -226,6 +231,7 @@ class Bioparse_camus_view(Dataset):
         h, w = image.height, image.width
         image = self.preprocess(image)
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
+        intermap = intermap[:self.num_concepts]
 
         mask_name = self.mask_name_list[index]
 

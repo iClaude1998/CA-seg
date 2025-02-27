@@ -52,7 +52,7 @@ class Bioparse_navive(Dataset):
         self.usdf_transforms = build_usdf_transforms(image_resolution)
 
         self.produce_sample_list()
-
+    
     
     def produce_sample_list(self):
         
@@ -75,6 +75,7 @@ class Bioparse_navive(Dataset):
             if len(masks) == len(self.organ):
                 pairs.append(pair)
         self.pairs = pairs 
+
     
     def __len__(self):
         return len(self.pairs)

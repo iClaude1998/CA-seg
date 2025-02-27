@@ -1,14 +1,14 @@
 datasets:
   size:
-  modality: "Normal"
+  modality: "."
   organ: 
-    - "left+lung"
-    - "right+lung"
+    - "left+heart+atrium"
+    - "left+heart+ventricle"
   batch_size: 4
-  root_dir: /home/yliu/datasets/mediseg/bioparse/Radiography
+  root_dir: /home/yliu/datasets/mediseg/bioparse/CAMUS
   name: "bioparse_navive" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
-  view:
+  view: "4CH"
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
