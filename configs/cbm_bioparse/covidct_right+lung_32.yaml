@@ -2,15 +2,15 @@ datasets:
   size:
     - 224
     - 224
-  modality: "Normal"
+  modality: "."
   organ: "right+lung"
   batch_size: 640
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
+  root_dir: "/home/yliu/datasets/mediseg/bioparse/COVID19_singleCT"
   name: "bioparse_image" # "bioparse_image" 
   train_rate: 1.0
   featuremap_size: 7
   gcam_dir: "gcams"
-  num_concepts: 64
+  num_concepts: 32
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -22,28 +22,7 @@ datasets:
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
     num_concepts: "${datasets.num_concepts}"
-  # val:
-  #   name: "${datasets.name}"
-  #   modality: "${datasets.modality}"
-  #   organ: "${datasets.organ}"
-  #   root_dir: "${datasets.root_dir}"
-  #   split: "val"
-  #   train_rate: "${datasets.train_rate}"
-  #   image_size: "${datasets.size}"
-  #   featuremap_size: "${datasets.featuremap_size}"
-  #   gcam_dir: "${datasets.gcam_dir}"
-  #   num_concepts: "${datasets.num_concepts}"
-  test:
-    name: "${datasets.name}"
-    modality: "${datasets.modality}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "test"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
-    gcam_dir: "${datasets.gcam_dir}"
-    num_concepts: "${datasets.num_concepts}"
+
 
 model:
   clip:
@@ -59,7 +38,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "experiments/cbm/bioparse_image/radiography_right+lung_64/checkpoints/best.pth" # the name of the loaded checkpoint "best.pth"
+  checkpoint_name: experiments/cbm/bioparse_image/radiography_right+lung_32/checkpoints/best.pth # the name of the loaded checkpoint "best.pth"
   num_epoch: 100
   save_interval: 20
   valiation_interval: 1
@@ -73,8 +52,8 @@ trainer:
   clip_grads:
 
 cbm_produce:
-  train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm_64"
+  train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm_32"
   val_dir: 
-  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm_64"
+  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm_32"
 
 log_method: "wandb" # wandb, tensorboard

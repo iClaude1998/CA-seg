@@ -132,6 +132,7 @@ class Reflow_Trainer(object):
         iter_id = self.start_iteration
         data_iter = iter(self.train_dataloader)
         
+        best_metrics = 0
         while (iter_id < self.num_iterations):
 
             try:
@@ -162,10 +163,20 @@ class Reflow_Trainer(object):
                 elif self.log_method == 'tensorboard':
                     self.writer.add_scalar('Training Loss', loss_mse.detach().cpu().numpy(), iter_id)
             
-            if iter_id % (self.save_interval * 500) == 0:
+            if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
                 self.visualize(vts, random_batch, iter_id)
-                self.save_checkpoints(iter_id)
+                evaluation_outcomes = self.evaluation()
+                if self.log_method == 'wandb':
+                    for key, value in evaluation_outcomes.items():
+                        wandb.log({f'Evaluation {key}': value, 'iteration': iter_id})
+                elif self.log_method == 'tensorboard':
+                    for key, value in evaluation_outcomes.items():
+                        self.writer.add_scalar(key, value, iter_id)
+                if evaluation_outcomes['dice_II'] > best_metrics:
+                    best_metrics = evaluation_outcomes['dice_II']
+                    self.save_checkpoints('best')
+
             print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
         
@@ -190,6 +201,7 @@ class Reflow_Trainer(object):
         iter_id = self.start_iteration
         data_iter = iter(self.train_dataloader)
         
+        best_metrics = 0
         while (iter_id < self.num_iterations):
 
             try:
@@ -220,14 +232,26 @@ class Reflow_Trainer(object):
                 elif self.log_method == 'tensorboard':
                     self.writer.add_scalar('Training Loss', mean_loss.detach().cpu().numpy(), iter_id)
             
-            if iter_id % (self.save_interval * 500) == 0:
+            if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
                 if self.accelerator.is_local_main_process:
                     self.visualize(vts, random_batch, iter_id)
-                self.save_checkpoints(iter_id)
+                    evaluation_outcomes = self.evaluation()
+                    if self.log_method == 'wandb':
+                        for key, value in evaluation_outcomes.items():
+                            wandb.log({f'Evaluation {key}': value, 'iteration': iter_id})
+                    elif self.log_method == 'tensorboard':
+                        for key, value in evaluation_outcomes.items():
+                            self.writer.add_scalar(key, value, iter_id)
+                    if evaluation_outcomes['dice_II'] > best_metrics:
+                        best_metrics = evaluation_outcomes['dice_II']
+                        self.save_checkpoints('best')
+                    
+                # self.save_checkpoints(iter_id)
             if self.accelerator.is_local_main_process:
                 print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
+            
         # perfect ending
         vts, random_batch = self.random_inference()
         self.save_checkpoints(iter_id)
@@ -284,6 +308,37 @@ class Reflow_Trainer(object):
                 mixed_img_gts = mix_images_with_masks(images, gts) 
                 
                 save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
+    
+    
+    def evaluation(self):
+
+        self.diffusion_model.eval()
+        outcomes = dedict(list)
+
+        dl = self.val_dataloader
+        
+        for batch in tqdm(dl):
+            vts, Rs = self.test_step(batch)
+            
+            mask_name = batch['mask_name']
+            gts = batch['mask']
+            if Rs.shape[2:] != gts.shape[2:]:
+                if len(Rs.shape) == 3:
+                    Rs = Rs.unsqueeze(1)
+                Rs = F.interpolate(Rs, gts.shape[-2:], mode='bilinear', align_corners=False)
+            if Rs.shape[1] != gts.shape[1]:
+                Rs = torch.repeat_interleave(Rs, gts.shape[1], dim=1)
+            with torch.no_grad():
+                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
+                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
+                
+                outcomes['iou_II'].extend(iou_batch_II)
+                outcomes['dice_II'].extend(dice_batch_II)
+        
+        for key in outcomes.keys():
+            outcomes[key] = np.mean(outcomes[key])
+        self.diffusion_model.train()
+        return outcomes
     
     
     def test(self, testset='test'):
