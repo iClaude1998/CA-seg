@@ -9,6 +9,7 @@ import torchvision
 import numpy as np
 import pandas as pd
 import importlib.util
+import torch.distributed as dist
 if importlib.util.find_spec('wandb') is not None:
     import wandb
 
@@ -181,10 +182,11 @@ class Dice_Trainer(object):
     def distribution_train(self):
         
         if self.accelerator.is_local_main_process:
+            best_metrics = 0
             if self.log_method == 'wandb':
                 wandb.init(project='clipflow2', name=self.exp_name)
         self.model.train()
-        best_metrics = 0
+        
         for epoch in range(self.start_epoch, self.num_epochs):
             losses = []
             if self.accelerator.is_local_main_process:
@@ -208,8 +210,19 @@ class Dice_Trainer(object):
                 if self.accelerator.is_local_main_process:
                     pbar.update(1)
             
+            self.accelerator.wait_for_everyone()
             evaluation_outcomes = self.evaluation()
-            self.scheduler.step(evaluation_outcomes['dice_II']) 
+            self.accelerator.wait_for_everyone()
+            
+            if self.accelerator.is_local_main_process:
+                dice = evaluation_outcomes['dice_II']
+                dice = torch.tensor(dice, device=self.accelerator.device) 
+            else:
+                dice = torch.tensor(0.0, device=self.accelerator.device) 
+            
+            self.accelerator.wait_for_everyone()
+            dist.broadcast(dice, src=0)
+            self.scheduler.step(dice) 
                  
             if self.accelerator.is_local_main_process:
                 self.logger.info(f'Epoch [{epoch}/{self.num_epochs}], Loss: {statistics.mean(losses):.4f}')
@@ -224,6 +237,8 @@ class Dice_Trainer(object):
                 if evaluation_outcomes['dice_II'] > best_metrics:
                     best_metrics = evaluation_outcomes['dice_II']
                     self.save_checkpoints(epoch, name='best')
+            
+            self.accelerator.wait_for_everyone()
                 
             if self.accelerator.is_local_main_process:
                 pbar.close()
@@ -232,6 +247,8 @@ class Dice_Trainer(object):
         # perfect ending
         preds, random_batch = self.random_inference()
         self.save_checkpoints(epoch + 1, 'last')
+        self.accelerator.wait_for_everyone()
+        
         if self.accelerator.is_local_main_process:
             self.logger.info(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {statistics.mean(losses):.4f}')
             self.visualize(preds, random_batch, epoch + 1)

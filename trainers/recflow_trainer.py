@@ -195,13 +195,13 @@ class Reflow_Trainer(object):
     def distribution_train(self):
         
         if self.accelerator.is_local_main_process:
+            best_metrics = 0
             if self.log_method == 'wandb':
                 wandb.init(project='clipflow2', name=self.exp_name)
         self.diffusion_model.train()
         iter_id = self.start_iteration
         data_iter = iter(self.train_dataloader)
         
-        best_metrics = 0
         while (iter_id < self.num_iterations):
 
             try:
@@ -211,6 +211,8 @@ class Reflow_Trainer(object):
                 # reinitialize data loader
                 data_iter = iter(self.train_dataloader)
                 batch = next(data_iter)
+            
+            self.accelerator.wait_for_everyone()
             with self.accelerator.accumulate(self.diffusion_model):
                 loss_mse = self.training_step(batch)
                 self.accelerator.backward(loss_mse)
@@ -225,6 +227,8 @@ class Reflow_Trainer(object):
             if self.use_ema:
                 self.model_ema(self.model)
             
+            self.accelerator.wait_for_everyone()
+            
             if iter_id % self.save_interval == 0 and self.accelerator.is_local_main_process:
                 self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
                 if self.log_method == 'wandb':
@@ -235,6 +239,8 @@ class Reflow_Trainer(object):
             if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
                 evaluation_outcomes = self.evaluation()
+                self.accelerator.wait_for_everyone()
+                
                 if self.accelerator.is_local_main_process:
                     self.visualize(vts, random_batch, iter_id)
                     if self.log_method == 'wandb':
@@ -246,6 +252,8 @@ class Reflow_Trainer(object):
                     if evaluation_outcomes['dice_II'] > best_metrics:
                         best_metrics = evaluation_outcomes['dice_II']
                         self.save_checkpoints(iter_id, name='best')
+            
+            self.accelerator.wait_for_everyone()
                     
             # self.save_checkpoints(iter_id)
             if self.accelerator.is_local_main_process:
@@ -255,6 +263,8 @@ class Reflow_Trainer(object):
         # perfect ending
         vts, random_batch = self.random_inference()
         self.save_checkpoints(iter_id, 'last')
+        
+        self.accelerator.wait_for_everyone()
         if self.accelerator.is_local_main_process:
             self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
             self.visualize(vts, random_batch, iter_id)

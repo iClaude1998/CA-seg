@@ -5,12 +5,12 @@ datasets:
     - "left\\+lung"
     - "right\\+lung"
   batch_size: 4
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
+  root_dir: "/data/claude/datasets/medisegs/bioparse/Radiography"
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
   annotation_name: "annotation1l.csv"
-  cbm_dir: 'cbm_1l'
+  cbm_dir: 'cbm'
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
