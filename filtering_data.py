@@ -24,16 +24,16 @@ torch.manual_seed(SEED)
 
 def parse_args():
     parser = ArgumentParser(description='Reflow')
-    parser.add_argument('--config', type=str, default='configs/cbm_bioparse/radiography_right+lung_32.yaml', help='path to config file')
+    parser.add_argument('--config', type=str, default='configs/cbm_bioparse/covidct_left+lung_64.yaml', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
-    parser.add_argument('--exp_name', type=str, default='radiography_right+lung_32', help='the name of the experiment')
+    parser.add_argument('--exp_name', type=str, default='covidct_left+lung_64', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     
-    task = 1
+    task =1
     if task == 0:
     
         args = parse_args()
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         
     elif task == 1:
         
-        exps = ["radiography_right+lung_32", "radiography_left+lung_32"]
+        exps = ["covidct_right+lung_64", "covidct_left+lung_64"]
         csv_files = [f'experiments/cbm/bioparse_image/{exp}/output_logs/filtered_infos.csv' for exp in exps]
         df = pd.concat([pd.read_csv(file) for file in csv_files], ignore_index=True)
         df = df.sample(frac=1).reset_index(drop=True)

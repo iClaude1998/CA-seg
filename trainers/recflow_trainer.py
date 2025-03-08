@@ -133,6 +133,7 @@ class Reflow_Trainer(object):
         iter_id = self.start_iteration
         data_iter = iter(self.train_dataloader)
         
+        best_metrics = 0
         while (iter_id < self.num_iterations):
 
             try:
@@ -163,10 +164,20 @@ class Reflow_Trainer(object):
                 elif self.log_method == 'tensorboard':
                     self.writer.add_scalar('Training Loss', loss_mse.detach().cpu().numpy(), iter_id)
             
-            if iter_id % (self.save_interval * 500) == 0:
+            if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
                 self.visualize(vts, random_batch, iter_id)
-                self.save_checkpoints(iter_id)
+                evaluation_outcomes = self.evaluation()
+                if self.log_method == 'wandb':
+                    for key, value in evaluation_outcomes.items():
+                        wandb.log({f'Evaluation {key}': value, 'iteration': iter_id})
+                elif self.log_method == 'tensorboard':
+                    for key, value in evaluation_outcomes.items():
+                        self.writer.add_scalar(key, value, iter_id)
+                if evaluation_outcomes['dice_II'] > best_metrics:
+                    best_metrics = evaluation_outcomes['dice_II']
+                    self.save_checkpoints(iter_id, name='best')
+
             print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
         
@@ -174,7 +185,7 @@ class Reflow_Trainer(object):
         self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss_mse.item():.4f}')
         vts, random_batch = self.random_inference()
         self.visualize(vts, random_batch, iter_id)
-        self.save_checkpoints(iter_id)
+        self.save_checkpoints(iter_id, name='last')
         
         if self.log_method == 'wandb':
             wandb.finish()
@@ -185,6 +196,7 @@ class Reflow_Trainer(object):
     def distribution_train(self):
         
         if self.accelerator.is_local_main_process:
+            best_metrics = 0
             if self.log_method == 'wandb':
                 wandb.init(project='clipflow2', name=self.exp_name)
         self.diffusion_model.train()
@@ -200,6 +212,8 @@ class Reflow_Trainer(object):
                 # reinitialize data loader
                 data_iter = iter(self.train_dataloader)
                 batch = next(data_iter)
+            
+            self.accelerator.wait_for_everyone()
             with self.accelerator.accumulate(self.diffusion_model):
                 loss_mse = self.training_step(batch)
                 self.accelerator.backward(loss_mse)
@@ -214,6 +228,8 @@ class Reflow_Trainer(object):
             if self.use_ema:
                 self.model_ema(self.model)
             
+            self.accelerator.wait_for_everyone()
+            
             if iter_id % self.save_interval == 0 and self.accelerator.is_local_main_process:
                 self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
                 if self.log_method == 'wandb':
@@ -221,17 +237,35 @@ class Reflow_Trainer(object):
                 elif self.log_method == 'tensorboard':
                     self.writer.add_scalar('Training Loss', mean_loss.detach().cpu().numpy(), iter_id)
             
-            if iter_id % (self.save_interval * 500) == 0:
+            if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
+                evaluation_outcomes = self.evaluation()
+                self.accelerator.wait_for_everyone()
+                
                 if self.accelerator.is_local_main_process:
                     self.visualize(vts, random_batch, iter_id)
-                self.save_checkpoints(iter_id)
+                    if self.log_method == 'wandb':
+                        for key, value in evaluation_outcomes.items():
+                            wandb.log({f'Evaluation {key}': value, 'iteration': iter_id})
+                    elif self.log_method == 'tensorboard':
+                        for key, value in evaluation_outcomes.items():
+                            self.writer.add_scalar(key, value, iter_id)
+                    if evaluation_outcomes['dice_II'] > best_metrics:
+                        best_metrics = evaluation_outcomes['dice_II']
+                        self.save_checkpoints(iter_id, name='best')
+            
+            self.accelerator.wait_for_everyone()
+                    
+            # self.save_checkpoints(iter_id)
             if self.accelerator.is_local_main_process:
                 print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
+            
         # perfect ending
         vts, random_batch = self.random_inference()
-        self.save_checkpoints(iter_id)
+        self.save_checkpoints(iter_id, 'last')
+        
+        self.accelerator.wait_for_everyone()
         if self.accelerator.is_local_main_process:
             self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
             self.visualize(vts, random_batch, iter_id)
@@ -285,6 +319,45 @@ class Reflow_Trainer(object):
                 mixed_img_gts = mix_images_with_masks(images, gts) 
                 
                 save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
+    
+    
+    def evaluation(self):
+
+        self.diffusion_model.eval()
+        outcomes = dedict(list)
+        dl = self.val_dataloader
+        
+        for batch in tqdm(dl):
+            vts, _ = self.test_step(batch)
+            mask_name = batch['mask_name']
+            gts = batch['mask']
+            
+            if self.accelerator is not None:
+                vts = self.accelerator.gather(vts)
+                gts = self.accelerator.gather(gts)
+            with torch.no_grad():
+                if self.accelerator is None:
+                    iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
+                    dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
+                    
+                    outcomes['iou_II'].extend(iou_batch_II)
+                    outcomes['dice_II'].extend(dice_batch_II)
+                else:
+                    if self.accelerator.is_main_process:
+                        iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17)
+                        dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17)
+                        outcomes['iou_II'].extend(iou_batch_II) 
+                        outcomes['dice_II'].extend(dice_batch_II)
+        
+        if self.accelerator is not None:
+            if self.accelerator.is_main_process:
+                for key in outcomes.keys():
+                    outcomes[key] = np.mean(outcomes[key])
+        else:
+            for key in outcomes.keys():
+                outcomes[key] = np.mean(outcomes[key])
+        self.diffusion_model.train()
+        return outcomes
     
     
     def test(self, testset='test'):
@@ -439,7 +512,7 @@ class Reflow_Trainer(object):
         
     
     
-    def save_checkpoints(self, iteration):
+    def save_checkpoints(self, iteration, name='best'):
         checkpoint = {
             'model': self.diffusion_model.state_dict(),
             'model_ema': self.model_ema.state_dict() if self.use_ema else None,
@@ -452,7 +525,7 @@ class Reflow_Trainer(object):
             if self.accelerator.is_local_main_process:
                 self.logger.info(f"Saved checkpoint at iteration {iteration}")
         else:
-            torch.save(checkpoint, os.path.join(self.checkpoint_path, f'checkpoint_iter{iteration}.pth'))
+            torch.save(checkpoint, os.path.join(self.checkpoint_path, f'{name}.pth'))
             self.logger.info(f"Saved checkpoint at iteration {iteration}")
     
     
