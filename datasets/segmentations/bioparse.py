@@ -51,6 +51,7 @@ class Bioparse_image(Dataset):
         image_size=None,
         featuremap_size=None,
         gcam_dir='gcam',
+        num_concepts=128,
     ) -> None:
         super().__init__()
 
@@ -63,6 +64,7 @@ class Bioparse_image(Dataset):
         else:
             split = 'test'
         self.train_rate = train_rate
+        self.num_concepts = num_concepts
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
         self.inter_dir = os.path.join(root_dir, modality, f"{split}_{gcam_dir}", self.organ)
@@ -118,6 +120,118 @@ class Bioparse_image(Dataset):
         h, w = image.height, image.width
         image = self.preprocess(image)
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
+        intermap = intermap[:self.num_concepts]
+
+        mask_name = self.mask_name_list[index]
+
+        mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
+        # sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
+        sdf_map = cv2.distanceTransform(np.array(mask), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
+        h, w = mask.height, mask.width
+        mask = self.mask_transforms(mask)
+        sdf_map = self.usdf_transforms(sdf_map)
+           
+        
+        return dict(
+                    pixel_values=image,
+                    img_name=img_name,
+                    mask_name=mask_name,
+                    height=h,
+                    width=w,
+                    img_path=f"{self.img_dir}/{img_name}",
+                    mask=mask,
+                    mask_path=f"{self.mask_dir}/{mask_name}",
+                    sdf_map=sdf_map,
+                    inter_map=torch.from_numpy(intermap).float(),
+                    )
+        
+
+
+class Bioparse_camus_view(Dataset):
+    
+    
+    def __init__(
+        self,
+        preprocessors,
+        view: str,
+        organ: str,
+        root_dir: str,
+        split: str,
+        train_rate: float = 0.8,
+        image_size=None,
+        featuremap_size=None,
+        gcam_dir='gcam',
+        num_concepts=128,
+    ) -> None:
+        super().__init__()
+
+        self.root_dir = root_dir
+        self.view = view
+        self.organ = organ
+        self.split = split
+        self.num_concepts = num_concepts
+        if self.split == 'train' or self.split == 'val':
+            split = 'train'
+        else:
+            split = 'test'
+        self.train_rate = train_rate
+        self.img_dir = os.path.join(root_dir, f'{split}')
+        self.mask_dir = os.path.join(root_dir, f"{split}_mask")
+        self.inter_dir = os.path.join(root_dir, f"{split}_{gcam_dir}", self.organ)
+
+        self.preprocess, _, image_resolution = preprocessors
+
+        if image_size is not None and image_size != image_resolution:
+            image_resolution = image_size
+            self.preprocess = refine_image_transforms(self.preprocess, image_resolution)
+
+        self.mask_transforms = build_mask_transforms(featuremap_size)
+        self.usdf_transforms = build_usdf_transforms(featuremap_size)
+        self.produce_sample_list()
+
+    
+    def produce_mask_names(self, img_name):
+        prefix, suffix = os.path.splitext(img_name)
+        mask_names = f"{prefix}_{self.organ}{suffix}"
+        return mask_names
+    
+    def produce_sample_list(self):
+        img_name_list = sorted([f for f in os.listdir(self.img_dir)])
+        img_name_list = [f for f in img_name_list if self.view in f]
+        mask_name_list = list(map(lambda x: self.produce_mask_names(x), img_name_list))
+        
+        pairs = [(img_name, mask_name) for img_name, mask_name in zip(img_name_list, mask_name_list) if mask_name in os.listdir(self.mask_dir)]
+
+        self.img_name_list = [pair[0] for pair in pairs]
+        self.mask_name_list = [pair[1] for pair in pairs]
+        
+        if self.split == 'train':
+            self.img_name_list = self.img_name_list[:int(len(self.img_name_list)*self.train_rate)]
+            self.mask_name_list = self.mask_name_list[:int(len(self.mask_name_list)*self.train_rate)]
+        elif self.split == 'val':
+            self.img_name_list = self.img_name_list[int(len(self.img_name_list)*self.train_rate):]
+            self.mask_name_list = self.mask_name_list[int(len(self.mask_name_list)*self.train_rate):]
+        self.intermap_name_list = [f"{os.path.splitext(img_name)[0]}_gcam.npy" for img_name in self.img_name_list]
+        idx_cache = []
+        for i, intermap in enumerate(self.intermap_name_list):
+            if os.path.exists(f"{self.inter_dir}/{intermap}"):
+                idx_cache.append(i)
+        self.intermap_name_list = [self.intermap_name_list[i] for i in idx_cache]
+        self.img_name_list = [self.img_name_list[i] for i in idx_cache]
+        self.mask_name_list = [self.mask_name_list[i] for i in idx_cache]
+
+   
+        
+    def __len__(self):
+        return len(self.img_name_list)
+
+    def __getitem__(self, index) -> Dict[str, Any]:
+        img_name = self.img_name_list[index]
+        image = Image.open(f"{self.img_dir}/{img_name}").convert("RGB")
+        h, w = image.height, image.width
+        image = self.preprocess(image)
+        intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
+        intermap = intermap[:self.num_concepts]
 
         mask_name = self.mask_name_list[index]
 

@@ -4,6 +4,8 @@ from .ddpmpp_trainer import DDPMPP_Trainer
 from .recflow_trainer import Reflow_Trainer
 from .dice_trainer import Dice_Trainer
 from .recflowturb_trainer import ReflowTurb_Trainer
+from .cbm_weakly_trainer import CLIPCBM_Weakly_Trainer
+from .cbm_contrastive_trainer import CLIPCBM_Contrastive_Trainer
 
 
 
@@ -112,6 +114,43 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                   accelerator,
                                   cfgs.log_method,
                                   clip_grads=cfgs.trainer.clip_grads)
+        
+    elif cfgs.learn_obj == 'cbm_weakly':
+        trainer = CLIPCBM_Weakly_Trainer(cfgs.task,
+                                        output_dir, 
+                                        clip_model, 
+                                        dataloader_pakages,
+                                        cfgs.trainer.learning_rate,
+                                        device,
+                                        cfgs.load_checkpoint,
+                                        cfgs.trainer.checkpoint_name,
+                                        cfgs.trainer.num_epoch,
+                                        cfgs.trainer.save_interval,
+                                        cfgs.trainer.valiation_interval,
+                                        cfgs.trainer.gamma,
+                                        cfgs.trainer.with_sigmoid,
+                                        accelerator,
+                                        cfgs.log_method,
+                                        clip_grads=cfgs.trainer.clip_grads)
+    
+    elif cfgs.learn_obj == 'cbm_contrastive':
+        trainer = CLIPCBM_Contrastive_Trainer(cfgs.task,
+                                              output_dir, 
+                                              clip_model, 
+                                              dataloader_pakages,
+                                              cfgs.trainer.learning_rate,
+                                              device,
+                                              cfgs.load_checkpoint,
+                                              cfgs.trainer.checkpoint_name,
+                                              cfgs.trainer.num_epoch,
+                                              cfgs.trainer.save_interval,
+                                              cfgs.trainer.valiation_interval,
+                                              cfgs.trainer.gamma,
+                                              cfgs.trainer.with_sigmoid,
+                                              accelerator,
+                                              cfgs.log_method,
+                                              clip_grads=cfgs.trainer.clip_grads,
+                                              criterion='match_loss')
         
     elif cfgs.learn_obj == 'dice':
         trainer = Dice_Trainer(cfgs.task,

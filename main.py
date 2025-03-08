@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
     parser.add_argument('--exp_name', type=str, default='covidct2l', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
-    parser.add_argument('--learn_obj', type=str, default='cbm', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'cbm', 'dice'], help='the learning objective')
+    parser.add_argument('--learn_obj', type=str, default='cbm', choices=['recflow', 'ddpm', 'ddpmpp', 'recflowturb', 'cbm', 'dice', 'cbm_weakly', "cbm_contrastive"], help='the learning objective')
     parser.add_argument('--distribution_training', action="store_true", help='whether enable distribution training')
     parser.add_argument('--load_checkpoint', action="store_true", help='whether to load checkpoint')
     parser.add_argument('--test_type', type=str, default='test', help='The test dataset')
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         device = cfgs.device
         accelerator = None
     
-    if cfgs.learn_obj != 'cbm':
+    if cfgs.learn_obj != 'cbm' and cfgs.learn_obj != 'cbm_weakly' and cfgs.learn_obj != 'cbm_contrastive':
         cliprlp, tokenizer, preprocess, resolution = load_clip_and_tokenizer(cfgs.model.clip, 'cpu')
         diffusion_model = create_diffusion(cfgs.model.diffusion)
     else:

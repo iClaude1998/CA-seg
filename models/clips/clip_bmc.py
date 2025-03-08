@@ -1,4 +1,7 @@
+import torch
+import random
 from torch import nn
+
 
 
 class ClipCBN(nn.Module):
@@ -26,6 +29,7 @@ class ClipCBN(nn.Module):
         self.backbone.eval()
         for param in self.backbone.parameters():
             param.requires_grad = False
-            
+
+
 
 
