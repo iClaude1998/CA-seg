@@ -6,6 +6,7 @@ import torch
 import random
 import logging
 import torchvision
+import numpy as np
 import pandas as pd
 import importlib.util
 if importlib.util.find_spec('wandb') is not None:
@@ -15,6 +16,7 @@ from tqdm import tqdm
 from torch.optim import AdamW
 from monai.losses import DiceLoss
 from torchvision import transforms
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from matplotlib import pyplot as plt
 from torch.nn import functional as F
 from contextlib import contextmanager
@@ -94,6 +96,7 @@ class Dice_Trainer(object):
         
         self.models_to_device()
         self.optimizer = self.configure_optimizers()
+        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5, verbose=True)
         self.num_epochs = num_epochs
         self.save_interval = save_interval
         
@@ -120,6 +123,7 @@ class Dice_Trainer(object):
     def train(self, gradient_accumulation_steps=1):
         
         self.model.train()
+        best_metrics = 0
         for epoch in range(self.start_epoch, self.num_epochs):
             losses = []
             iter_id = 0
@@ -140,26 +144,33 @@ class Dice_Trainer(object):
                 
                 iter_id += 1
                 losses.append(loss.detach().cpu().item())
+            
+            # after each epoch, do evaluation
+            self.logger.info(f'Epoch [{epoch}/{self.num_epochs}], Loss: {statistics.mean(losses):.4f}')
+            evaluation_outcomes = self.evaluation()
+            # log infos
+            if self.log_method == 'wandb':
+                wandb.log({'Training Loss': statistics.mean(losses), 'Epoch': epoch})
+                for key, value in evaluation_outcomes.items():
+                    wandb.log({f'Evaluation {key}': value, 'Epoch': epoch})
+            elif self.log_method == 'tensorboard':
+                self.writer.add_scalar('Training Loss', statistics.mean(losses), epoch)
+                for key, value in evaluation_outcomes.items():
+                    self.writer.add_scalar(key, value, epoch)
                 
-            if epoch % self.save_interval == 0:
-                self.logger.info(f'Epoch [{epoch}/{self.num_epochs}], Loss: {statistics.mean(losses):.4f}')
-                # log infos
-                if self.log_method == 'wandb':
-                    wandb.log({'Training Loss': statistics.mean(losses), 'Epoch': epoch})
-                elif self.log_method == 'tensorboard':
-                    self.writer.add_scalar('Training Loss', statistics.mean(losses), epoch)
-        
-            if epoch % (self.save_interval * 50) == 0:
-                preds, random_batch = self.random_inference()
-                self.visualize(preds, random_batch, epoch)
-                self.save_checkpoints(epoch)
+            # save the best checkpoints        
+            if evaluation_outcomes['dice_II'] > best_metrics:
+                best_metrics = evaluation_outcomes['dice_II']
+                self.save_checkpoints(epoch, 'best')
+                
+            self.scheduler.step(evaluation_outcomes['dice_II'])    
             print(f"\rEpoch: {epoch}", end='', flush=True)
         
         # let's do the last inference and log
         self.logger.info(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {loss.item():.4f}')
         preds, random_batch = self.random_inference()
         self.visualize(preds, random_batch, epoch + 1)
-        self.save_checkpoints(epoch + 1)
+        self.save_checkpoints(epoch + 1, 'last')
         
         if self.log_method == 'wandb':
             wandb.finish()
@@ -173,11 +184,12 @@ class Dice_Trainer(object):
             if self.log_method == 'wandb':
                 wandb.init(project='clipflow2', name=self.exp_name)
         self.model.train()
-        
+        best_metrics = 0
         for epoch in range(self.start_epoch, self.num_epochs):
             losses = []
             if self.accelerator.is_local_main_process:
                 pbar = tqdm(total=len(self.train_dataloader), desc=f"Epoch {epoch}/{self.num_epochs}")
+                
             for batch in self.train_dataloader:
                 with self.accelerator.accumulate(self.model):
                     loss = self.training_step(batch)
@@ -195,26 +207,31 @@ class Dice_Trainer(object):
                     self.model_ema(self.model)
                 if self.accelerator.is_local_main_process:
                     pbar.update(1)
-                
-            if epoch % self.save_interval == 0 and self.accelerator.is_local_main_process:
+            
+            evaluation_outcomes = self.evaluation()
+            self.scheduler.step(evaluation_outcomes['dice_II']) 
+                 
+            if self.accelerator.is_local_main_process:
                 self.logger.info(f'Epoch [{epoch}/{self.num_epochs}], Loss: {statistics.mean(losses):.4f}')
                 if self.log_method == 'wandb':
                     wandb.log({'Training Loss': statistics.mean(losses), 'epoch': epoch})
+                    for key, value in evaluation_outcomes.items():
+                        wandb.log({f'Training {key}': value, 'epoch': epoch})
                 elif self.log_method == 'tensorboard':
                     self.writer.add_scalar('Training Loss', statistics.mean(losses), epoch)
-            
-            if epoch % (self.save_interval * 50) == 0:
-                preds, random_batch = self.random_inference()
-                if self.accelerator.is_local_main_process:
-                    self.visualize(preds, random_batch, epoch)
-                self.save_checkpoints(epoch)
+                    for key, value in evaluation_outcomes.items():
+                        self.writer.add_scalar(f'Training {key}', value, epoch)
+                if evaluation_outcomes['dice_II'] > best_metrics:
+                    best_metrics = evaluation_outcomes['dice_II']
+                    self.save_checkpoints(epoch, name='best')
+                
             if self.accelerator.is_local_main_process:
                 pbar.close()
                 print(f"\rEpoch: {epoch}", end='', flush=True)
                 
         # perfect ending
         preds, random_batch = self.random_inference()
-        self.save_checkpoints(epoch + 1)
+        self.save_checkpoints(epoch + 1, 'last')
         if self.accelerator.is_local_main_process:
             self.logger.info(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {statistics.mean(losses):.4f}')
             self.visualize(preds, random_batch, epoch + 1)
@@ -251,6 +268,48 @@ class Dice_Trainer(object):
                 mixed_img_gts = mix_images_with_masks(images, gts) 
                 
                 save_batch(mixed_img_predits_I, mixed_img_predits_II, mixed_img_gts, mask_names, self.vis_path)
+                
+    
+    @torch.no_grad()
+    def evaluation(self):
+
+        self.model.eval()
+        outcomes = dedict(list)
+
+        dl = self.val_dataloader
+        for batch in tqdm(dl):
+            mask_name = batch['mask_name']
+            gts = batch['mask']
+            preds, _ = self.test_step(batch)
+            
+            if self.accelerator is not None:
+                preds = self.accelerator.gather(preds)
+                gts = self.accelerator.gather(gts)
+            
+            if self.accelerator is None:
+                iou_batch_II = compute_metrics(preds, gts, mask_name, metric='iou') # stage II
+                dice_batch_II = compute_metrics(preds, gts, mask_name, metric='dice') # stage II
+                outcomes['iou_II'].extend(iou_batch_II)
+                outcomes['dice_II'].extend(dice_batch_II)
+            else:
+                if self.accelerator.is_main_process:
+                    iou_batch_II = compute_metrics(preds, gts, mask_name, metric='iou') # stage II
+                    dice_batch_II = compute_metrics(preds, gts, mask_name, metric='dice') # stage II
+                    outcomes['iou_II'].extend(iou_batch_II) 
+                    outcomes['dice_II'].extend(dice_batch_II)
+                
+        
+        if self.accelerator is not None:
+            if self.accelerator.is_main_process:
+                for key in outcomes.keys():
+                    outcomes[key] = np.mean(outcomes[key])
+        else:
+            for key in outcomes.keys():
+                outcomes[key] = np.mean(outcomes[key])
+        self.model.train()
+        return outcomes
+    
+    
     
     @torch.no_grad()
     def test(self, testset='test'):
@@ -316,11 +375,11 @@ class Dice_Trainer(object):
             self.val_dataloader = self.accelerator.prepare(self.val_dataloader)
         if self.test_dataloader is not None:
             self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
-        self.model, self.optimizer = self.accelerator.prepare(self.model, self.optimizer)
+        self.model, self.optimizer, self.scheduler = self.accelerator.prepare(self.model, self.optimizer, self.scheduler)
         
     
     
-    def save_checkpoints(self, epoch):
+    def save_checkpoints(self, epoch, name='best'):
         checkpoint = {
             'model': self.model.state_dict(),
             'model_ema': self.model_ema.state_dict() if self.use_ema else None,
@@ -333,7 +392,7 @@ class Dice_Trainer(object):
             if self.accelerator.is_local_main_process:
                 self.logger.info(f"Saved checkpoint at epoch {epoch}")
         else:
-            torch.save(checkpoint, os.path.join(self.checkpoint_path, f'checkpoint_ep{epoch}.pth'))
+            torch.save(checkpoint, os.path.join(self.checkpoint_path, f'{name}.pth'))
             self.logger.info(f"Saved checkpoint at epoch {epoch}")
     
     

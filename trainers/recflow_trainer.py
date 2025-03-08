@@ -175,7 +175,7 @@ class Reflow_Trainer(object):
                         self.writer.add_scalar(key, value, iter_id)
                 if evaluation_outcomes['dice_II'] > best_metrics:
                     best_metrics = evaluation_outcomes['dice_II']
-                    self.save_checkpoints('best')
+                    self.save_checkpoints(iter_id, name='best')
 
             print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
@@ -184,7 +184,7 @@ class Reflow_Trainer(object):
         self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {loss_mse.item():.4f}')
         vts, random_batch = self.random_inference()
         self.visualize(vts, random_batch, iter_id)
-        self.save_checkpoints(iter_id)
+        self.save_checkpoints(iter_id, name='last')
         
         if self.log_method == 'wandb':
             wandb.finish()
@@ -234,9 +234,9 @@ class Reflow_Trainer(object):
             
             if iter_id % (self.save_interval * 100) == 0:
                 vts, random_batch = self.random_inference()
+                evaluation_outcomes = self.evaluation()
                 if self.accelerator.is_local_main_process:
                     self.visualize(vts, random_batch, iter_id)
-                    evaluation_outcomes = self.evaluation()
                     if self.log_method == 'wandb':
                         for key, value in evaluation_outcomes.items():
                             wandb.log({f'Evaluation {key}': value, 'iteration': iter_id})
@@ -245,16 +245,16 @@ class Reflow_Trainer(object):
                             self.writer.add_scalar(key, value, iter_id)
                     if evaluation_outcomes['dice_II'] > best_metrics:
                         best_metrics = evaluation_outcomes['dice_II']
-                        self.save_checkpoints('best')
+                        self.save_checkpoints(iter_id, name='best')
                     
-                # self.save_checkpoints(iter_id)
+            # self.save_checkpoints(iter_id)
             if self.accelerator.is_local_main_process:
                 print(f"\rIter: {iter_id}", end='', flush=True)
             iter_id += 1
             
         # perfect ending
         vts, random_batch = self.random_inference()
-        self.save_checkpoints(iter_id)
+        self.save_checkpoints(iter_id, 'last')
         if self.accelerator.is_local_main_process:
             self.logger.info(f'Step [{iter_id}/{self.num_iterations}], Loss: {mean_loss.detach().cpu().item():.4f}')
             self.visualize(vts, random_batch, iter_id)
@@ -314,29 +314,37 @@ class Reflow_Trainer(object):
 
         self.diffusion_model.eval()
         outcomes = dedict(list)
-
         dl = self.val_dataloader
         
         for batch in tqdm(dl):
-            vts, Rs = self.test_step(batch)
-            
+            vts, _ = self.test_step(batch)
             mask_name = batch['mask_name']
             gts = batch['mask']
-            if Rs.shape[2:] != gts.shape[2:]:
-                if len(Rs.shape) == 3:
-                    Rs = Rs.unsqueeze(1)
-                Rs = F.interpolate(Rs, gts.shape[-2:], mode='bilinear', align_corners=False)
-            if Rs.shape[1] != gts.shape[1]:
-                Rs = torch.repeat_interleave(Rs, gts.shape[1], dim=1)
+            
+            if self.accelerator is not None:
+                vts = self.accelerator.gather(vts)
+                gts = self.accelerator.gather(gts)
             with torch.no_grad():
-                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
-                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
-                
-                outcomes['iou_II'].extend(iou_batch_II)
-                outcomes['dice_II'].extend(dice_batch_II)
+                if self.accelerator is None:
+                    iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
+                    dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
+                    
+                    outcomes['iou_II'].extend(iou_batch_II)
+                    outcomes['dice_II'].extend(dice_batch_II)
+                else:
+                    if self.accelerator.is_main_process:
+                        iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17)
+                        dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17)
+                        outcomes['iou_II'].extend(iou_batch_II) 
+                        outcomes['dice_II'].extend(dice_batch_II)
         
-        for key in outcomes.keys():
-            outcomes[key] = np.mean(outcomes[key])
+        if self.accelerator is not None:
+            if self.accelerator.is_main_process:
+                for key in outcomes.keys():
+                    outcomes[key] = np.mean(outcomes[key])
+        else:
+            for key in outcomes.keys():
+                outcomes[key] = np.mean(outcomes[key])
         self.diffusion_model.train()
         return outcomes
     
@@ -364,10 +372,10 @@ class Reflow_Trainer(object):
             if Rs.shape[1] != gts.shape[1]:
                 Rs = torch.repeat_interleave(Rs, gts.shape[1], dim=1)
             with torch.no_grad():
-                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
+                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh='otsu') # stage I
                 iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
                 
-                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=17) # stage I
+                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh='otsu') # stage I
                 dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
                 
                 outcomes['mask_name'].extend(mask_name)
@@ -487,7 +495,7 @@ class Reflow_Trainer(object):
         
     
     
-    def save_checkpoints(self, iteration):
+    def save_checkpoints(self, iteration, name='best'):
         checkpoint = {
             'model': self.diffusion_model.state_dict(),
             'model_ema': self.model_ema.state_dict() if self.use_ema else None,
@@ -500,7 +508,7 @@ class Reflow_Trainer(object):
             if self.accelerator.is_local_main_process:
                 self.logger.info(f"Saved checkpoint at iteration {iteration}")
         else:
-            torch.save(checkpoint, os.path.join(self.checkpoint_path, f'checkpoint_iter{iteration}.pth'))
+            torch.save(checkpoint, os.path.join(self.checkpoint_path, f'{name}.pth'))
             self.logger.info(f"Saved checkpoint at iteration {iteration}")
     
     
