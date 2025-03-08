@@ -25,10 +25,10 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=camus_4ch_baseline
-config_file=configs/flowmatch/bioparse_multiple/camus_4ch_baseline.yaml
+exp_name=radiography_right+lung_v0_baseline
+config_file=configs/flowmatch/bioparse/radiography_right+lung_v0_baseline.yaml
 test_type=test
-learn_obj=recflow
+learn_obj=dice
 
 
 python main.py --task test \

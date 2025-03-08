@@ -1,0 +1,70 @@
+datasets:
+  size:
+  modality: "."
+  organ: 
+    - "left\\+lung"
+    - "right\\+lung"
+  batch_size: 8
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/COVID19_singleCT"
+  name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
+  train_rate: 0.8
+  resize: False
+  annotation_name: "annotation_64.csv"
+  cbm_dir: 'cbm_64'
+  train:
+    name: "${datasets.name}"
+    modality: "${datasets.modality}"
+    organ: "${datasets.organ}"
+    root_dir: "${datasets.root_dir}"
+    split: "train"
+    train_rate: "${datasets.train_rate}"
+    image_size: "${datasets.size}"
+    resize: "${datasets.resize}"
+    annotation_name: "${datasets.annotation_name}"
+    cbm_dir: "${datasets.cbm_dir}"
+
+
+model:
+  clip:
+    pretrain: "Pubmedclip" # Pubmedclip, MedICaT, ViT-B-32, Biomedclip
+    outlayers: 
+      - 11
+      - 11
+      - 11
+    inter_mode: False
+    proj_patch: True
+  diffusion:
+    version: "v3"
+    image_size: 224
+    in_channels: 4 # 4 for ISIC
+    num_channels: 128
+    out_channels: 1
+    num_res_blocks: 2
+    attention_resolutions: "16"
+    dropout: 0.0
+    channel_mult: ""
+    num_classes: # set None for avoid label embeddings (why we have it, strange ???)
+    use_checkpoint: True
+    use_fp16: False
+    num_heads: 1
+    num_head_channels: -1
+    num_heads_upsample: -1
+    use_scale_shift_norm: -1
+    resblock_updown: False
+    use_new_attention_order: False
+    norm_type: "batchnorm"
+
+trainer:
+  gt_type: "sdf_map" # sdf_map, mask
+  learning_rate: 1.0e-4
+  output: "output_logs" # experiments/exp_name/logs 
+  use_ema: False
+  checkpoint_name: experiments/recflow/bioparse_seg2/radiography64/checkpoints/checkpoint_iter100000.pth # the name of the loaded checkpoint "checkpoint_iter100000.pth"
+  num_timesteps: 1000
+  num_iterations: 100000
+  save_interval: 100
+  start_point: "guassian"
+  gradient_accumulation_steps: 1
+  clip_grads:
+
+log_method: "tensorboard" # wandb, tensorboard
