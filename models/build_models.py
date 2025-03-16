@@ -40,6 +40,7 @@ def load_clip_and_tokenizer(cfgs, device):
         resolution = 224
         default_imgsize = 224
         model = BiomedCLIPWrapper(Biomedclip(model), device)
+        
     return model, tokenizer, preprocess, resolution
 
 

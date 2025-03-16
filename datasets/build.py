@@ -24,16 +24,16 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_bioparse_amos22_dataset(config, preprocessors)
     elif config.name == "bioparse_camus_view":
         return build_bioparse_camus_view_dataset(config, preprocessors)
-    elif config.name == "bioparse_seg_amos22":
-        return build_bioparse_seg_amos22_dataset(config, preprocessors)
-    elif config.name == "bioparse_seg_camus":
-        return build_bioparse_seg_camus_dataset(config, preprocessors)
     elif config.name == "bioparse_amos22_weakly":
         return build_bioparse_amos22_weakly_dataset(config, preprocessors)
+    elif config.name == "bioparse_seg_camus":
+        return build_bioparse_seg_camus_dataset(config, preprocessors)
     elif config.name == "bioparse_seg2":
         return build_bioparse_seg2_dataset(config, preprocessors)
     elif config.name == "bioparse_seg":
         return build_bioparse_seg_dataset(config, preprocessors)
+    elif config.name == "bioparse_seg_amos22":
+        return build_bioparse_seg_amos22_dataset(config, preprocessors)
     elif config.name == "bioparse_navive":
         return build_bioparse_navive_dataset(config, preprocessors)
     

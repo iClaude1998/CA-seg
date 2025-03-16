@@ -25,8 +25,6 @@ from utils import process_checkpoints, compute_metrics, mix_images_with_masks, s
 
 
 
-
-
 class CLIPCBM_Trainer(object):
     
     def __init__(
@@ -51,6 +49,7 @@ class CLIPCBM_Trainer(object):
         accelerator=None,
         log_method='wandb',
         clip_grads=None,
+        augmentation=False,
     ):
         # instantiate control module
         self.task = task
@@ -76,6 +75,7 @@ class CLIPCBM_Trainer(object):
         self.checkpoint_path = os.path.join(output_dir, 'checkpoints')
         self.vis_path = os.path.join(output_dir, 'visualizations') 
         self.validation_interval = validation_interval
+        self.augmentation = augmentation
         
         # I have to seperate the branches
         if accelerator is None:
@@ -120,14 +120,18 @@ class CLIPCBM_Trainer(object):
         for epoch in range(self.start_epoch, self.num_epoch):
             training_loss_temp = []
             
-            for iter_id, batch in tqdm(enumerate(self.train_dataloader),desc=f'Epoch {epoch}'):
+            for iter_id, batch in tqdm(enumerate(self.train_dataloader), desc=f'Epoch {epoch}'):
 
                 images = batch['pixel_values'].to(self.device)
                 cams = batch['inter_map'].to(self.device)
                 # sdf_maps = batch['sdf_map'].to(self.device)
                 onehot_maps = batch['mask'].to(self.device)
-                concept_weights = self.model(images)
-                preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                
+                if self.augmentation:
+                    preds, concept_weights = self.augment_forward(images, cams)
+                else:
+                    concept_weights = self.model(images)
+                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
 
                 # preds = postprocess_pred(preds)
                 # loss = self.criterion(preds, onehot_maps) + self.regularizer(concept_weights)
@@ -210,8 +214,11 @@ class CLIPCBM_Trainer(object):
                 
                 with self.accelerator.accumulate(self.model):
                 
-                    concept_weights = self.model(images)
-                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                    if self.augmentation:
+                        preds, concept_weights = self.augment_forward(images, cams)
+                    else:
+                        concept_weights = self.model(images)
+                        preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                     # loss = self.criterion(preds, onehot_maps) + self.regularizer(concept_weights)
                     loss = self.criterion(preds, onehot_maps, concept_weights)
                     self.accelerator.backward(loss)
@@ -283,8 +290,11 @@ class CLIPCBM_Trainer(object):
             mask_name = batch['mask_name']
 
             with torch.no_grad():
-                concept_weights = self.model(images)
-                preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                if self.augmentation:
+                    preds, concept_weights = self.augment_forward(images, cams)
+                else:
+                    concept_weights = self.model(images)
+                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                 preds = postprocess_pred(preds, self.with_sigmoid)
                 loss = self.criterion(preds, onehot_maps, concept_weights)
 
@@ -324,10 +334,12 @@ class CLIPCBM_Trainer(object):
             mask_name = batch['mask_name']
            
             with torch.no_grad():
-                concept_weights = self.model(images)
                 untrained = torch.mean(cams, dim=1, keepdim=True)
-                
-                preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                if self.augmentation:
+                    preds, _ = self.augment_forward(images, cams)
+                else:
+                    concept_weights = self.model(images)
+                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
                 
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
                 preds = postprocess_pred(preds, self.with_sigmoid)
@@ -394,10 +406,12 @@ class CLIPCBM_Trainer(object):
             # gt -> [B, H, W, C]
             h, w = images.shape[-2:]
             with torch.no_grad():
-                concept_weights = self.model(images)
-                untrained = torch.mean(cams.reshape, dim=1, keepdim=True)
-                
-                preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                if self.augmentation:
+                    preds, _ = self.augment_forward(images, cams)
+                else:
+                    concept_weights = self.model(images)
+                    untrained = torch.mean(cams.reshape, dim=1, keepdim=True)
+                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
 
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
                 preds = postprocess_pred(preds, self.with_sigmoid)
@@ -432,8 +446,13 @@ class CLIPCBM_Trainer(object):
                 # gt -> [B, H, W, C]
                 h, w = images.shape[-2:]
                 with torch.no_grad():
-                    concept_weights = self.model(images)
-                    preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                    
+                    if self.augmentation:
+                        preds, _ = self.augment_forward(images, cams)
+                    else:
+                        concept_weights = self.model(images)
+                        preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
+                    
                     if interpolate:
                         preds = F.interpolate(preds, size=(h, w), mode='bilinear', align_corners=False).detach().cpu().numpy()
                     else:
@@ -513,7 +532,63 @@ class CLIPCBM_Trainer(object):
         self.model, self.optimizer, self.scheduler = self.accelerator.prepare(self.model, self.optimizer, self.scheduler)
         self.model.to(self.device)
     
-    
+    def augment_forward(self, images, cams):
+        
+        b, ca, hc, wc = cams.shape
+        b, ci, hi, wi = images.shape
+        # Flips
+        images_aug0 = torch.flip(images, dims=[3])
+        cams_aug0 = torch.flip(cams, dims=[3])
+        
+        # scaling 0.8
+        images_aug1 = F.interpolate(images, scale_factor=0.8, mode='bicubic', align_corners=False)
+        cams_aug1 = F.interpolate(cams, scale_factor=0.8, mode='nearest')
+        
+        # scaling 1.2
+        images_aug2 = F.interpolate(images, scale_factor=1.2, mode='bicubic', align_corners=False)
+        cams_aug2 = F.interpolate(cams, scale_factor=1.2, mode='nearest')
+        
+        # Flip + scaling 0.8
+        cams_intermediate = torch.flip(cams, dims=[3])
+        images_intermediate = torch.flip(images, dims=[3])
+        images_aug3 = F.interpolate(images_intermediate, scale_factor=0.8, mode='bicubic', align_corners=False)
+        cams_aug3 = F.interpolate(cams_intermediate, scale_factor=0.8, mode='nearest')
+        
+        # Flip + scaling 1.2
+        cams_intermediate = torch.flip(cams, dims=[3])
+        images_intermediate = torch.flip(images, dims=[3])
+        images_aug4 = F.interpolate(images_intermediate, scale_factor=1.2, mode='bicubic', align_corners=False)
+        cams_aug4 = F.interpolate(cams_intermediate, scale_factor=1.2, mode='nearest')
+        
+        images_group0 = torch.stack([images, images_aug0], dim=0)
+        cams_group0 = torch.stack([cams, cams_aug0], dim=0)
+        
+        images_group1 = torch.stack([images_aug1, images_aug3], dim=0)
+        cams_group1 = torch.stack([cams_aug1, cams_aug3], dim=0)
+        
+        images_group2 = torch.stack([images_aug2, images_aug4], dim=0)
+        cams_group2 = torch.stack([cams_aug2, cams_aug4], dim=0)
+        
+        res = cams.new_zeros((b, 1, hc, wc))
+        for i, (image_group, cams_group) in enumerate(zip([images_group0, images_group1, images_group2], [cams_group0, cams_group1, cams_group2])):
+            _, b, c, h, w = cams_group.shape
+            _, _, ci, hi, wi = image_group.shape
+            concept_weights = self.model(image_group.reshape(-1, ci, hi, wi))
+            preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams_group.reshape(-1, c, h, w), dim=1, keepdim=True)
+            preds = preds.reshape(2, b, 1, h, w)
+            preds_aug0, preds_aug1 = preds[0], preds[1]
+            if i == 0:
+                preds_aug1 = torch.flip(preds_aug1, dims=[3])
+            else:
+                preds_aug0 = F.interpolate(preds_aug0, size=(hc, wc), mode='nearest')
+                preds_aug1 = torch.flip(preds_aug1, dims=[3])
+                preds_aug1 = F.interpolate(preds_aug1, size=(hc, wc), mode='nearest')
+            
+            res += (preds_aug0 + preds_aug1)
+        res = res / 6
+        
+        return res, concept_weights
+        
 
     def configure_optimizers(self):
         

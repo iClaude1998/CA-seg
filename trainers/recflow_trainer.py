@@ -6,6 +6,7 @@ import random
 import numpy as np
 import logging
 import statistics
+import numpy as np
 import torchvision
 import pandas as pd
 
@@ -382,10 +383,16 @@ class Reflow_Trainer(object):
             if Rs.shape[1] != gts.shape[1]:
                 Rs = torch.repeat_interleave(Rs, gts.shape[1], dim=1)
             with torch.no_grad():
-                iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh='otsu') # stage I
+                if Rs.shape == gts.shape:
+                    iou_batch_I = compute_metrics(Rs, gts, mask_name, metric='iou', thresh=17) # stage I
+                else:
+                    iou_batch_I = np.array([0] * len(mask_name))
+                    
                 iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
-                
-                dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh='otsu') # stage I
+                if Rs.shape == gts.shape:
+                    dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=17) # stage I
+                else:
+                    dice_batch_I = np.array([0] * len(mask_name))
                 dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
                 
                 outcomes['mask_name'].extend(mask_name)
@@ -514,7 +521,7 @@ class Reflow_Trainer(object):
             'optimizer': self.optimizer.state_dict()
         }
         if self.accelerator is not None:
-            self.accelerator.save(checkpoint, os.path.join(self.checkpoint_path, f'checkpoint_iter{iteration}.pth'))
+            self.accelerator.save(checkpoint, os.path.join(self.checkpoint_path, f'{name}.pth'))
             if self.accelerator.is_local_main_process:
                 self.logger.info(f"Saved checkpoint at iteration {iteration}")
         else:
@@ -558,6 +565,7 @@ class Reflow_Trainer(object):
             self.logger.info(f"fail loading checkpoint from {checkpoint_path}, please check it, and try again")
             return False
         checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        print("Load checkpoint from iteration: ", checkpoint['iteration'])
         checkpoint = process_checkpoints(checkpoint)
         self.diffusion_model.load_state_dict(checkpoint['model'])
         if self.use_ema and checkpoint['model_ema'] is not None:

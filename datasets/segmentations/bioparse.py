@@ -12,34 +12,7 @@ from .build_mask_transforms import build_mask_transforms, refine_image_transform
 
 
 class Bioparse_image(Dataset):
-    """
-    A PyTorch Dataset class for loading and preprocessing AMOS images and their corresponding masks.
-    Attributes:
-        root_dir (str): Root directory containing the dataset.
-        modality (str): Modality of the images (e.g., CT, MRI).
-        organ (str): Organ of interest.
-        split (str): Dataset split (e.g., train, val, test).
-        img_dir (str): Directory containing the images.
-        mask_dir (str): Directory containing the masks.
-        preprocess (callable): Preprocessing function for images.
-        image_only (bool): Whether to load only images without masks.
-        mask_transforms (callable): Preprocessing function for masks.
-        img_name_list (list): List of image filenames.
-        mask_name_list (list): List of mask filenames.
-    Methods:
-        __init__(preprocessors, modality, organ, root_dir, split, image_only=False, image_size=None):
-            Initializes the dataset with the given parameters.
-        produce_mask_names(img_name):
-            Generates the corresponding mask filename for a given image filename.
-        produce_sample_list():
-            Produces the list of image and mask filenames, ensuring that masks exist for the images.
-        __len__():
-            Returns the number of samples in the dataset.
-        __getitem__(index):
-            Retrieves the sample (image and mask) at the given index.
-    """
     
-
     def __init__(
         self,
         preprocessors,
@@ -68,7 +41,7 @@ class Bioparse_image(Dataset):
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
         self.inter_dir = os.path.join(root_dir, modality, f"{split}_{gcam_dir}", self.organ)
-        # self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
+
         self.preprocess, _, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
@@ -109,10 +82,10 @@ class Bioparse_image(Dataset):
         self.img_name_list = [self.img_name_list[i] for i in idx_cache]
         self.mask_name_list = [self.mask_name_list[i] for i in idx_cache]
 
-   
-        
+
     def __len__(self):
         return len(self.img_name_list)
+
 
     def __getitem__(self, index) -> Dict[str, Any]:
         img_name = self.img_name_list[index]
@@ -131,7 +104,6 @@ class Bioparse_image(Dataset):
         mask = self.mask_transforms(mask)
         sdf_map = self.usdf_transforms(sdf_map)
            
-        
         return dict(
                     pixel_values=image,
                     img_name=img_name,
@@ -220,8 +192,6 @@ class Bioparse_camus_view(Dataset):
         self.img_name_list = [self.img_name_list[i] for i in idx_cache]
         self.mask_name_list = [self.mask_name_list[i] for i in idx_cache]
 
-   
-        
     def __len__(self):
         return len(self.img_name_list)
 
@@ -242,7 +212,6 @@ class Bioparse_camus_view(Dataset):
         mask = self.mask_transforms(mask)
         sdf_map = self.usdf_transforms(sdf_map)
            
-        
         return dict(
                     pixel_values=image,
                     img_name=img_name,
