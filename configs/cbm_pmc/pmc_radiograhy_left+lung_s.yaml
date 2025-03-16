@@ -4,12 +4,13 @@ datasets:
     - 224
   modality: "Normal"
   organ: "left+lung"
-  batch_size: 640
+  batch_size: 80
   root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
   name: "bioparse_image" # "bioparse_image" 
-  train_rate: 0.8
+  train_rate: 1.0
   featuremap_size: 7
   gcam_dir: "gcams"
+  num_concepts: 128
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -20,16 +21,18 @@ datasets:
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
-  val:
-    name: "${datasets.name}"
-    modality: "${datasets.modality}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "val"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
-    gcam_dir: "${datasets.gcam_dir}"
+    num_concepts: "${datasets.num_concepts}"
+  # val:
+  #   name: "${datasets.name}"
+  #   modality: "${datasets.modality}"
+  #   organ: "${datasets.organ}"
+  #   root_dir: "${datasets.root_dir}"
+  #   split: "val"
+  #   train_rate: "${datasets.train_rate}"
+  #   image_size: "${datasets.size}"
+  #   featuremap_size: "${datasets.featuremap_size}"
+  #   gcam_dir: "${datasets.gcam_dir}"
+  #   num_concepts: "${datasets.num_concepts}"
   test:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -40,7 +43,7 @@ datasets:
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
-
+    num_concepts: "${datasets.num_concepts}"
 model:
   clip:
     pretrain: "PMC_CLIP"
@@ -67,6 +70,7 @@ trainer:
   with_sigmoid: True
   gradient_accumulation_steps: 1
   clip_grads:
+  augmentation: True
 
 
 log_method: "wandb" # wandb, tensorboard

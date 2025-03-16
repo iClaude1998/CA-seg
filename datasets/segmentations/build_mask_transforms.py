@@ -70,11 +70,13 @@ def minmx_normalization_usdf(usdf):
     usdf = (usdf - usdf.min()) / (usdf.max() - usdf.min())
     return usdf
 
+
 def sigmoid_normalization_usdf(usdf):
     # R -> [-1, 1]
     usdf = torch.sigmoid(usdf)
     usdf = 2 * (usdf - 0.5)
     return torch.clamp(usdf, min=0)
+
 
 def usdf_function(mask):
     usdf_map = cv2.distanceTransform(mask, cv2.DIST_L2, cv2.DIST_MASK_PRECISE)

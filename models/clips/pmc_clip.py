@@ -1,3 +1,4 @@
+import math
 import torch
 
 from torch import nn 
@@ -71,7 +72,22 @@ class AttentionPool2d(nn.Module):
     def forward(self, x):
         x = x.reshape(x.shape[0], x.shape[1], x.shape[2] * x.shape[3]).permute(2, 0, 1)  # NCHW -> (HW)NC (7*7)xBx2048
         x = torch.cat([x.mean(dim=0, keepdim=True), x], dim=0)  # (HW+1)NC
-        x = x + self.positional_embedding[:, None, :].to(x.dtype)  # (HW+1)NC
+        
+        if x.shape[0] != self.positional_embedding.shape[0]:
+            fsize = int(math.sqrt(x.shape[0] - 1))
+            cls_token, position_tokens = self.positional_embedding[:1, :], self.positional_embedding[1:, :]
+            num_tokens = position_tokens.shape[0]
+            tsize = int(math.sqrt(num_tokens))
+            position_tokens = position_tokens.transpose(0, 1).reshape(-1, tsize, tsize)
+            position_tokens = F.interpolate(position_tokens.unsqueeze(0), size=(fsize, fsize), mode='bilinear', align_corners=False).squeeze(0)
+            position_tokens = position_tokens.reshape(-1, fsize*fsize).transpose(0, 1)
+            positional_embedding = torch.cat([cls_token, position_tokens], dim=0)
+            positional_embedding = positional_embedding[:, None, :].to(x.dtype)
+        else:
+            positional_embedding = self.positional_embedding[:, None, :].to(x.dtype)
+            
+        
+        x = x + positional_embedding  # (HW+1)NC
         x, _ = F.multi_head_attention_forward(
             query=x, key=x, value=x,
             embed_dim_to_check=x.shape[-1],

@@ -113,7 +113,8 @@ def build_trainer(cfgs, output_dir, clip_model, diffusion_model, dataloader_paka
                                   cfgs.trainer.with_sigmoid,
                                   accelerator,
                                   cfgs.log_method,
-                                  clip_grads=cfgs.trainer.clip_grads)
+                                  clip_grads=cfgs.trainer.clip_grads,
+                                  augmentation=cfgs.trainer.augmentation)
         
     elif cfgs.learn_obj == 'cbm_weakly':
         trainer = CLIPCBM_Weakly_Trainer(cfgs.task,

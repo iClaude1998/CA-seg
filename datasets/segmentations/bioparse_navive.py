@@ -76,12 +76,9 @@ class Bioparse_navive(Dataset):
                 pairs.append(pair)
         self.pairs = pairs 
 
-    
     def __len__(self):
         return len(self.pairs)
     
-    
-
     def __getitem__(self, index) -> Dict[str, Any]:
         
         img_name, mask_names = self.pairs[index]
