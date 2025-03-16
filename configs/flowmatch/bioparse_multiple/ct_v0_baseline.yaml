@@ -5,7 +5,7 @@ datasets:
     - "left+lung"
     - "right+lung"
   batch_size: 8
-  root_dir: /home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/COVID19_singleCT
+  root_dir: /home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/COVID19_singleCT
   name: "bioparse_navive" # "bioparse_image" "bioparse_featuremap"
   train_rate: 1.0
   view:
@@ -55,7 +55,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: experiments/dice/bioparse_navive/radiology_v0_baseline/checkpoints/checkpoint_ep100.pth # the name of the loaded checkpoint
+  checkpoint_name: experiments/dice/bioparse_navive/radiology_v0_baseline/checkpoints/best.pth # the name of the loaded checkpoint
   num_epochs: 100
   save_interval: 1
   with_codition: False

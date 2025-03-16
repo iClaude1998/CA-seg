@@ -521,7 +521,7 @@ class Reflow_Trainer(object):
             'optimizer': self.optimizer.state_dict()
         }
         if self.accelerator is not None:
-            self.accelerator.save(checkpoint, os.path.join(self.checkpoint_path, f'checkpoint_iter{iteration}.pth'))
+            self.accelerator.save(checkpoint, os.path.join(self.checkpoint_path, f'{name}.pth'))
             if self.accelerator.is_local_main_process:
                 self.logger.info(f"Saved checkpoint at iteration {iteration}")
         else:
@@ -565,6 +565,7 @@ class Reflow_Trainer(object):
             self.logger.info(f"fail loading checkpoint from {checkpoint_path}, please check it, and try again")
             return False
         checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        print("Load checkpoint from iteration: ", checkpoint['iteration'])
         checkpoint = process_checkpoints(checkpoint)
         self.diffusion_model.load_state_dict(checkpoint['model'])
         if self.use_ema and checkpoint['model_ema'] is not None:

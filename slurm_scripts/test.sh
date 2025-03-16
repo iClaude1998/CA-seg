@@ -25,9 +25,9 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=radiography_right+lung_v0_baseline
-config_file=configs/flowmatch/bioparse/radiography_right+lung_v0_baseline.yaml
-test_type=test
+exp_name=covidct_v0
+config_file=configs/flowmatch/bioparse/covidct_v0.yaml
+test_type=train
 learn_obj=dice
 
 
