@@ -6,6 +6,7 @@ import logging
 import statistics
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import importlib.util
 
 # adapt for pheonix cluster
@@ -16,6 +17,7 @@ from torch import nn
 from tqdm import tqdm
 from torch.optim import Adam
 from monai.losses import DiceLoss
+from matplotlib import pyplot as plt
 from torch.nn import functional as F
 from torch.nn.utils import clip_grad_norm_
 from collections import defaultdict as dedict
@@ -326,6 +328,7 @@ class CLIPCBM_Trainer(object):
             dl = self.train_dataloader
         
         outcomes = dedict(list)
+        weights_collections = []
         for batch in tqdm(dl, desc='Test'):
             images = batch['pixel_values'].to(self.device)
             cams = batch['inter_map'].to(self.device)
@@ -336,11 +339,12 @@ class CLIPCBM_Trainer(object):
             with torch.no_grad():
                 untrained = torch.mean(cams, dim=1, keepdim=True)
                 if self.augmentation:
-                    preds, _ = self.augment_forward(images, cams)
+                    preds, concept_weights = self.augment_forward(images, cams)
                 else:
                     concept_weights = self.model(images)
                     preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
-                
+                    
+                weights_collections.append(concept_weights.cpu().numpy())
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
                 preds = postprocess_pred(preds, self.with_sigmoid)
                 
@@ -355,9 +359,16 @@ class CLIPCBM_Trainer(object):
                 
                 outcomes['iou_II'].extend(iou_batch_II)
                 outcomes['dice_II'].extend(dice_batch_II)
+                outcomes['name'].extend(mask_name)
             
         outcomes = pd.DataFrame(outcomes)
         outcomes.to_csv(os.path.join(self.log_path, f'outcomes_test_100.csv'), index=False)
+        weights_collections = np.concatenate(weights_collections, axis=0)
+        
+        weights = np.mean(weights_collections, axis=0)
+        weights = weights / weights.max()
+        np.save(os.path.join(self.log_path, f'weights_zshot.npy'), weights)
+        
         return outcomes
     
     
@@ -400,7 +411,7 @@ class CLIPCBM_Trainer(object):
         for batch in tqdm(dataloader):
             images = batch['pixel_values'].to(self.device)
             cams = batch['inter_map'].to(self.device)
-            sdf_maps = batch['sdf_map'].to(self.device)
+            sdf_maps = batch['mask'].to(self.device)
             mask_name = batch['mask_name']
 
             # gt -> [B, H, W, C]
@@ -410,9 +421,9 @@ class CLIPCBM_Trainer(object):
                     preds, _ = self.augment_forward(images, cams)
                 else:
                     concept_weights = self.model(images)
-                    untrained = torch.mean(cams.reshape, dim=1, keepdim=True)
                     preds = torch.sum(self.temperature * concept_weights[..., None, None] * cams, dim=1, keepdim=True)
 
+                untrained = torch.mean(cams, dim=1, keepdim=True)
                 untrained = postprocess_pred(untrained, self.with_sigmoid)
                 preds = postprocess_pred(preds, self.with_sigmoid)
                 

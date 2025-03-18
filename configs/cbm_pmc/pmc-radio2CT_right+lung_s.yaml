@@ -10,6 +10,7 @@ datasets:
   train_rate: 1.
   featuremap_size: 7
   gcam_dir: "gcams"
+  num_concepts: 128
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -20,7 +21,7 @@ datasets:
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
-
+    num_concepts: "${datasets.num_concepts}"
 
 model:
   clip:
@@ -36,7 +37,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "experiments/cbm/bioparse_image/pmc_radiography_right+lung_s/checkpoints/best.pth" # the name of the loaded checkpoint "best.pth"
+  checkpoint_name: "experiments/cbm/bioparse_image/pmc_radiograhy_right+lung_s/checkpoints/best.pth" # the name of the loaded checkpoint "best.pth"
   num_epoch: 100
   save_interval: 20
   valiation_interval: 1
@@ -48,6 +49,7 @@ trainer:
   with_sigmoid: True
   gradient_accumulation_steps: 1
   clip_grads:
+  augmentation: True
 
 cbm_produce:
   train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm_pmc"

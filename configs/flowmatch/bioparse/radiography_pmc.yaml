@@ -5,7 +5,11 @@ datasets:
     - "left\\+lung"
     - "right\\+lung"
   batch_size: 4
+<<<<<<< HEAD
   root_dir: "/home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/Radiography"
+=======
+  root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
+>>>>>>> 10558a80871ab583f4fa9e3d83b2c50135a9a72b
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False

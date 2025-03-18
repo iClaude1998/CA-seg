@@ -380,6 +380,8 @@ class Reflow_Trainer(object):
                 if len(Rs.shape) == 3:
                     Rs = Rs.unsqueeze(1)
                 Rs = F.interpolate(Rs, gts.shape[-2:], mode='bilinear', align_corners=False)
+            Rs = postprocess_pred(Rs, with_sigmoid=True)
+                
             if Rs.shape[1] != gts.shape[1]:
                 Rs = torch.repeat_interleave(Rs, gts.shape[1], dim=1)
             with torch.no_grad():
@@ -691,8 +693,15 @@ class Reflow_Trainer(object):
             plt.title(f'GT')
             plt.savefig(os.path.join(save_dir, f"GT.png")) 
             plt.close()
-                
-                
+
+
+def postprocess_pred(preds, with_sigmoid=True):
+    
+    # R -> [-1, 1]
+    if with_sigmoid:
+        preds = torch.sigmoid(preds)
+    preds = 2 * (preds - 0.5)
+    return torch.clamp(preds, min=0)                
             
             
         
