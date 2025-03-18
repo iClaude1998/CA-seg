@@ -7,9 +7,10 @@ datasets:
   batch_size: 128
   root_dir: "/home/yliu/datasets/mediseg/bioparse/COVID19_singleCT"
   name: "bioparse_image" # "bioparse_image" 
-  train_rate: 1.
+  train_rate: 1.0
   featuremap_size: 7
   gcam_dir: "gcams"
+  num_concepts: 128
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -20,7 +21,8 @@ datasets:
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
-  
+    num_concepts: "${datasets.num_concepts}"
+
 
 model:
   clip:
@@ -36,9 +38,9 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "experiments/cbm/bioparse_image/pmc_radiography_left+lung_s/checkpoints/best.pth" # the name of the loaded checkpoint "best.pth"
+  checkpoint_name: "experiments/cbm/bioparse_image/pmc_radiograhy_left+lung_s/checkpoints/best.pth" # the name of the loaded checkpoint "best.pth"
   num_epoch: 100
-  save_interval: 20
+  save_interval: 100
   valiation_interval: 1
   sum_for_last: True
   gamma: 0.98 # the gamma of the Exp learning rate scheduler, normally 0.9~0.99
@@ -48,6 +50,7 @@ trainer:
   with_sigmoid: True
   gradient_accumulation_steps: 1
   clip_grads:
+  augmentation: True
 
 
 log_method: "wandb" # wandb, tensorboard
