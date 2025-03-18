@@ -396,9 +396,9 @@ class Reflow_Trainer(object):
                 dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
                 
                 outcomes['mask_name'].extend(mask_name)
-                # outcomes['iou_I'].extend(iou_batch_I)
+                outcomes['iou_I'].extend(iou_batch_I)
                 outcomes['iou_II'].extend(iou_batch_II)
-                # outcomes['dice_I'].extend(dice_batch_I)
+                outcomes['dice_I'].extend(dice_batch_I)
                 outcomes['dice_II'].extend(dice_batch_II)
         outcomes = pd.DataFrame(outcomes)
         outcomes.to_csv(os.path.join(self.log_path, f'outcomes_{testset}_out.csv'), index=False)

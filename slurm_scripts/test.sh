@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=kanrenzhun # job name
+#SBATCH --job-name=zhengchangren # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=1          # number of tasks (multi-thread job starts 4 tasks)
@@ -25,10 +25,10 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=covidct_v0
-config_file=configs/flowmatch/bioparse/covidct_v0.yaml
+exp_name=ct_pmc
+config_file=configs/flowmatch/bioparse/ct_pmc.yaml
 test_type=train
-learn_obj=dice
+learn_obj=recflow
 
 
 python main.py --task test \

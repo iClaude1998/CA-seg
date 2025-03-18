@@ -30,7 +30,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 
 python main.py --task train \
-       --exp_name radiography_left+lung_baseline \
-       --config configs/flowmatch/bioparse/radiography_left+lung_baseline.yaml \
+       --exp_name radiography_pmc \
+       --config configs/flowmatch/bioparse/radiography_pmc.yaml \
        --num_workers 8 \
        --learn_obj recflow \
