@@ -25,10 +25,10 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=ct_pmc
-config_file=configs/flowmatch/bioparse/ct_pmc.yaml
+exp_name=ct_v0_baseline
+config_file=configs/dice/ct_v0_baseline.yaml
 test_type=train
-learn_obj=recflow
+learn_obj=dice
 
 
 python main.py --task test \

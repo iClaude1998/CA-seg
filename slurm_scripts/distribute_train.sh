@@ -38,8 +38,8 @@ export ACCELERATE_PORT=29500
 # export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 # export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=radiography_pmc
-config=configs/flowmatch/bioparse/radiography_pmc.yaml
+exp_name=radiography_pmc_v0_baseline
+config=configs/dice/radiography_pmc_v0_baseline.yaml
 
 accelerate launch --multi-gpu \
                   --main_process_port=$ACCELERATE_PORT \
@@ -51,7 +51,7 @@ accelerate launch --multi-gpu \
                   --exp_name ${exp_name} \
                   --config ${config} \
                   --num_workers 8 \
-                  --learn_obj recflow \
+                  --learn_obj dice \
                   --distribution_training
 
 

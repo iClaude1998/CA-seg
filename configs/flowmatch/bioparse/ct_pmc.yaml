@@ -4,18 +4,15 @@ datasets:
   organ: 
     - "left\\+lung"
     - "right\\+lung"
-<<<<<<< HEAD
   batch_size: 8
   root_dir: "/home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/COVID19_singleCT"
-=======
-  batch_size: 4
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/COVID19_singleCT"
->>>>>>> 10558a80871ab583f4fa9e3d83b2c50135a9a72b
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 1.0
   resize: False
   annotation_name: "annotation_pmc.csv"
   cbm_dir: 'cbm_pmc'
+  norm: None
+  clamp: False
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"
@@ -27,6 +24,8 @@ datasets:
     resize: "${datasets.resize}"
     annotation_name: "${datasets.annotation_name}"
     cbm_dir: "${datasets.cbm_dir}"
+    norm: "${datasets.norm}"
+    clamp: "${datasets.clamp}"
 
 
 model:
@@ -64,11 +63,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-<<<<<<< HEAD
-  checkpoint_name: "experiments/recflow/bioparse_seg2/radiography_pmc/checkpoints/best.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
-=======
   checkpoint_name: "experiments/recflow/bioparse_seg2/radiography1/checkpoints/checkpoint_iter100000.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
->>>>>>> 10558a80871ab583f4fa9e3d83b2c50135a9a72b
   num_timesteps: 1000
   num_iterations: 160000
   save_interval: 100
@@ -77,3 +72,6 @@ trainer:
   clip_grads:
 
 log_method: "tensorboard" # wandb, tensorboard
+
+# experiments/recflow/bioparse_seg2/radiography1/checkpoints/checkpoint_iter100000.pth
+# experiments/recflow/bioparse_seg2/radiography_pmc/checkpoints/best.pth

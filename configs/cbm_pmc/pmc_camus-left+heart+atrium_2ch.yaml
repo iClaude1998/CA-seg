@@ -73,6 +73,6 @@ trainer:
 log_method: "wandb" # wandb, tensorboard
 
 cbm_produce:
-  train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm"
+  train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm_pmc"
   val_dir:
-  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm"
+  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm_pmc"
