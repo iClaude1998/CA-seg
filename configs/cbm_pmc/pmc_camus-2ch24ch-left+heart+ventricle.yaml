@@ -4,10 +4,10 @@ datasets:
     - 224
   view: "2CH"
   organ: "left+heart+ventricle"
-  batch_size: 640
+  batch_size: 80
   root_dir: "/home/yliu/datasets/mediseg/bioparse/CAMUS"
   name: "bioparse_camus_view" # "bioparse_image"
-  train_rate: 0.8
+  train_rate: 1.0
   featuremap_size: 7
   gcam_dir: "gcam"
   train:
@@ -20,16 +20,16 @@ datasets:
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
-  val:
-    name: "${datasets.name}"
-    view: "${datasets.view}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "val"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
-    gcam_dir: "${datasets.gcam_dir}"
+  # val:
+  #   name: "${datasets.name}"
+  #   view: "${datasets.view}"
+  #   organ: "${datasets.organ}"
+  #   root_dir: "${datasets.root_dir}"
+  #   split: "val"
+  #   train_rate: "${datasets.train_rate}"
+  #   image_size: "${datasets.size}"
+  #   featuremap_size: "${datasets.featuremap_size}"
+  #   gcam_dir: "${datasets.gcam_dir}"
   test:
     name: "${datasets.name}"
     view: "${datasets.view}"
@@ -68,11 +68,11 @@ trainer:
   with_sigmoid: True
   gradient_accumulation_steps: 1
   clip_grads:
-
+  augmentation: True
 
 log_method: "wandb" # wandb, tensorboard
 
 cbm_produce:
-  train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm_zshot"
+  train_dir: "${datasets.root_dir}/train_cbm_zshot"
   val_dir:
-  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm_zshot"
+  test_dir: "${datasets.root_dir}/test_cbm_zshot"

@@ -27,31 +27,31 @@
 
 
 // train
-// {
-//     // Use IntelliSense to learn about possible attributes.
-//     // Hover to view descriptions of existing attributes.
-//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-//     "version": "0.2.0",
-//     "configurations": [
-//         {
-//             "name": "Python Debugger: Current File",
-//             "type": "debugpy",
-//             "request": "launch",
-//             "program": "${file}",
-//             "console": "integratedTerminal",
-//             "justMyCode": false,
-//             "env": {"CUDA_VISIBLE_DEVICES": "0",
-//                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-//                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-//             "args": ["--task", "train",
-//                      "--config", "configs/cbm_pmc/pmc_radiograhy_left+lung_s.yaml",
-//                      "--exp_name", "debug", 
-//                      "--device", "cuda",
-//                      "--learn_obj", "cbm"]
-//         }
-//     ]
-// }
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {"CUDA_VISIBLE_DEVICES": "0",
+                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
+                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
+                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
+            "args": ["--task", "train",
+                     "--config", "configs/flowmatch/bioparse_multiple/radiology_v0_baseline.yaml",
+                     "--exp_name", "debug", 
+                     "--device", "cuda",
+                     "--learn_obj", "dice"]
+        }
+    ]
+}
 
 
 // distribute train
@@ -125,34 +125,34 @@
 // }
 
 // test
-{
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "env": {"CUDA_VISIBLE_DEVICES": "0",
-                    "HF_HOME": "${workspaceFolder}/pretrained/transformers",
-                    "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
-                    "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-            "args": ["--task", "test",
-                     "--config", "configs/cbm_pmc/pmc_radiograhy_left+lung_s.yaml",
-                     "--exp_name", "pmc_radiograhy_left+lung_s",
-                     "--device", "cuda",
-                     "--test_type", "test",
-                     "--learn_obj", "cbm",
-                     "--load_checkpoint",
-                    ]
-        }
-    ]
-}
+// {
+//     // Use IntelliSense to learn about possible attributes.
+//     // Hover to view descriptions of existing attributes.
+//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "Python Debugger: Current File",
+//             "type": "debugpy",
+//             "request": "launch",
+//             "program": "${file}",
+//             "console": "integratedTerminal",
+//             "justMyCode": false,
+//             "env": {"CUDA_VISIBLE_DEVICES": "0",
+//                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
+//                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
+//                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
+//             "args": ["--task", "test",
+//                      "--config", "configs/cbm_pmc/pmc_radiograhy_left+lung_s.yaml",
+//                      "--exp_name", "pmc_radiograhy_left+lung_s",
+//                      "--device", "cuda",
+//                      "--test_type", "test",
+//                      "--learn_obj", "cbm",
+//                      "--load_checkpoint",
+//                     ]
+//         }
+//     ]
+// }
 
 
 
