@@ -59,7 +59,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "experiments/recflow/bioparse_seg2/radiography1/checkpoints/checkpoint_iter100000.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
+  checkpoint_name: "experiments/recflow/bioparse_seg2/radiography_pmc/checkpoints/best.pth" # the name of the loaded checkpoint "checkpoint_iter100000.pth"
   num_timesteps: 1000
   num_iterations: 160000
   save_interval: 100

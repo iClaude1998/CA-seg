@@ -28,6 +28,7 @@ class Bioparse_navive(Dataset):
         view: str = None,
         train_rate: float = 0.8,
         image_size=None,  
+        annotation_name='annotation.csv',
     ) -> None:
         super().__init__()
 
@@ -41,7 +42,7 @@ class Bioparse_navive(Dataset):
             self.split = 'test'
 
         self.train_rate = train_rate
-
+        self.annotation_path = os.path.join(root_dir, modality, annotation_name)
         self.preprocess, self.tokenizer, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
@@ -54,27 +55,62 @@ class Bioparse_navive(Dataset):
         self.produce_sample_list()
     
     
-    def produce_sample_list(self):
+    # def produce_sample_list(self):
         
-        self.img_root = os.path.join(self.root_dir, self.modality, self.split)
-        self.mask_root = os.path.join(self.root_dir, self.modality, f"{self.split}_mask")
+    #     self.img_root = os.path.join(self.root_dir, self.modality, self.split)
+    #     self.mask_root = os.path.join(self.root_dir, self.modality, f"{self.split}_mask")
+        
+    #     pairs = []
+        
+    #     for iname in os.listdir(self.img_root):
+    #         if self.view is not None and self.view not in iname:
+    #             continue
+    #         masks = []
+    #         prefix, suffix = os.path.splitext(iname)
+    #         for organ in self.organ:
+    #             mask_name = f"{prefix}_{organ}{suffix}"
+    #             if not os.path.exists(os.path.join(self.mask_root, mask_name)):
+    #                 continue
+    #             masks.append(mask_name)
+    #         pair = [iname, masks]
+    #         if len(masks) == len(self.organ):
+    #             pairs.append(pair)
+    #     self.pairs = pairs 
+        
+    def produce_sample_list(self):
+        self.img_root = os.path.join(self.root_dir, self.modality)
+        self.mask_root = os.path.join(self.root_dir, self.modality)
+        
+        anns = pd.read_csv(self.annotation_path)
+        
+        pattern = '|'.join(self.organ)
+        anns = anns[anns['mask_path'].str.contains(pattern, na=False, regex=True)]
         
         pairs = []
-        
-        for iname in os.listdir(self.img_root):
-            if self.view is not None and self.view not in iname:
-                continue
+        for index, row in anns.iterrows():
+            img_name = row['img_path']
+            adir, name = os.path.split(img_name)
+            prefix, suffix = os.path.splitext(name)
             masks = []
-            prefix, suffix = os.path.splitext(iname)
             for organ in self.organ:
-                mask_name = f"{prefix}_{organ}{suffix}"
-                if not os.path.exists(os.path.join(self.mask_root, mask_name)):
+                organ = organ.replace('\\', '')
+                possible_mask_name = f"{adir}_mask/{prefix}_{organ}{suffix}"
+                if not possible_mask_name in anns['mask_path'].values:
                     continue
-                masks.append(mask_name)
-            pair = [iname, masks]
+                masks.append(possible_mask_name)
+            pair = [img_name, masks]
             if len(masks) == len(self.organ):
                 pairs.append(pair)
-        self.pairs = pairs 
+        self.pairs = pairs
+        
+        if self.split == 'train':
+            self.pairs = pairs[:int(len(pairs) * (self.train_rate - 0.2))]
+        elif self.split == 'val':
+            self.pairs = pairs[int(len(pairs) * (self.train_rate - 0.2)):int(len(pairs) * self.train_rate)]
+        else:
+            self.pairs = pairs[int(len(pairs) * self.train_rate):]
+        
+        
 
     def __len__(self):
         return len(self.pairs)

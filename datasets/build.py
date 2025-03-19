@@ -254,7 +254,8 @@ def build_bioparse_navive_dataset(config, preprocessors):
                            config.split, 
                            config.view,
                            config.train_rate,
-                           image_size=tuple(config.image_size) if config.image_size is not None else None)
+                           image_size=tuple(config.image_size) if config.image_size is not None else None,
+                           annotation_name=config.annotation_name)
 
 
 

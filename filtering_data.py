@@ -24,16 +24,16 @@ torch.manual_seed(SEED)
 
 def parse_args():
     parser = ArgumentParser(description='Reflow')
-    parser.add_argument('--config', type=str, default='configs/cbm_pmc/pmc-radio2CT_right+lung_s.yaml', help='path to config file')
+    parser.add_argument('--config', type=str, default='configs/cbm_pmc/pmc_camus-left+heart+ventricle_2ch.yaml', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
-    parser.add_argument('--exp_name', type=str, default='pmc-radio2CT_right+lung_s', help='the name of the experiment')
+    parser.add_argument('--exp_name', type=str, default='pmc_camus-left+heart+ventricle_2ch', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     
-    task =1
+    task = 1
     if task == 0:
     
         args = parse_args()
@@ -67,8 +67,8 @@ if __name__ == '__main__':
         
     elif task == 1:
         
-        exps = ["pmc-radio2CT_left+lung_s", "pmc-radio2CT_right+lung_s"]
-        csv_files = [f'experiments/cbm/bioparse_image/{exp}/output_logs/filtered_infos.csv' for exp in exps]
+        exps = ["pmc_camus-left+heart+atrium_2ch", "pmc_camus-left+heart+atrium_4ch", "pmc_camus-left+heart+ventricle_2ch", "pmc_camus-left+heart+ventricle_4ch"]
+        csv_files = [f'experiments/cbm/bioparse_camus_view/{exp}/output_logs/filtered_infos.csv' for exp in exps]
         df = pd.concat([pd.read_csv(file) for file in csv_files], ignore_index=True)
         df = df.sample(frac=1).reset_index(drop=True)
         df.to_csv("annotation.csv", index=False)

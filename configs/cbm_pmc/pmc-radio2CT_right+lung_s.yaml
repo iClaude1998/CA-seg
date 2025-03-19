@@ -7,7 +7,7 @@ datasets:
   batch_size: 128
   root_dir: "/home/yliu/datasets/mediseg/bioparse/COVID19_singleCT"
   name: "bioparse_image" # "bioparse_image" 
-  train_rate: 1.
+  train_rate: 1.0
   featuremap_size: 7
   gcam_dir: "gcams"
   num_concepts: 128
@@ -23,6 +23,7 @@ datasets:
     gcam_dir: "${datasets.gcam_dir}"
     num_concepts: "${datasets.num_concepts}"
 
+
 model:
   clip:
     pretrain: "PMC_CLIP"
@@ -37,7 +38,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "experiments/cbm/bioparse_image/pmc_radiograhy_right+lung_s/checkpoints/best.pth" # the name of the loaded checkpoint "best.pth"
+  checkpoint_name: "best.pth" # the name of the loaded checkpoint "best.pth"
   num_epoch: 100
   save_interval: 20
   valiation_interval: 1
