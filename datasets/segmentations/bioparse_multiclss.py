@@ -123,12 +123,8 @@ class Bioparse_segmentation(Dataset):
         h, w = image.height, image.width
         image = self.preprocess(image)
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
-        
         prompt = ''
-
         mask_name = self.mask_name_list[index]
-
-
         mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
         sdf_map = cv2.distanceTransform(np.array(mask), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
         # sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
@@ -138,7 +134,6 @@ class Bioparse_segmentation(Dataset):
         intermap = self.intermap_transforms(intermap)
         text_enc = self.tokenizer(prompt)
            
-        
         return_dict= dict(
                     pixel_values=image,
                     img_name=img_name,
@@ -258,6 +253,7 @@ class Bioparse_segmentation2(Dataset):
 
     def __len__(self):
         return len(self.img_name_list)
+
 
     def __getitem__(self, index) -> Dict[str, Any]:
         img_name = self.img_name_list[index]
