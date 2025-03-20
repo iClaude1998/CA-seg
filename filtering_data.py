@@ -24,9 +24,9 @@ torch.manual_seed(SEED)
 
 def parse_args():
     parser = ArgumentParser(description='Reflow')
-    parser.add_argument('--config', type=str, default='configs/cbm_pmc/pmc_camus-left+heart+ventricle_2ch.yaml', help='path to config file')
+    parser.add_argument('--config', type=str, default='configs/cbm_pmc/pmc_camus-4ch22ch-left+heart+atrium.yaml', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
-    parser.add_argument('--exp_name', type=str, default='pmc_camus-left+heart+ventricle_2ch', help='the name of the experiment')
+    parser.add_argument('--exp_name', type=str, default='pmc_camus-4ch22ch-left+heart+atrium', help='the name of the experiment')
     parser.add_argument('--device', type=str, default='cuda', help='experiment device')
     return parser.parse_args()
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         
     elif task == 1:
         
-        exps = ["pmc_camus-left+heart+atrium_2ch", "pmc_camus-left+heart+atrium_4ch", "pmc_camus-left+heart+ventricle_2ch", "pmc_camus-left+heart+ventricle_4ch"]
+        exps = ["pmc_camus-4ch22ch-left+heart+atrium", "pmc_camus-4ch22ch-left+heart+ventricle", "pmc_camus-2ch24ch-left+heart+ventricle", "pmc_camus-2ch24ch-left+heart+atrium"]
         csv_files = [f'experiments/cbm/bioparse_camus_view/{exp}/output_logs/filtered_infos.csv' for exp in exps]
         df = pd.concat([pd.read_csv(file) for file in csv_files], ignore_index=True)
         df = df.sample(frac=1).reset_index(drop=True)

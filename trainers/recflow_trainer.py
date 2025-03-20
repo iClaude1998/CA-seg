@@ -390,12 +390,14 @@ class Reflow_Trainer(object):
                 else:
                     iou_batch_I = np.array([0] * len(mask_name))
                     
-                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
+                iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh='crf', images=batch['pixel_values']) # stage II
+                # iou_batch_II = compute_metrics(vts, gts, mask_name, metric='iou', thresh=17) # stage II
                 if Rs.shape == gts.shape:
                     dice_batch_I = compute_metrics(Rs, gts, mask_name, metric='dice', thresh=17) # stage I
                 else:
                     dice_batch_I = np.array([0] * len(mask_name))
-                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
+                dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh='crf', images=batch['pixel_values']) # stage II
+                # dice_batch_II = compute_metrics(vts, gts, mask_name, metric='dice', thresh=17) # stage II
                 
                 outcomes['mask_name'].extend(mask_name)
                 outcomes['iou_I'].extend(iou_batch_I)

@@ -3,16 +3,14 @@ import sys
 sys.path.append('..')
 import cv2
 import torch
- 
-
 import matplotlib
 import numpy as np
 import importlib.util
 import blobfile as bf
+import pydensecrf.densecrf as dcrf
 
-
-from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
+from torch.utils.data import DataLoader
 
 from datasets import build_dataset
 
@@ -153,7 +151,7 @@ def mix_images_with_masks(images, masks, alpha_heatmap=0.5, colormap='jet'):
     return np.clip(images, a_min=0., a_max=1.)
 
 
-def compute_metrics(preds, gts, mask_name, metric, thresh=126):
+def compute_metrics(preds, gts, mask_name, metric, thresh=126, images=None):
     # preds = preds.squeeze(1).cpu().numpy()
     # gts = gts.squeeze(1).cpu().numpy()
     outcomes = []
@@ -166,6 +164,12 @@ def compute_metrics(preds, gts, mask_name, metric, thresh=126):
         elif thresh == 'otsu':
             pred = min_max_normalize(pred)
             pred = otsu_thresholding(pred)
+        elif thresh == 'crf':
+            assert images is not None, "images is required for crf thresholding"
+            images = images.permute(0, 2, 3, 1).cpu().numpy()
+            pred_norm = min_max_normalize(pred)
+            pred_mask = (255 * pred_norm >= 17).astype('float32')
+            pred = crf_postprocess(pred_mask, images) > 0
         else:
             pred = (pred.sigmoid() > 0.5)
         gt = (255 * gt > 0)
@@ -319,7 +323,60 @@ def build_dataloaders(cfgs, preprocess, tokenizer, resolution, bz=None):
     return train_dl, val_dl, test_dl, num_training_samples, num_val_samples, num_test_samples
 
 
+def crf_postprocess(preds, images):
+    """
+    Apply CRF postprocessing to the predicted masks.
+    
+    Args:
+        preds: A tensor of shape (N, H, W) containing the predicted masks.
+    """
+    outcomes = []
+    mus = np.array([0.48145466, 0.4578275, 0.40821073])
+    stds = np.array([0.26862954, 0.26130258, 0.27577711])
+    tau = 1.05
+    gaussian_sxy = 5
+    bilateral_sxy = 5
+    bilateral_srgb = 3
+    # (0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711)
+    for i in range(preds.shape[0]):
+        pred = preds[i]
+        
+        # anti normalize the image
+        image = images[i]
+        image = (image * stds + mus) * 255.0
+        image = image.astype('uint8')
+        
+        d = dcrf.DenseCRF2D(image.shape[1], image.shape[0], 2)
+        n_energy = -np.log((1.0 - pred + 1e-8)) / (tau * sigmoid(1 - pred))
+        p_energy = -np.log((pred + 1e-8)) / (tau * sigmoid(pred))
+        
+        U = np.zeros((2, image.shape[0] * image.shape[1]), dtype='float32')
+        U[0, :] = n_energy.flatten()
+        U[1, :] = p_energy.flatten()
+        
+        d.setUnaryEnergy(U)
+        d.addPairwiseGaussian(sxy=gaussian_sxy, compat=3)
+        d.addPairwiseBilateral(sxy=bilateral_sxy, srgb=bilateral_srgb, rgbim=np.ascontiguousarray(image), compat=5)
+        
+        Q = d.inference(1)
+        amap = np.argmax(Q, axis=0).reshape((image.shape[0], image.shape[1]))
+        amap = amap.astype('uint8') * 255
+        nb_blobs, im_with_separated_blobs, stats, _ = cv2.connectedComponentsWithStats(amap)
+        sizes = stats[:, cv2.CC_STAT_AREA]
+        sorted_sizes = sorted(sizes[1:], reverse=True) 
+        top_k_sizes = sorted_sizes[:1]
+        
+        im_result = np.zeros_like(im_with_separated_blobs)
+        for index_blob in range(1, nb_blobs):
+            if sizes[index_blob] in top_k_sizes:
+                im_result[im_with_separated_blobs == index_blob] = 255
+        outcomes.append(im_result)
+    outcomes = np.stack(outcomes, axis=0)
+    return outcomes
 
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
     
     
 
