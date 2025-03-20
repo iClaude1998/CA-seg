@@ -1,53 +1,45 @@
 datasets:
   size:
-  view: "2CH"
+  modality: "."
   organ: 
     - "left\\+heart\\+atrium"
     - "left\\+heart\\+ventricle"
   batch_size: 8
-  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/CAMUS"
-  name: "bioparse_seg_camus" # "bioparse_image" "bioparse_featuremap"
+  root_dir: /home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/CAMUS
+  name: "bioparse_navive" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
-  resize: False
-  cbm_dir: "cbm_zshot"
-  annotation_name: "annotation_zshot.csv"
+  view: "4CH"
+  annotation_name: "annotation_pmc.csv"
   train:
     name: "${datasets.name}"
-    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
     split: "train"
+    view: "${datasets.view}"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
-    resize: "${datasets.resize}"
-    cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
   val:
     name: "${datasets.name}"
-    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
     split: "val"
+    view: "${datasets.view}"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
-    resize: "${datasets.resize}"
-    cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
   test:
     name: "${datasets.name}"
-    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
     split: "test"
+    view: "${datasets.view}"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
-    resize: "${datasets.resize}"
-    cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
- 
 
 model:
   clip:
@@ -63,7 +55,7 @@ model:
     image_size: 224
     in_channels: 3 # 4 for ISIC
     num_channels: 128
-    out_channels: 1
+    out_channels: 2
     num_res_blocks: 2
     attention_resolutions: "16"
     dropout: 0.0
@@ -83,7 +75,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: experiments/dice/bioparse_seg_camus/camus_4ch_v0_baseline/checkpoints/checkpoint_ep100.pth # the name of the loaded checkpoint
+  checkpoint_name: "best.pth" # the name of the loaded checkpoint
   num_epochs: 100
   save_interval: 1
   with_codition: False

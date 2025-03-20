@@ -1,11 +1,11 @@
 datasets:
   size:
   view: "2CH"
-  organ: 
+  organ:
     - "left\\+heart\\+atrium"
     - "left\\+heart\\+ventricle"
   batch_size: 8
-  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/CAMUS"
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/CAMUS"
   name: "bioparse_seg_camus" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
@@ -47,7 +47,7 @@ datasets:
     resize: "${datasets.resize}"
     cbm_dir: "${datasets.cbm_dir}"
     annotation_name: "${datasets.annotation_name}"
- 
+
 
 model:
   clip:
@@ -83,10 +83,10 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: experiments/dice/bioparse_seg_camus/camus_4ch_v0_baseline/checkpoints/checkpoint_ep100.pth # the name of the loaded checkpoint
+  checkpoint_name: "experiments/dice/bioparse_seg_camus/camus_4ch_v0_pmc/checkpoints/best.pth" # the name of the loaded checkpoint
   num_epochs: 100
   save_interval: 1
-  with_codition: False
+  with_codition: True
   gradient_accumulation_steps: 1
   clip_grads:
 

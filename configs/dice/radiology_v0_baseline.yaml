@@ -8,7 +8,7 @@ datasets:
   root_dir: /home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/Radiography
   name: "bioparse_navive" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
-  annotation_name: "annotation.csv"
+  annotation_name: "annotation_pmc.csv"
   view:
   train:
     name: "${datasets.name}"

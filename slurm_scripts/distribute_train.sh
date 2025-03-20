@@ -38,8 +38,8 @@ export ACCELERATE_PORT=29500
 # export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 # export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=radiography_pmc_v0_baseline
-config=configs/dice/radiography_pmc_v0_baseline.yaml
+exp_name=camus_2ch_v0_pmc_baseline
+config=configs/dice/camus_2ch_v0_pmc_baseline.yaml
 
 accelerate launch --multi-gpu \
                   --main_process_port=$ACCELERATE_PORT \
