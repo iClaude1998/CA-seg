@@ -2,14 +2,14 @@ datasets:
   size:
     - 224
     - 224
-  view: "2CH"
+  view: "4CH"
   organ: "left+heart+atrium"
   batch_size: 80
   root_dir: "/home/yliu/datasets/mediseg/bioparse/CAMUS"
   name: "bioparse_camus_view" # "bioparse_image"
-  train_rate: 0.8
+  train_rate: 1.
   featuremap_size: 28
-  gcam_dir: "gcam"
+  gcam_dir: "gcam_aug"
   train:
     name: "${datasets.name}"
     view: "${datasets.view}"
@@ -20,16 +20,16 @@ datasets:
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
-  val:
-    name: "${datasets.name}"
-    view: "${datasets.view}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "val"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
-    gcam_dir: "${datasets.gcam_dir}"
+  # val:
+  #   name: "${datasets.name}"
+  #   view: "${datasets.view}"
+  #   organ: "${datasets.organ}"
+  #   root_dir: "${datasets.root_dir}"
+  #   split: "val"
+  #   train_rate: "${datasets.train_rate}"
+  #   image_size: "${datasets.size}"
+  #   featuremap_size: "${datasets.featuremap_size}"
+  #   gcam_dir: "${datasets.gcam_dir}"
   test:
     name: "${datasets.name}"
     view: "${datasets.view}"
@@ -40,7 +40,7 @@ datasets:
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
- 
+
 
 model:
   clip:
@@ -56,7 +56,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "best.pth" # the name of the loaded checkpoint "best.pth"
+  checkpoint_name: "experiments/cbm/bioparse_camus_view/pmc_camus-left+heart+atrium_2ch_aug/checkpoints/best.pth" # the name of the loaded checkpoint "best.pth"
   num_epoch: 100
   save_interval: 20
   valiation_interval: 1
@@ -70,10 +70,9 @@ trainer:
   clip_grads:
   augmentation: True
 
-
 log_method: "wandb" # wandb, tensorboard
 
 cbm_produce:
-  train_dir: "${datasets.root_dir}/train_cbm_pmc"
+  train_dir: "${datasets.root_dir}/train_cbm_aug_zshot"
   val_dir:
-  test_dir: "${datasets.root_dir}/test_cbm_pmc"
+  test_dir: "${datasets.root_dir}/test_cbm_aug_zshot"

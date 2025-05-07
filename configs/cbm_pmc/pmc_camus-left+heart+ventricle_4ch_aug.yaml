@@ -2,14 +2,14 @@ datasets:
   size:
     - 224
     - 224
-  view: "2CH"
-  organ: "left+heart+atrium"
+  view: "4CH"
+  organ: "left+heart+ventricle"
   batch_size: 80
   root_dir: "/home/yliu/datasets/mediseg/bioparse/CAMUS"
   name: "bioparse_camus_view" # "bioparse_image"
-  train_rate: 0.8
+  train_rate: 1.0
   featuremap_size: 28
-  gcam_dir: "gcam"
+  gcam_dir: "gcam_aug"
   train:
     name: "${datasets.name}"
     view: "${datasets.view}"
@@ -20,16 +20,16 @@ datasets:
     image_size: "${datasets.size}"
     featuremap_size: "${datasets.featuremap_size}"
     gcam_dir: "${datasets.gcam_dir}"
-  val:
-    name: "${datasets.name}"
-    view: "${datasets.view}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "val"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
-    gcam_dir: "${datasets.gcam_dir}"
+  # val:
+  #   name: "${datasets.name}"
+  #   view: "${datasets.view}"
+  #   organ: "${datasets.organ}"
+  #   root_dir: "${datasets.root_dir}"
+  #   split: "val"
+  #   train_rate: "${datasets.train_rate}"
+  #   image_size: "${datasets.size}"
+  #   featuremap_size: "${datasets.featuremap_size}"
+  #   gcam_dir: "${datasets.gcam_dir}"
   test:
     name: "${datasets.name}"
     view: "${datasets.view}"
@@ -74,6 +74,6 @@ trainer:
 log_method: "wandb" # wandb, tensorboard
 
 cbm_produce:
-  train_dir: "${datasets.root_dir}/train_cbm_pmc"
+  train_dir: "${datasets.root_dir}/train_cbm_aug"
   val_dir:
-  test_dir: "${datasets.root_dir}/test_cbm_pmc"
+  test_dir: "${datasets.root_dir}/test_cbm_aug"

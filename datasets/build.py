@@ -1,7 +1,8 @@
 from .segmentations import (ISIC_seg, ISICattribute_seg, Bkaiattributes_seg, busiattributes_seg, 
                             camusattributes_seg, ISIC_image, Bioparse_image, Bioparse_segmentation, 
                             Bioparse_segmentation2, Bioparse_amos22, Bioparse_segmentation_amos22, 
-                            Bioparse_camus, Bioparse_amos22_weakly, Bioparse_camus_view, Bioparse_navive)
+                            Bioparse_camus, Bioparse_amos22_weakly, Bioparse_camus_view, Bioparse_navive, 
+                            Bioparse_segmentation2_hacker, Bioparse_camus_hacker, Bioparse_segmentation_amos22_hacker)
 
 
 def build_dataset(config, preprocessors, inter_mode=True):
@@ -36,7 +37,12 @@ def build_dataset(config, preprocessors, inter_mode=True):
         return build_bioparse_seg_amos22_dataset(config, preprocessors)
     elif config.name == "bioparse_navive":
         return build_bioparse_navive_dataset(config, preprocessors)
-    
+    elif config.name == "bioparse_seg2_hacker":
+        return build_bioparse_segmentation2_hacker_dataset(config, preprocessors)
+    elif config.name == "bioparse_camus_hacker":
+        return build_bioparse_camus_hacker_dataset(config, preprocessors)
+    elif config.name == "bioparse_seg_amos22_hacker":
+        return build_bioparse_segmentation_amos22_hacker_dataset(config, preprocessors)
 
 
 
@@ -258,4 +264,37 @@ def build_bioparse_navive_dataset(config, preprocessors):
                            annotation_name=config.annotation_name)
 
 
+def build_bioparse_segmentation2_hacker_dataset(config, preprocessors):
+    return Bioparse_segmentation2_hacker(preprocessors, 
+                                        config.modality, 
+                                        config.organ, 
+                                        config.root_dir, 
+                                        config.split, 
+                                        config.train_rate,
+                                        image_size=tuple(config.image_size) if config.image_size is not None else None,
+                                        annotation_name=config.annotation_name,
+                                        cbm_dir=config.cbm_dir)
 
+
+def build_bioparse_camus_hacker_dataset(config, preprocessors):
+    return Bioparse_camus_hacker(preprocessors, 
+                                config.view, 
+                                config.organ, 
+                                config.root_dir, 
+                                config.split, 
+                                config.train_rate,
+                                image_size=tuple(config.image_size) if config.image_size is not None else None,
+                                annotation_name=config.annotation_name,
+                                cbm_dir=config.cbm_dir)
+
+
+def build_bioparse_segmentation_amos22_hacker_dataset(config, preprocessors):
+    return Bioparse_segmentation_amos22_hacker(preprocessors, 
+                                                config.modality, 
+                                                config.organ, 
+                                                config.root_dir, 
+                                                config.split, 
+                                                config.train_rate,
+                                                image_size=tuple(config.image_size) if config.image_size is not None else None,
+                                                annotation_name=config.annotation_name,
+                                                cbm_dir=config.cbm_dir)
