@@ -4,13 +4,13 @@ datasets:
   organ: 
     - "left\\+lung"
     - "right\\+lung"
-  batch_size: 4
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/COVID19_singleCT"
+  batch_size: 8
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/COVID19_singleCT"
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
   annotation_name: "annotation_32.csv"
-  cbm_dir: 'cbm_64'
+  cbm_dir: 'cbm_32'
   train:
     name: "${datasets.name}"
     modality: "${datasets.modality}"

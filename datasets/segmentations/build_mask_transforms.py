@@ -35,10 +35,12 @@ def build_mask_transforms(image_resolution):
                 T.ToTensor()])
     
     
-def build_intermap_transforms(image_resolution, norm='minmax', resize=True):
+def build_intermap_transforms(image_resolution, norm='minmax', resize=True, clamp=False):
     transforms = [T.ToTensor(),]
     if resize:
         transforms.append(Resize_Interpretability_Map(image_resolution))
+    if clamp:
+        transforms.append(T.Lambda(lambda x: torch.clamp(x, min=0)))
     if norm == 'minmax':
         transforms.append(minmx_normalization_usdf)
     elif norm == 'sigmoid':

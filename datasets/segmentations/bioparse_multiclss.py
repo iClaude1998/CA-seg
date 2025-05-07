@@ -196,6 +196,8 @@ class Bioparse_segmentation2(Dataset):
         resize=False,
         annotation_name='annotation.csv',
         cbm_dir='cbm',    
+        norm=None,
+        clamp=False,
     ) -> None:
         super().__init__()
 
@@ -218,7 +220,7 @@ class Bioparse_segmentation2(Dataset):
 
         self.mask_transforms = build_mask_transforms(image_resolution)
         self.usdf_transforms = build_usdf_transforms(image_resolution)
-        self.intermap_transforms = build_intermap_transforms(image_resolution, None, resize)
+        self.intermap_transforms = build_intermap_transforms(image_resolution, norm, resize, clamp=clamp)
         self.produce_sample_list()
 
     

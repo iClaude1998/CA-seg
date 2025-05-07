@@ -30,7 +30,7 @@ export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
 
 python main.py --task train \
-       --exp_name amos22_aorta \
-       --config configs/cbm_amos22/amos22_aorta.yaml \
+       --exp_name radiography_pmc \
+       --config configs/flowmatch/bioparse/radiography_pmc.yaml \
        --num_workers 8 \
        --learn_obj recflow \

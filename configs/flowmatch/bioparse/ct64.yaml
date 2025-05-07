@@ -4,8 +4,8 @@ datasets:
   organ: 
     - "left\\+lung"
     - "right\\+lung"
-  batch_size: 4
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/COVID19_singleCT"
+  batch_size: 8
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata/mediseg/bioparse/COVID19_singleCT"
   name: "bioparse_seg2" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
@@ -59,7 +59,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: experiments/recflow/bioparse_seg2/radiography32/checkpoints/checkpoint_iter100000.pth # the name of the loaded checkpoint "checkpoint_iter100000.pth"
+  checkpoint_name: experiments/recflow/bioparse_seg2/radiography64/checkpoints/checkpoint_iter100000.pth # the name of the loaded checkpoint "checkpoint_iter100000.pth"
   num_timesteps: 1000
   num_iterations: 100000
   save_interval: 100
