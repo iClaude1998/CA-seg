@@ -271,8 +271,7 @@ def build_bioparse_segmentation2_hacker_dataset(config, preprocessors):
                                         config.split, 
                                         config.train_rate,
                                         image_size=tuple(config.image_size) if config.image_size is not None else None,
-                                        annotation_name=config.annotation_name,
-                                        cbm_dir=config.cbm_dir)
+                                        annotation_name=config.annotation_name)
 
 
 def build_bioparse_camus_hacker_dataset(config, preprocessors):
@@ -283,8 +282,7 @@ def build_bioparse_camus_hacker_dataset(config, preprocessors):
                                 config.split, 
                                 config.train_rate,
                                 image_size=tuple(config.image_size) if config.image_size is not None else None,
-                                annotation_name=config.annotation_name,
-                                cbm_dir=config.cbm_dir)
+                                annotation_name=config.annotation_name)
 
 
 def build_bioparse_segmentation_amos22_hacker_dataset(config, preprocessors):
@@ -295,5 +293,4 @@ def build_bioparse_segmentation_amos22_hacker_dataset(config, preprocessors):
                                                 config.split, 
                                                 config.train_rate,
                                                 image_size=tuple(config.image_size) if config.image_size is not None else None,
-                                                annotation_name=config.annotation_name,
-                                                cbm_dir=config.cbm_dir)
+                                                annotation_name=config.annotation_name)

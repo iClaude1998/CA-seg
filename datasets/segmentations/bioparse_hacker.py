@@ -15,30 +15,24 @@ from .build_mask_transforms import build_mask_transforms, refine_image_transform
 
 class Bioparse_segmentation2_hacker(Dataset):
     """
-    A PyTorch Dataset class for loading and preprocessing AMOS images and their corresponding masks.
+    Bioparse_segmentation2_hacker is a custom PyTorch Dataset class designed for handling
+    segmentation tasks in medical imaging. It supports various preprocessing and transformation
+    techniques to prepare the data for training and evaluation.
+
     Attributes:
-        root_dir (str): Root directory containing the dataset.
-        modality (str): Modality of the images (e.g., CT, MRI).
-        organ (str): Organ of interest.
-        split (str): Dataset split (e.g., train, val, test).
-        img_dir (str): Directory containing the images.
-        mask_dir (str): Directory containing the masks.
-        preprocess (callable): Preprocessing function for images.
-        image_only (bool): Whether to load only images without masks.
-        mask_transforms (callable): Preprocessing function for masks.
-        img_name_list (list): List of image filenames.
-        mask_name_list (list): List of mask filenames.
+        preprocessors (tuple): A tuple containing the preprocessing function, tokenizer, and image resolution.
+        modality (str): The imaging modality (e.g., CT, MRI) of the dataset.
+        organ (str): The target organ for segmentation.
+        root_dir (str): The root directory where the dataset is stored.
+        split (str): The dataset split to use ('train', 'val', or 'test').
+        train_rate (float): The proportion of data to use for training.
+        image_size (int, optional): The desired image size for preprocessing.
+        annotation_name (str): The name of the annotation file.
+        cbm_dir (str): The directory for CBM-related data.
+
     Methods:
-        __init__(preprocessors, modality, organ, root_dir, split, image_only=False, image_size=None):
-            Initializes the dataset with the given parameters.
-        produce_mask_names(img_name):
-            Generates the corresponding mask filename for a given image filename.
-        produce_sample_list():
-            Produces the list of image and mask filenames, ensuring that masks exist for the images.
-        __len__():
-            Returns the number of samples in the dataset.
-        __getitem__(index):
-            Retrieves the sample (image and mask) at the given index.
+        __init__: Initializes the dataset with the given parameters.
+        produce_sample_list: Generates a list of samples based on the annotations and split.
     """
     
 
@@ -51,8 +45,7 @@ class Bioparse_segmentation2_hacker(Dataset):
         split: str,
         train_rate: float = 0.8,
         image_size=None,
-        annotation_name='annotation.csv',
-        cbm_dir='cbm',    
+        annotation_name='annotation.csv',   
     ) -> None:
         super().__init__()
 
@@ -64,7 +57,6 @@ class Bioparse_segmentation2_hacker(Dataset):
             split = 'train'
         else:
             split = 'test'
-        self.cbm_dir = cbm_dir
         self.train_rate = train_rate
         self.annotation_path = os.path.join(root_dir, modality, annotation_name)
         self.preprocess, self.tokenizer, image_resolution = preprocessors
@@ -117,7 +109,7 @@ class Bioparse_segmentation2_hacker(Dataset):
         # sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
         h, w = mask.height, mask.width
         mask = self.mask_transforms(mask)
-        intermap = self.intermap_transforms(sdf_map)
+        intermap = self.intermap_transforms(sdf_map) / 10
         sdf_map = self.usdf_transforms(sdf_map)
         text_enc = self.tokenizer(prompt)
            
@@ -144,30 +136,24 @@ class Bioparse_segmentation2_hacker(Dataset):
 
 class Bioparse_camus_hacker(Dataset):
     """
-    A PyTorch Dataset class for loading and preprocessing AMOS images and their corresponding masks.
+    Bioparse_camus_hacker is a custom PyTorch Dataset class designed for handling
+    segmentation tasks in medical imaging, specifically for the CAMUS dataset. It supports various
+    preprocessing and transformation techniques to prepare the data for training and evaluation.
+
     Attributes:
-        root_dir (str): Root directory containing the dataset.
-        modality (str): Modality of the images (e.g., CT, MRI).
-        organ (str): Organ of interest.
-        split (str): Dataset split (e.g., train, val, test).
-        img_dir (str): Directory containing the images.
-        mask_dir (str): Directory containing the masks.
-        preprocess (callable): Preprocessing function for images.
-        image_only (bool): Whether to load only images without masks.
-        mask_transforms (callable): Preprocessing function for masks.
-        img_name_list (list): List of image filenames.
-        mask_name_list (list): List of mask filenames.
+        preprocessors (tuple): A tuple containing the preprocessing function, tokenizer, and image resolution.
+        view (str): The view type (e.g., 2CH, 4CH) of the dataset.
+        organ (str): The target organ for segmentation.
+        root_dir (str): The root directory where the dataset is stored.
+        split (str): The dataset split to use ('train', 'val', or 'test').
+        train_rate (float): The proportion of data to use for training.
+        image_size (int, optional): The desired image size for preprocessing.
+        annotation_name (str): The name of the annotation file.
+        cbm_dir (str): The directory for CBM-related data.
+
     Methods:
-        __init__(preprocessors, modality, organ, root_dir, split, image_only=False, image_size=None):
-            Initializes the dataset with the given parameters.
-        produce_mask_names(img_name):
-            Generates the corresponding mask filename for a given image filename.
-        produce_sample_list():
-            Produces the list of image and mask filenames, ensuring that masks exist for the images.
-        __len__():
-            Returns the number of samples in the dataset.
-        __getitem__(index):
-            Retrieves the sample (image and mask) at the given index.
+        __init__: Initializes the dataset with the given parameters.
+        produce_sample_list: Generates a list of samples based on the annotations and split.
     """
     
 
@@ -180,8 +166,7 @@ class Bioparse_camus_hacker(Dataset):
         split: str,
         train_rate: float = 0.8,
         image_size=None,
-        annotation_name='annotation.csv',
-        cbm_dir='cbm',    
+        annotation_name='annotation.csv',   
     ) -> None:
         super().__init__()
 
@@ -193,7 +178,6 @@ class Bioparse_camus_hacker(Dataset):
             split = 'train'
         else:
             split = 'test'
-        self.cbm_dir = cbm_dir
         self.train_rate = train_rate
         self.annotation_path = os.path.join(root_dir, annotation_name)
         self.preprocess, self.tokenizer, image_resolution = preprocessors
@@ -229,9 +213,6 @@ class Bioparse_camus_hacker(Dataset):
         self.img_name_list = anns['img_path'].tolist()
         self.mask_name_list = anns['mask_path'].tolist()
         
-
-    
-
     def __len__(self):
         return len(self.img_name_list)
 
@@ -249,7 +230,7 @@ class Bioparse_camus_hacker(Dataset):
 
         h, w = mask.height, mask.width
         mask = self.mask_transforms(mask)
-        intermap = self.intermap_transforms(sdf_map)
+        intermap = self.intermap_transforms(sdf_map) / 10
         sdf_map = self.usdf_transforms(sdf_map)
         text_enc = self.tokenizer(prompt)
            
@@ -276,30 +257,24 @@ class Bioparse_camus_hacker(Dataset):
 
 class Bioparse_segmentation_amos22_hacker(Dataset):
     """
-    A PyTorch Dataset class for loading and preprocessing AMOS images and their corresponding masks.
+    Bioparse_segmentation_amos22_hacker is a custom PyTorch Dataset class designed for handling
+    segmentation tasks in medical imaging, specifically for the AMOS22 dataset. It supports various
+    preprocessing and transformation techniques to prepare the data for training and evaluation.
+
     Attributes:
-        root_dir (str): Root directory containing the dataset.
-        modality (str): Modality of the images (e.g., CT, MRI).
-        organ (str): Organ of interest.
-        split (str): Dataset split (e.g., train, val, test).
-        img_dir (str): Directory containing the images.
-        mask_dir (str): Directory containing the masks.
-        preprocess (callable): Preprocessing function for images.
-        image_only (bool): Whether to load only images without masks.
-        mask_transforms (callable): Preprocessing function for masks.
-        img_name_list (list): List of image filenames.
-        mask_name_list (list): List of mask filenames.
+        preprocessors (tuple): A tuple containing the preprocessing function, tokenizer, and image resolution.
+        modality (str): The imaging modality (e.g., CT, MRI) of the dataset.
+        organ (str): The target organ for segmentation.
+        root_dir (str): The root directory where the dataset is stored.
+        split (str): The dataset split to use ('crop_train', 'crop_val', or 'crop_test').
+        train_rate (float): The proportion of data to use for training.
+        image_size (int, optional): The desired image size for preprocessing.
+        annotation_name (str): The name of the annotation file.
+        cbm_dir (str): The directory for CBM-related data.
+
     Methods:
-        __init__(preprocessors, modality, organ, root_dir, split, image_only=False, image_size=None):
-            Initializes the dataset with the given parameters.
-        produce_mask_names(img_name):
-            Generates the corresponding mask filename for a given image filename.
-        produce_sample_list():
-            Produces the list of image and mask filenames, ensuring that masks exist for the images.
-        __len__():
-            Returns the number of samples in the dataset.
-        __getitem__(index):
-            Retrieves the sample (image and mask) at the given index.
+        __init__: Initializes the dataset with the given parameters.
+        produce_sample_list: Generates a list of samples based on the annotations and split.
     """
     
 
@@ -312,8 +287,7 @@ class Bioparse_segmentation_amos22_hacker(Dataset):
         split: str,
         train_rate: float = 0.8,
         image_size=None,
-        annotation_name='annotation.csv',
-        cbm_dir='cbm',    
+        annotation_name='annotation.csv',  
     ) -> None:
         super().__init__()
 
@@ -325,7 +299,6 @@ class Bioparse_segmentation_amos22_hacker(Dataset):
             split = 'crop_train'
         else:
             split = 'crop_test'
-        self.cbm_dir = cbm_dir
         self.train_rate = train_rate
         self.annotation_path = os.path.join(root_dir, modality, annotation_name)
         self.preprocess, self.tokenizer, image_resolution = preprocessors
@@ -377,7 +350,7 @@ class Bioparse_segmentation_amos22_hacker(Dataset):
         # sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
         h, w = mask.height, mask.width
         mask = self.mask_transforms(mask)
-        intermap = self.intermap_transforms(sdf_map)
+        intermap = self.intermap_transforms(sdf_map) / 10
         sdf_map = self.usdf_transforms(sdf_map)
         text_enc = self.tokenizer(prompt)
            

@@ -27,16 +27,10 @@ export TRANSFORMERS_CACHE=$(pwd)/pretrained/transformers
 export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-<<<<<<< HEAD
-exp_name=pmc_camus_4ch22ch-left+heart+ventricle_aug
-config_file=configs/cbm_pmc/pmc_camus_4ch22ch-left+heart+ventricle_aug.yaml
-test_type=train
-=======
 
 exp_name=camus_2t4ch_aug
 config=configs/flowmatch/bioparse/camus_2t4ch_aug.yaml
 test_type=test
->>>>>>> 115363385004710b0254bbc523d14ecdae6f7efc
 learn_obj=recflow
 
 python main.py --task test \
