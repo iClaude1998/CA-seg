@@ -1,6 +1,6 @@
 #!/bin/bash
 # Configure the resources required
-#SBATCH --job-name=meishuo # job name
+#SBATCH --job-name=020❤️0574 # job name
 #SBATCH -p a100
 #SBATCH -N 1 # number of tasks (sequential job starts 1 task) (check this if your job unexpectedly uses 2 nodes)
 #SBATCH --ntasks=2          # number of tasks (multi-thread job starts 2 tasks)
@@ -22,7 +22,7 @@ module load cuDNN/8.6.0.163-CUDA-11.8.0
 conda info --envs
 nvcc -V
 
-export ACCELERATE_PORT=29500
+export ACCELERATE_PORT=29501
 
 # echo "NODELIST="${SLURM_NODELIST}
 # master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
@@ -38,8 +38,8 @@ export ACCELERATE_PORT=29500
 # export HUGGINGFACE_HUB_CACHE=$(pwd)/pretrained/huggingface_hub
 # export XDG_CACHE_HOME=$(pwd)/pretrained/clips
 
-exp_name=camus_2ch_v0_pmc_baseline
-config=configs/dice/camus_2ch_v0_pmc_baseline.yaml
+exp_name=camus_4ch_v0_aug
+config=configs/dice/camus_4ch_v0_aug.yaml
 
 accelerate launch --multi-gpu \
                   --main_process_port=$ACCELERATE_PORT \

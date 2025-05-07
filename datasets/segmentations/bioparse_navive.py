@@ -82,6 +82,7 @@ class Bioparse_navive(Dataset):
         self.mask_root = os.path.join(self.root_dir, self.modality)
         
         anns = pd.read_csv(self.annotation_path)
+        anns = anns[anns['mask_path'].str.contains(self.view, na=False)]
         
         pattern = '|'.join(self.organ)
         anns = anns[anns['mask_path'].str.contains(pattern, na=False, regex=True)]

@@ -440,6 +440,7 @@ class Dice_Trainer(object):
             
     def load_checkpoint(self, checkpoint_path):
         # check whether the path exist, if not, find the ckpt according to the exp_name
+        print(f"Load checkpoint from {checkpoint_path}")
         if os.path.exists(checkpoint_path):
             checkpoint_path = checkpoint_path
         elif os.path.exists(os.path.join(self.checkpoint_path, checkpoint_path)):

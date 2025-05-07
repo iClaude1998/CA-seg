@@ -2,18 +2,7 @@ datasets:
   size:
   modality: "MRI"
   organ: 
-    - "aorta"
-    - "duodenum"
-    - "esophagus"
-    - "gallbladder"
-    - "left\\+adrenal\\+gland"
-    - "left\\+kidney"
-    - "pancreas"
-    - "postcava"
-    - "right\\+adrenal\\+gland"
-    - "right\\+kidney"
-    - "spleen"
-    - "stomach"
+    - "liver"
   batch_size: 8
   root_dir: "/home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/amos22"
   name: "bioparse_seg_amos22" # "bioparse_image" "bioparse_featuremap"
@@ -91,7 +80,7 @@ trainer:
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "best.pth" # the name of the loaded checkpoint
+  checkpoint_name: "experiments/dice/bioparse_seg_amos22/amos22_multiple_v0/checkpoints/best.pth" # the name of the loaded checkpoint
   num_epochs: 100
   save_interval: 1
   with_codition: True

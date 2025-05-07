@@ -205,9 +205,6 @@ def build_bioparse_seg2_dataset(config, preprocessors):
                                   norm=config.norm,
                                   clamp=config.clamp)
 
-    
-
-
 
 def build_bioparse_seg_amos22_dataset(config, preprocessors):
     return Bioparse_segmentation_amos22(preprocessors, 

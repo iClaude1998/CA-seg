@@ -1,60 +1,53 @@
 datasets:
   size:
-  modality: "MRI"
-  organ: 
-    - "aorta"
-    - "duodenum"
-    - "esophagus"
-    - "gallbladder"
-    - "left\\+adrenal\\+gland"
-    - "left\\+kidney"
-    - "pancreas"
-    - "postcava"
-    - "right\\+adrenal\\+gland"
-    - "right\\+kidney"
-    - "spleen"
-    - "stomach"
+  view: "4CH"
+  organ:
+    - "left\\+heart\\+atrium"
+    - "left\\+heart\\+ventricle"
   batch_size: 8
-  root_dir: "/home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/amos22"
-  name: "bioparse_seg_amos22" # "bioparse_image" "bioparse_featuremap"
+  root_dir: "/home/a1233646/ai_studio/datasource/medidata_backend/mediseg/bioparse/CAMUS"
+  name: "bioparse_seg_camus" # "bioparse_image" "bioparse_featuremap"
   train_rate: 0.8
   resize: False
-  annotation_name: "annotation_all.csv"
-  cbm_dir: "cbm"
+  cbm_dir: "cbm_aug_zshot"
+  annotation_name: "annotation_zshot_aug.csv"
   train:
     name: "${datasets.name}"
+    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
-    split: "crop_train"
+    split: "train"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-    annotation_name: "${datasets.annotation_name}"
     cbm_dir: "${datasets.cbm_dir}"
+    annotation_name: "${datasets.annotation_name}"
   val:
     name: "${datasets.name}"
+    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
-    split: "crop_val"
+    split: "val"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-    annotation_name: "${datasets.annotation_name}"
     cbm_dir: "${datasets.cbm_dir}"
+    annotation_name: "${datasets.annotation_name}"
   test:
     name: "${datasets.name}"
+    view: "${datasets.view}"
     modality: "${datasets.modality}"
     organ: "${datasets.organ}"
     root_dir: "${datasets.root_dir}"
-    split: "crop_test"
+    split: "test"
     train_rate: "${datasets.train_rate}"
     image_size: "${datasets.size}"
     resize: "${datasets.resize}"
-    annotation_name: "${datasets.annotation_name}"
     cbm_dir: "${datasets.cbm_dir}"
- 
+    annotation_name: "${datasets.annotation_name}"
+
 
 model:
   clip:
@@ -85,13 +78,12 @@ model:
     resblock_updown: False
     use_new_attention_order: False
 
-
 trainer:
   gt_type: "sdf_map" # sdf_map, mask
   learning_rate: 1.0e-4
   output: "output_logs" # experiments/exp_name/logs 
   use_ema: False
-  checkpoint_name: "best.pth" # the name of the loaded checkpoint
+  checkpoint_name: "experiments/dice/bioparse_seg_camus/camus_2ch_v0_aug/checkpoints/best.pth" # the name of the loaded checkpoint
   num_epochs: 100
   save_interval: 1
   with_codition: True
