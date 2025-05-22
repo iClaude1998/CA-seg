@@ -6,7 +6,7 @@ from transformers import AutoTokenizer
 from open_clip import create_model_from_pretrained, get_tokenizer
 
 from .clips import (CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN, 
-                    BiomedCLIPWrapper, Biomedclip, BioMedCLIP_Weakly_Segmentor, PMCCLIP_Weakly_Segmentor)
+                    BiomedCLIPWrapper, Biomedclip, BioMedCLIP_Weakly_Segmentor, PMCCLIP_Weakly_Segmentor, ImageEncoderWrapper, CLIPImageEncoderWrapper)
 from .diffusion import (UNetModel_v1preview, UNetModel_v2preview, UNetModel_v3preview,
                         UNetModel_v1position, UNetModel_v2position, UNetModel_v3position, UNetModel_v0preview)
 
@@ -219,15 +219,23 @@ def create_diffusion(cfgs):
 
 
 def load_clipcbn_preprocessor(cfgs):
-    if cfgs.pretrain == 'ViT-B-32':
-        model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-        resolution = model.visual.preprocess_cfg['size']
-        tokenizer = open_clip.get_tokenizer('ViT-B-32')
-        backbone = model.visual
+    if cfgs.pretrain == 'ViT-B-16':
+        # model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-16', pretrained='laion2b_s34b_b79k')
+        # resolution = model.visual.preprocess_cfg['size']
+        # tokenizer = open_clip.get_tokenizer('ViT-B-16')
+        # backbone = model.visual
+        # in_features = 512
+        # if cfgs.no_proj:
+        #     backbone.proj = None
+        #     in_features = 768
+        model, preprocess = clip.load("ViT-B/16")
+        tokenizer =clip.tokenize
+        resolution = 224
+        backbone = CLIPImageEncoderWrapper(model.visual, with_head=not cfgs.no_proj, image_size=224)
         in_features = 512
         if cfgs.no_proj:
-            backbone.proj = None
             in_features = 768
+        
         
     elif cfgs.pretrain == "MedICaT":
         model, _ , preprocess = open_clip.create_model_and_transforms('hf-hub:luhuitong/CLIP-ViT-L-14-448px-MedICaT-ROCO')
@@ -256,10 +264,10 @@ def load_clipcbn_preprocessor(cfgs):
                                                 cache_dir="pretrained/huggingface_hub/biomedclip")
         tokenizer = get_tokenizer('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
         backbone = model.visual
+        backbone = ImageEncoderWrapper(backbone, with_head=not cfgs.no_proj, image_size=224)
         resolution = 224
         in_features = 512
         if cfgs.no_proj:
-            backbone = model.visual.trunk
             in_features = 768
         
     elif cfgs.pretrain == "PMC_CLIP":

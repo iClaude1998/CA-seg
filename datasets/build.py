@@ -157,6 +157,7 @@ def build_bioparse_image_dataset(config, preprocessors):
                           image_size=tuple(config.image_size) if config.image_size is not None else None,
                           featuremap_size=config.featuremap_size,
                           gcam_dir=config.gcam_dir,
+                          model_gcam=config.model_gcam,
                           num_concepts=config.num_concepts,
                           )
     

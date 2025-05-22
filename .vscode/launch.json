@@ -44,11 +44,11 @@
                     "HF_HOME": "${workspaceFolder}/pretrained/transformers",
                     "HUGGINGFACE_HUB_CACHE": "${workspaceFolder}/pretrained/huggingface_hub",
                     "XDG_CACHE_HOME": "${workspaceFolder}/pretrained/clips",},
-            "args": ["--task", "train",
-                     "--config", "configs/flowmatch/bioparse/amos22_2ch_hacker.yaml",
-                     "--exp_name", "debug", 
+            "args": ["--task", "test",
+                     "--config", "configs/cbm_bioparse/radiography_right+lung_biomedclip.yaml",
+                     "--exp_name", "radiography_right+lung_biomedclip.yaml", 
                      "--device", "cuda",
-                     "--learn_obj", "recflow"]
+                     "--learn_obj", "cbm"]
         }
     ]
 }

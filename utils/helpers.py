@@ -122,6 +122,8 @@ def process_checkpoints(checkpoint):
     return checkpoint
 
 
+
+
 def mix_images_with_masks(images, masks, alpha_heatmap=0.5, colormap='jet'):
     """
     Mixes images with unsigned distance functions (USDFs) using a specified colormap and alpha blending.

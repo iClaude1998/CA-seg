@@ -29,6 +29,22 @@ class ClipCBN(nn.Module):
         self.backbone.eval()
         for param in self.backbone.parameters():
             param.requires_grad = False
+    
+    def load_state_dict(self, state_dict, strict=True):
+        concept_head_state_dict = {
+        k.replace('concept_head.', ''): v
+        for k, v in state_dict.items()
+        if k.startswith('concept_head.')
+        }
+        missing, unexpected = self.concept_head.load_state_dict(concept_head_state_dict, strict=False)
+
+        if strict:
+            if missing:
+                raise RuntimeError(f'Missing keys in concept_head: {missing}')
+            if unexpected:
+                raise RuntimeError(f'Unexpected keys in concept_head: {unexpected}')
+
+        print("[INFO] Only concept_head parameters loaded.")
 
 
 

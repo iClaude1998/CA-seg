@@ -1,6 +1,5 @@
 import os 
 import cv2
-import zarr
 import torch 
 import numpy as np
 
@@ -24,6 +23,7 @@ class Bioparse_image(Dataset):
         image_size=None,
         featuremap_size=None,
         gcam_dir='gcam',
+        model_gcam='pmcclip',
         num_concepts=128,
     ) -> None:
         super().__init__()
@@ -38,9 +38,10 @@ class Bioparse_image(Dataset):
             split = 'test'
         self.train_rate = train_rate
         self.num_concepts = num_concepts
+        self.model_gcam = model_gcam
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
-        self.inter_dir = os.path.join(root_dir, modality, f"{split}_{gcam_dir}", self.organ)
+        self.inter_dir = os.path.join(root_dir, modality, f"{split}_{gcam_dir}", self.model_gcam, self.organ)
 
         self.preprocess, _, image_resolution = preprocessors
 

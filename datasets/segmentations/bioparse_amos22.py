@@ -87,7 +87,6 @@ class Bioparse_amos22(Dataset):
         self.img_dir = os.path.join(root_dir, modality, f'{split}')
         self.mask_dir = os.path.join(root_dir, modality, f"{split}_mask")
         self.inter_dir = os.path.join(root_dir, modality, f"{split}_{gcam_dir}", self.organ)
-        # self.sdf_dir = zarr.open(os.path.join(root_dir, modality, f"{split}_usdf"), mode='r')
         self.preprocess, _, image_resolution = preprocessors
 
         if image_size is not None and image_size != image_resolution:
@@ -131,11 +130,9 @@ class Bioparse_amos22(Dataset):
         h, w = image.height, image.width
         image = self.preprocess(image)
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
-
         mask_name = self.mask_name_list[index]
-
         mask = Image.open(f"{self.mask_dir}/{mask_name}").convert("L")
-        # sdf_map = self.sdf_dir[os.path.splitext(mask_name)[0]][:]
+
         sdf_map = cv2.distanceTransform(np.array(mask), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
         h, w = mask.height, mask.width
         mask = self.mask_transforms(mask)
