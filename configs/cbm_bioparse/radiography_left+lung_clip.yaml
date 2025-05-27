@@ -7,7 +7,7 @@ datasets:
   batch_size: 80
   root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
   name: "bioparse_image" # "bioparse_image" 
-  train_rate: 0.8
+  train_rate: 1.0
   featuremap_size: 56
   gcam_dir: "gcams_aug"
   model_gcam: "clip"
@@ -24,18 +24,18 @@ datasets:
     gcam_dir: "${datasets.gcam_dir}"
     model_gcam: "${datasets.model_gcam}"
     num_concepts: "${datasets.num_concepts}"
-  val:
-    name: "${datasets.name}"
-    modality: "${datasets.modality}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "val"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
-    gcam_dir: "${datasets.gcam_dir}"
-    model_gcam: "${datasets.model_gcam}"
-    num_concepts: "${datasets.num_concepts}"
+  # val:
+  #   name: "${datasets.name}"
+  #   modality: "${datasets.modality}"
+  #   organ: "${datasets.organ}"
+  #   root_dir: "${datasets.root_dir}"
+  #   split: "val"
+  #   train_rate: "${datasets.train_rate}"
+  #   image_size: "${datasets.size}"
+  #   featuremap_size: "${datasets.featuremap_size}"
+  #   gcam_dir: "${datasets.gcam_dir}"
+  #   model_gcam: "${datasets.model_gcam}"
+  #   num_concepts: "${datasets.num_concepts}"
   test:
     name: "${datasets.name}"
     modality: "${datasets.modality}"

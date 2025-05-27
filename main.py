@@ -27,7 +27,7 @@ torch.manual_seed(SEED)
 def parse_args():
     parser = ArgumentParser(description='Reflow')
     parser.add_argument('--task', type=str, default='train', help='the task to performs', 
-                        choices=['train', 'inf', 'test', 'vis_process', 'thresh_search', 'lr_search', 'produce_cam'])
+                        choices=['train', 'inf', 'test', 'vis_process', 'thresh_search', 'lr_search', 'produce_cam', 'speed_test'])
     parser.add_argument('--config', type=str, default='configs/flowmatch/bioparse/amos22_multiple.yaml', help='path to config file')
     parser.add_argument('--num_workers', type=int, default=0, help='number of workers for dataloader')
     parser.add_argument('--exp_name', type=str, default='covidct2l', help='the name of the experiment')
@@ -129,6 +129,8 @@ if __name__ == '__main__':
             if test_outdir is not None:
                 os.makedirs(test_outdir, exist_ok=True)
             trainer.produce_cam(train_outdir, val_outdir, test_outdir, False)
+        elif cfgs.task == 'speed_test':
+            trainer.inference_speed_test()
         else:
             raise ValueError(f"Unsupported task: {cfgs.task}, what do you wanna do ???")
         

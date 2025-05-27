@@ -2,10 +2,10 @@ datasets:
   size:
     - 224
     - 224
-  modality: "Normal"
-  organ: "right+lung"
+  modality: "."
+  organ: "left+lung"
   batch_size: 80
-  root_dir: "/home/yliu/datasets/mediseg/bioparse/Radiography"
+  root_dir: "/home/yliu/datasets/mediseg/bioparse/COVID19_singleCT"
   name: "bioparse_image" # "bioparse_image" 
   train_rate: 1.0
   featuremap_size: 56
@@ -24,31 +24,8 @@ datasets:
     gcam_dir: "${datasets.gcam_dir}"
     model_gcam: "${datasets.model_gcam}"
     num_concepts: "${datasets.num_concepts}"
-  # val:
-  #   name: "${datasets.name}"
-  #   modality: "${datasets.modality}"
-  #   organ: "${datasets.organ}"
-  #   root_dir: "${datasets.root_dir}"
-  #   split: "val"
-  #   train_rate: "${datasets.train_rate}"
-  #   image_size: "${datasets.size}"
-  #   featuremap_size: "${datasets.featuremap_size}"
-  #   gcam_dir: "${datasets.gcam_dir}"
-  #   model_gcam: "${datasets.model_gcam}"
-  #   num_concepts: "${datasets.num_concepts}"
-  test:
-    name: "${datasets.name}"
-    modality: "${datasets.modality}"
-    organ: "${datasets.organ}"
-    root_dir: "${datasets.root_dir}"
-    split: "test"
-    train_rate: "${datasets.train_rate}"
-    image_size: "${datasets.size}"
-    featuremap_size: "${datasets.featuremap_size}"
-    gcam_dir: "${datasets.gcam_dir}"
-    model_gcam: "${datasets.model_gcam}"
-    num_concepts: "${datasets.num_concepts}"
 
+ 
 model:
   clip:
     pretrain: "ViT-B-16"
@@ -82,5 +59,5 @@ log_method: "wandb" # wandb, tensorboard
 
 cbm_produce:
   train_dir: "${datasets.root_dir}/${datasets.modality}/train_cbm/clip"
-  val_dir: 
-  test_dir: "${datasets.root_dir}/${datasets.modality}/test_cbm/clip"
+  val_dir:
+  test_dir:

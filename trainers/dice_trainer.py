@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append('..')
+import time
 import statistics
 import torch
 import random
@@ -521,6 +522,35 @@ class Dice_Trainer(object):
         if self.task == 'train':
             if self.log_method == "tensorboard":
                 self.writer = SummaryWriter(self.log_path)
+    
+    def inference_speed_test(self):
+
+        # images, text_ids, gt, Rs = self.get_input(batch)
+        images = torch.randn(1, 3, 224, 224).to(self.device) 
+        Rs = torch.randn(1, 1, 224, 224).to(self.device)      
+        for _ in range(10):
+            preds = self.model(images, Rs)
+            # if self.with_codition:
+            #     preds = self.model(images, Rs)
+            # else:
+            #     preds = self.model(images)
+        
+        # speed test
+        torch.cuda.synchronize()
+        start_time = time.time()
+        with torch.no_grad():
+            for _ in range(100):
+                preds = self.model(images, Rs)
+                # if self.with_codition:
+                #     preds = self.model(images, Rs)
+                # else:
+                #     preds = self.model(images)
+        
+        torch.cuda.synchronize()
+        end_time = time.time()
+        avg_time = (end_time - start_time) / 100 * 1000  # ms
+        self.logger.info(f"Average inference time per image: {avg_time:.2f} ms")
+        self.logger.info(f"Throughput: {1000 / avg_time:.2f} FPS")      
     
     
     

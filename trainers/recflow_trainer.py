@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append('..')
+import time
 import torch
 import random
 import numpy as np
@@ -695,6 +696,55 @@ class Reflow_Trainer(object):
             plt.title(f'GT')
             plt.savefig(os.path.join(save_dir, f"GT.png")) 
             plt.close()
+
+    def inference_speed_test(self):
+
+        # images, text_ids, gt, Rs = self.get_input(batch)
+        text_ids = torch.randint(0, 1000, (1, 77)).to(self.device)
+        images = torch.randn(1, 3, 224, 224).to(self.device) 
+        gt = torch.randn(1, 1, 224, 224).to(self.device)  
+        Rs = torch.randn(1, 1, 224, 224).to(self.device)      
+        B = gt.shape[0]
+        zt, conditions, Rs, intermediate = self.get_conditions(images, text_ids, gt, Rs=Rs)
+        eular_steps = [999, 749, 499, 249]            
+        # eular_steps = [999,899,799,699,599,499,399,299,199,99]
+        # eular_steps = list(range(1000))[::-1]
+        for _ in range(10):
+            for i, step in enumerate(eular_steps):
+                ts = torch.ones(B, device=self.device) * step
+                x = torch.cat([conditions, zt], dim=1)
+                # if self.diffusion_version == 'v1' or self.diffusion_version == 'v1p':
+                #     v = self.diffusion_model(x, ts, y=None)
+                # elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
+                #     v = self.diffusion_model(x, ts, intermediate.detach())
+                # elif self.diffusion_version == 'v3' or self.diffusion_version == 'v3p':
+                #     v = self.diffusion_model(x, ts, Rs)
+                v = self.diffusion_model(x, ts, Rs)
+                zt = zt + v / len(eular_steps)
+        
+        # speed test
+        torch.cuda.synchronize()
+        start_time = time.time()
+        with torch.no_grad():
+            for _ in range(100):
+                for i, step in enumerate(eular_steps):
+                    ts = torch.ones(B, device=self.device) * step
+                    x = torch.cat([conditions, zt], dim=1)
+                    # if self.diffusion_version == 'v1' or self.diffusion_version == 'v1p':
+                    #     v = self.diffusion_model(x, ts, y=None)
+                    # elif self.diffusion_version == 'v2' or self.diffusion_version == 'v2p':
+                    #     v = self.diffusion_model(x, ts, intermediate.detach())
+                    # elif self.diffusion_version == 'v3' or self.diffusion_version == 'v3p':
+                    #     v = self.diffusion_model(x, ts, Rs)
+                    v = self.diffusion_model(x, ts, Rs)
+                    zt = zt + v / len(eular_steps)
+        
+        torch.cuda.synchronize()
+        end_time = time.time()
+        avg_time = (end_time - start_time) / 100 * 1000  # ms
+        self.logger.info(f"Average inference time per image: {avg_time:.2f} ms")
+        self.logger.info(f"Throughput: {1000 / avg_time:.2f} FPS")      
+    
 
 
 def postprocess_pred(preds, with_sigmoid=True):
