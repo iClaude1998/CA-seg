@@ -93,6 +93,8 @@ class Bioparse_image(Dataset):
         image = Image.open(f"{self.img_dir}/{img_name}").convert("RGB")
         h, w = image.height, image.width
         image = self.preprocess(image)
+        if not isinstance(image, torch.Tensor):
+            image = image['pixel_values'][0]
         intermap = np.load(f"{self.inter_dir}/{self.intermap_name_list[index]}")
         intermap = intermap[:self.num_concepts]
 

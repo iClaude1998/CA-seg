@@ -119,6 +119,7 @@ class CLIPCBM_Trainer(object):
         
         num_batches = len(self.train_dataloader)
         best_iou, best_dice = 0, 0
+        # outcomes = self.validation()
         for epoch in range(self.start_epoch, self.num_epoch):
             training_loss_temp = []
             

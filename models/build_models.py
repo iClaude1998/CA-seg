@@ -2,11 +2,11 @@ import clip
 import torch
 import open_clip
 
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoConfig, AutoModel, AutoProcessor
 from open_clip import create_model_from_pretrained, get_tokenizer
 
 from .clips import (CLIPWrapper, CLIPLRP, PUBMEDCLIPLRP, PUBMEDCLIPWrapper, ModifiedResNet, image_transform, ClipCBN, 
-                    BiomedCLIPWrapper, Biomedclip, BioMedCLIP_Weakly_Segmentor, PMCCLIP_Weakly_Segmentor, ImageEncoderWrapper, CLIPImageEncoderWrapper)
+                    BiomedCLIPWrapper, Biomedclip, BioMedCLIP_Weakly_Segmentor, PMCCLIP_Weakly_Segmentor, ImageEncoderWrapper, CLIPImageEncoderWrapper, ConceptCLIPBackbone)
 from .diffusion import (UNetModel_v1preview, UNetModel_v2preview, UNetModel_v3preview,
                         UNetModel_v1position, UNetModel_v2position, UNetModel_v3position, UNetModel_v0preview)
 
@@ -40,7 +40,6 @@ def load_clip_and_tokenizer(cfgs, device):
         resolution = 224
         default_imgsize = 224
         model = BiomedCLIPWrapper(Biomedclip(model), device)
-        
     return model, tokenizer, preprocess, resolution
 
 
@@ -219,15 +218,8 @@ def create_diffusion(cfgs):
 
 
 def load_clipcbn_preprocessor(cfgs):
+    hf_token = '***REMOVED***'
     if cfgs.pretrain == 'ViT-B-16':
-        # model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-16', pretrained='laion2b_s34b_b79k')
-        # resolution = model.visual.preprocess_cfg['size']
-        # tokenizer = open_clip.get_tokenizer('ViT-B-16')
-        # backbone = model.visual
-        # in_features = 512
-        # if cfgs.no_proj:
-        #     backbone.proj = None
-        #     in_features = 768
         model, preprocess = clip.load("ViT-B/16")
         tokenizer =clip.tokenize
         resolution = 224
@@ -278,6 +270,19 @@ def load_clipcbn_preprocessor(cfgs):
         tokenizer = AutoTokenizer.from_pretrained('microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract')
         resolution = 224
         in_features = 768
+    
+    elif cfgs.pretrain == "ConceptCLIP":
+        model_name = 'JerrryNie/ConceptCLIP'
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True, token=hf_token)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, token=hf_token)
+        processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True, token=hf_token)
+        preprocess = processor.image_processor
+        tokenizer = processor.tokenizer
+        backbone = model.visual.trunk
+        # backbone = model.visual
+        # backbone = ConceptCLIPBackbone(backbone, with_head=not cfgs.no_proj, image_size=384)
+        resolution = 384
+        in_features = 1152
         
     if cfgs.task == 'biomed_weakly':
         model = BioMedCLIP_Weakly_Segmentor(cfgs.num_concepts, cfgs.modality, cfgs.organ)
